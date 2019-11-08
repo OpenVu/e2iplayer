@@ -1,18 +1,5 @@
 # -*- coding: utf-8 -*-
 
-#
-#
-# @Codermik release, based on @Samsamsam's E2iPlayer public.
-# Released with kind permission of Samsamsam.
-# All code developed by Samsamsam is the property of the Samsamsam and the E2iPlayer project,  
-# all other work is Â© E2iStream Team, aka Codermik.  TSiPlayer is Â© Rgysoft, his group can be
-# found here:  https://www.facebook.com/E2TSIPlayer/
-#
-# https://www.facebook.com/e2iStream/
-#
-#
-
-
 ###################################################
 # LOCAL import
 ###################################################
@@ -63,6 +50,7 @@ class Favourites(CBaseHostClass):
         
     def _setHost(self, hostName):
         if hostName == self.hostName: return True
+        if (hostName.startswith('TS_')) or (hostName.startswith('TSM_')): hostName = 'tsiplayer'
         try:
             _temp = __import__('Plugins.Extensions.IPTVPlayer.hosts.host' + hostName, globals(), locals(), ['IPTVHost'], -1)
             host = _temp.IPTVHost()
