@@ -77,7 +77,7 @@ class IPTVHostsGroups:
         
         self.PREDEFINED_HOSTS['english']          = ['favourites','youtube','musicbox','liveleak','twitchtv','hitboxtv','tvplayercom','bbciplayer','itvcom','lookmovieag', 'streamzennet','filmativa','filmovizijastudio','solarmovie','putlockertvto', \
                                                      'yifytv','icefilmsinfo','movierulzsx','streamzennet','forjatn','classiccinemaonline','seriesonline','mythewatchseries','thewatchseriesto','bbcsport','ourmatchnet','watchwrestling','watchwrestlinguno','hoofootcom','eurosportplayer','ngolos', \
-                                                     'laola1tv','redbull','dailymotion','artetv','ted', 'pinkbike','watchcartoononline','orthobulletscom','vumedicom','ororotv','appletrailers','localmedia','webstream','tsiplayer','infoversion','ustvgo']
+                                                     'laola1tv','redbull','dailymotion','artetv','ted', 'pinkbike','watchcartoononline','orthobulletscom','vumedicom','ororotv','appletrailers','localmedia','webstream','tsiplayer','infoversion']
         
         self.PREDEFINED_HOSTS['german']           = ['filmpalast','hdfilmetv','kinox','serienstreamto', 'bsto','cineto','hdstreams','artetv', 'tvnowde','playrtsiw','ardmediathek','hitboxtv','sportdeutschland', 'twitchtv','zdfmediathek','youtube', \
                                                      'dailymotion','vimeo', 'vevo','webstream','favourites','localmedia','appletrailers', 'tsiplayer','infoversion']
@@ -87,8 +87,7 @@ class IPTVHostsGroups:
         self.PREDEFINED_HOSTS['hungarian']        = ['filmezz','mooviecc', 'mozicsillag', 'kinox', 'youtube', 'dailymotion', 'vimeo', 'vevo', 'webstream', 'favourites', 'localmedia', 'twitchtv', 'hitboxtv', 'appletrailers', 'tsiplayer', 'infoversion']
         self.PREDEFINED_HOSTS['arabic']           = ['tsiplayer','akoam','egybest','dardarkomcom','movs4ucom', 'movizlandcom','faselhdcom','forjatn','webstream','youtube', 'dailymotion','vimeo','vevo','localmedia','favourites', 'appletrailers','hitboxtv','twitchtv','infoversion']
         self.PREDEFINED_HOSTS['greek']            = ['tainieskaiseirestv','greekdocumentaries3', 'oipeirates', 'gamatotvme', 'youtube', 'dailymotion', 'vimeo', 'vevo', 'twitchtv', 'hitboxtv', 'webstream', 'localmedia', 'favourites', 'appletrailers', 'tsiplayer', 'infoversion']
-        self.PREDEFINED_HOSTS['spanish']          = ['mrpiracy','plusdede','hdfull', 'vidcorncom', 'dixmax', 'seriesblanco', 'artetv', 'hitboxtv', 'twitchtv', 'youtube', 'vimeo', 'dailymotion', 'vevo', 'webstream', 'favourites', 'localmedia', 'tsiplayer', 'appletrailers', 'infoversion', \
-                                                     'sagasclasicas','tdtiptvchannels']
+        self.PREDEFINED_HOSTS['spanish']          = ['mrpiracy','plusdede','hdfull', 'vidcorncom', 'dixmax', 'seriesblanco', 'artetv', 'hitboxtv', 'twitchtv', 'youtube', 'vimeo', 'dailymotion', 'vevo', 'webstream', 'favourites', 'localmedia', 'tsiplayer', 'appletrailers', 'infoversion']
         self.PREDEFINED_HOSTS['indian']           = ['movierulzsx','favourites','webstream', 'localmedia', 'youtube', 'dailymotion', 'vevo', 'twitchtv', 'hitboxtv', 'appletrailers', 'tsiplayer', 'infoversion']
         self.PREDEFINED_HOSTS['italian']          = ['altadefinizione01','altadefinizionecool', 'altadefinizione1', 'tantifilmorg', 'cb01', 'cb01uno', 'filmstreamhdit', 'guardaserie', 'dsda', 'playrtsiw', 'la7it', 'raiplay', 'artetv', 'dplayit', 'mediasetplay', 'pmgsport', \
                                                      'sportitalia','youtube','dailymotion','vimeo', 'vevo', 'twitchtv', 'hitboxtv', 'webstream', 'favourites', 'localmedia', 'tsiplayer', 'appletrailers', 'infoversion'
