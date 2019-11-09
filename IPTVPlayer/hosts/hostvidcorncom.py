@@ -302,7 +302,7 @@ class VidCorn(CBaseHostClass, CaptchaHelper):
         self.cacheLinks = {}
         
         if not self.loggedIn:
-            self.sessionEx.open(MessageBox, 'Debes iniciar sesiÃ³n para ver los enlaces.', type = MessageBox.TYPE_ERROR, timeout=10)
+            self.sessionEx.open(MessageBox, 'Debes iniciar sesión para ver los enlaces.', type = MessageBox.TYPE_ERROR, timeout=10)
 
         sts, data = self.getPage(cItem['url'])
         if not sts: return
@@ -488,7 +488,7 @@ class VidCorn(CBaseHostClass, CaptchaHelper):
         val = self.cleanHtmlStr(self.cm.ph.getDataBeetwenNodes(data, ('<span', '>', 'tv-status'), ('</span', '>'), False)[1])
         if val: itemsList.append((_('TV status'), val))
 
-        val = self.cleanHtmlStr(self.cm.ph.getDataBeetwenNodes(data, ('<span', '>', 'aÃ±o'), ('</span', '>'), False)[1])
+        val = self.cleanHtmlStr(self.cm.ph.getDataBeetwenNodes(data, ('<span', '>', 'año'), ('</span', '>'), False)[1])
         if val: itemsList.append((_('Year'), val))
 
         val = self.cleanHtmlStr(self.cm.ph.getDataBeetwenNodes(data, ('<i', '>', 'fa-star'), ('</b', '>'), False)[1])
