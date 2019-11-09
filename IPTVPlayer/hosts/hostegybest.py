@@ -240,8 +240,9 @@ class EgyBest(CBaseHostClass):
         sts, data = self.getPage(cItem['url'])
         if not sts: return
             
-        data = self.cm.ph.getAllItemsBeetwenNodes(data, ('<a', '>', 'tvep'), ('</a', '>'), True)
+        data = self.cm.ph.getAllItemsBeetwenNodes(data, ('<a', '>', 'tv-p1'), ('</a', '>'), True)
         for item in data:
+            printDBG('item='+item)
             url   = self.getFullUrl(self.cm.ph.getSearchGroups(item, '''href=['"]([^'^"]+?)['"]''')[0])
             icon  = self.getFullIconUrl(self.cm.ph.getSearchGroups(item, '''src=['"]([^'^"]+?)['"]''')[0])
             title = self.cleanHtmlStr(item) 
