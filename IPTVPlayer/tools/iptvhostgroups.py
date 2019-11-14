@@ -68,7 +68,7 @@ class IPTVHostsGroups:
                                                      ]
         self.PREDEFINED_HOSTS['cartoonsandanime'] = ['watchcartoononline','bajeczkiorg','animeodcinki','kreskowkazone','otakufr']
         self.PREDEFINED_HOSTS['sport']            = ['webstream','bbcsport','twitchtv','ourmatchnet','watchwrestling','watchwrestling','eurosportplayer','hoofootcom','ekstraklasatv','pmgsport','hitboxtv','meczykipl','del','redbull','laola1tv','ngolos', \
-                                                     'okgoals','pinkbike','watchwrestlinguno']
+                                                     'okgoals','pinkbike','watchwrestlinguno','fullmatchtvcom']
         self.PREDEFINED_HOSTS['documentary']      = ['dailymotion','ororotv','dokumentalnenet','vumedicom','greekdocumentaries3','dsda']
         
         self.PREDEFINED_HOSTS['polish']           = ['favourites','webstream','localmedia','youtube','twitchtv','bajeczkiorg','allboxtv','efilmytv','ekinotv','kinox','ekstraklasahttps://www.facebook.com/groups/629673107501622/?ref=bookmarkstv','alltubetv','dokumentalnenet','filisertv','hitboxtv','iitvpl', \
@@ -95,7 +95,7 @@ class IPTVHostsGroups:
                                                      ]
         self.PREDEFINED_HOSTS['swedish']          = ['favourites','webstream','localmedia','youtube','dailymotion','vimeo','vevo','twitchtv','hitboxtv','appletrailers','tsiplayer','infoversion']
         self.PREDEFINED_HOSTS['balkans']          = ['fenixsite','gledalica','filma24io','andrijaiandjelka','filmehdnet','filmaoncom','filmovizijastudio','filmativa','filma24hdcom','kinox','youtube','dailymotion','vimeo','vevo','hitboxtv','twitchtv','webstream', \
-                                                     'favourites','localmedia','appletrailers','tsiplayer','infoversion']
+                                                     'favourites','localmedia','appletrailers','tsiplayer','infoversion','filmowood']
         self.PREDEFINED_HOSTS['music']            = ['vevo','musicmp3ru','musicbox','shoutcast','youtube','dailymotion','vimeo','localmedia','favourites']      
         self.PREDEFINED_HOSTS['others']           = ['favourites','webstream','youtube','dailymotion','vimeo','localmedia', 'urllist', 'tsiplayer', 'liveleak', 'twitchtv', 'hitboxtv', 'spryciarze', 'wgrane', 'playrtsiw', 'cdapl', 'drdk', 'appletrailers', 'infoversion']
         self.PREDEFINED_HOSTS['live']=[]
