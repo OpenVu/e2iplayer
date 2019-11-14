@@ -332,7 +332,8 @@ class urlparser:
                        'player.veuclips.com':   self.pp.parserVIUCLIPS	   ,   
                        'onet.pl':               self.pp.parserONETTV        ,
                        'onet.tv':               self.pp.parserONETTV        ,
-                       'openlive.org':          self.pp.parserOPENLIVEORG   ,
+                       'onlystream.tv':         self.pp.parserONLYSTREAM    ,
+					   'openlive.org':          self.pp.parserOPENLIVEORG   ,
                        'openload.co':           self.pp.parserOPENLOADIO    ,
                        'openload.info':         self.pp.parserEXASHARECOM   ,
                        'openload.io':           self.pp.parserOPENLOADIO    ,
@@ -493,7 +494,7 @@ class urlparser:
                        'vidstodo.me':           self.pp.parserVIDSTODOME     ,
                        'vidstream.in':          self.pp.parserVIDSTREAM     ,
                        'vidstream.to':          self.pp.parserVIDSTREAM     ,
-	               'vidstream.top':         self.pp.parserVIDSTREAM     ,
+	                   'vidstream.top':         self.pp.parserVIDSTREAM     ,
                        'vidstreamup.com':       self.pp.parserVIUCLIPS    ,
                        'vidto.me':              self.pp.parserVIDTO         ,
                        'vidtodo.com':           self.pp.parserVIDSTODOME     ,
@@ -11959,37 +11960,64 @@ class pageParser(CaptchaHelper):
             
         return urlsTab
 		
-    def parserONLYSTREAMTV(self, baseUrl):
-        printDBG("parserONLYSTREAMTV baseUrl[%s]" % baseUrl)
+    def parserONLYSTREAM(self, baseUrl):
+        printDBG("parserONLYSTREAM baseUrl[%s]" % baseUrl)
 
-        HTTP_HEADER = self.cm.getDefaultHeader(browser='chrome')
-        referer = baseUrl.meta.get('Referer')
-        if referer: HTTP_HEADER['Referer'] = referer
-        urlParams = {'header': HTTP_HEADER}
-        sts, data = self.cm.getPage(baseUrl, urlParams)
-        if not sts: return False
+        def checkTxt(txt):
+            txt = txt.replace('\n', ' ')
+            if txt.find('file:'):
+                txt = txt.replace('file:', '"file":')
+            if txt.find('label:'):
+                txt = txt.replace('label:', '"label":')
+            if txt.find('kind:'):
+                txt = txt.replace('kind:', '"kind":')
+            return txt
+                
+        sts, data = self.cm.getPage(baseUrl)
+        if not sts:
+            return []
 
-        if "eval(function(p,a,c,k,e,d)" in data:
-            printDBG( 'Host resolveUrl packed' )
-            packed = re.compile('>eval\(function\(p,a,c,k,e,d\)(.+?)</script>', re.DOTALL).findall(data)
-            if packed:
-                data2 = packed[-1]
-            else:
-                return ''
-            printDBG( 'Host pack: [%s]' % data2)
-            try:
-                data = unpackJSPlayerParams(data2, TEAMCASTPL_decryptPlayerParams, 0, True, True)
-                printDBG( 'OK unpack: [%s]' % data)
-            except Exception: pass
+        urlsTab=[]
+        subTracks = []
+        
+        # subtitles search
+        t = re.findall("tracks: \[(.*?)\]", data, re.S)
+        if t:
+            txt = checkTxt("[" + t[0] + "]")
+            printDBG(txt)
+            tracks = json_loads(txt)
+            printDBG(str(tracks))
+            
+            for tr in tracks:
+                if tr.get('kind','') == 'captions':
+                    printDBG(str(tr))
+                    srtUrl = tr.get('file','')
+                    if srtUrl != '' and not ('empty.srt' in srtUrl):
+                        label = tr.get('label', 'srt')
+                        srtFormat = srtUrl[-3:]
+                        params = {'title': label, 'url': srtUrl, 'lang': label.lower()[:3], 'format': srtFormat}
+                        printDBG(str(params))
+                        subTracks.append(params)
+                    
+        # stream search
+        s = re.findall("sources: \[(.*?)\]", data, re.S)
+        if not s:
+            return []
+        
+        txt = checkTxt("[" + s[0] + "]")
+        printDBG(txt)
+        
+        links = json_loads(txt)
+        #printDBG(str(links))
+        for l in links:
+            if 'file' in l:
+                url = urlparser.decorateUrl(l['file'], {'Referer' : baseUrl, 'external_sub_tracks':subTracks})
+                params = {'name': l.get('label', 'link') , 'url': url}
+                printDBG(params)
+                urlsTab.append(params)
+        
+        return urlsTab
 
-        urlTab=[]
-        urlTab = self._getSources(data)
-        if len(urlTab)==0: urlTab = self._findLinks(data, contain='mp4')
-        hlsUrl = self.cm.ph.getSearchGroups(data, '''["'](https?://[^'^"]+?\.m3u8(?:\?[^"^']+?)?)["']''', ignoreCase=True)[0]
-        if hlsUrl != '':
-            hlsUrl = strwithmeta(hlsUrl, {'Origin':"https://" + urlparser.getDomain(baseUrl), 'Referer':baseUrl})
-            urlTab.extend(getDirectM3U8Playlist(hlsUrl, checkExt=False, variantCheck=True, checkContent=True, sortWithMaxBitrate=99999999))
-        return urlTab
         
     def parserVIDEOSPACE(self, baseUrl):
         printDBG("parserVIDEOSPACE baseUrl[%r]" % baseUrl)
