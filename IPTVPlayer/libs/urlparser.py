@@ -289,7 +289,8 @@ class urlparser:
                        'megadrive.tv':          self.pp.parserMEGADRIVETV    ,
                        'megom.tv':              self.pp.paserMEGOMTV        ,
                        'megustavid.com':        self.pp.parserMEGUSTAVID    ,
-                       'mightyupload.com':      self.pp.parserMIGHTYUPLOAD  ,
+                       'mixdrop.co':            self.pp.parserMIXDROP       ,
+	               'mightyupload.com':      self.pp.parserMIGHTYUPLOAD  ,
                        'miplayer.net':          self.pp.parserMIPLAYERNET   ,
                        'moevideo.net':          self.pp.parserPLAYEREPLAY   ,
                        'moonwalk.cc':           self.pp.parserMOONWALKCC    ,
@@ -333,7 +334,7 @@ class urlparser:
                        'onet.pl':               self.pp.parserONETTV        ,
                        'onet.tv':               self.pp.parserONETTV        ,
                        'onlystream.tv':         self.pp.parserONLYSTREAM    ,
-					   'openlive.org':          self.pp.parserOPENLIVEORG   ,
+	               'openlive.org':          self.pp.parserOPENLIVEORG   ,
                        'openload.co':           self.pp.parserOPENLOADIO    ,
                        'openload.info':         self.pp.parserEXASHARECOM   ,
                        'openload.io':           self.pp.parserOPENLOADIO    ,
@@ -494,7 +495,7 @@ class urlparser:
                        'vidstodo.me':           self.pp.parserVIDSTODOME     ,
                        'vidstream.in':          self.pp.parserVIDSTREAM     ,
                        'vidstream.to':          self.pp.parserVIDSTREAM     ,
-	                   'vidstream.top':         self.pp.parserVIDSTREAM     ,
+                       'vidstream.top':         self.pp.parserVIDSTREAM     ,
                        'vidstreamup.com':       self.pp.parserVIUCLIPS    ,
                        'vidto.me':              self.pp.parserVIDTO         ,
                        'vidtodo.com':           self.pp.parserVIDSTODOME     ,
@@ -11661,28 +11662,43 @@ class pageParser(CaptchaHelper):
         #example  https://supervideo.tv/embed-k9aicjz32dcj.html
 
         sts, data = self.cm.getPage(baseUrl)
-        if not sts: return False
+        if not sts: 
+            return False
+
+        vidTab = []
+        
+        # readable script
+        if 'player.updateSrc({src:' in data:
             
+            url = self.cm.ph.getSearchGroups(data, "player.updateSrc\({src: \"([^\"]+?)\"")[0]
+            printDBG(url)
+            if url[-4:] == 'm3u8':
+                vidTab.extend(getDirectM3U8Playlist(url, checkExt=True, variantCheck=True, checkContent=True, sortWithMaxBitrate=99999999))
+            else:
+                vidTab.append({'name':title, 'url':url})
+        
+        return vidTab
+    
+        # with crypted script
         tmpTab = self.cm.ph.getAllItemsBeetwenMarkers(data, ">eval(", '</script>')
         for tmp in tmpTab:
             tmp2 = unpackJSPlayerParams(tmp, VIDUPME_decryptPlayerParams, 0, r2=True)
 
-        printDBG("=======================================")
-        printDBG(tmp2)
-        printDBG("=======================================")
+            printDBG("=======================================")
+            printDBG(tmp2)
+            printDBG("=======================================")
 
-        vidTab = []
 
-      	title = self.cm.ph.getSearchGroups(tmp2, 'media:{title:"([^"]+?)"')[0]
-        urls_text = self.cm.ph.getDataBeetwenNodes(tmp2, 'sources:[', ']')[1]
-        printDBG(urls_text)
-        urls = eval(urls_text[8:])
-        for u in urls:
-            printDBG(u)
-            if u[-4:] == 'm3u8':
-                vidTab.extend(getDirectM3U8Playlist(u, checkExt=True, variantCheck=True, checkContent=True, sortWithMaxBitrate=99999999))
-            else:
-                vidTab.append({'name':title, 'url':u})
+            title = self.cm.ph.getSearchGroups(tmp2, 'media:{title:"([^"]+?)"')[0]
+            urls_text = self.cm.ph.getDataBeetwenNodes(tmp2, 'sources:[', ']')[1]
+            printDBG(urls_text)
+            urls = eval(urls_text[8:])
+            for u in urls:
+                printDBG(u)
+                if u[-4:] == 'm3u8':
+                    vidTab.extend(getDirectM3U8Playlist(u, checkExt=True, variantCheck=True, checkContent=True, sortWithMaxBitrate=99999999))
+                else:
+                    vidTab.append({'name':title, 'url':u})
 
         return vidTab
 
@@ -12018,7 +12034,6 @@ class pageParser(CaptchaHelper):
         
         return urlsTab
 
-        
     def parserVIDEOSPACE(self, baseUrl):
         printDBG("parserVIDEOSPACE baseUrl[%r]" % baseUrl)
         HTTP_HEADER = self.cm.getDefaultHeader(browser='chrome')
@@ -12043,3 +12058,52 @@ class pageParser(CaptchaHelper):
 
         videoUrl = self.cm.ph.getSearchGroups(data, '''["'](https?://[^'^"]+?\.mp4(?:\?[^"^']+?)?)["']''', ignoreCase=True)[0]
         return videoUrl
+		
+    def parserMIXDROP(self, baseUrl):
+        printDBG("parserMIXDROP baseUrl[%s]" % baseUrl)
+        # example :https://mixdrop.co/f/1f13jq
+        #          https://mixdrop.co/e/1f13jq
+
+        
+        if '/f/' in baseUrl:
+            url = baseUrl.replace('/f/','/e/')
+        else:
+            url = baseUrl
+            
+        sts, data = self.cm.getPage(url)
+        if not sts:
+            return []
+
+        urlsTab=[]
+        # decrypt packed scripts
+        scripts = re.findall(r"(eval\s?\(function\(p,a,c,k,e,d.*?)</script>", data,re.S)
+        for script in scripts:
+            script = script + "\n"
+            # mods
+            script = script.replace("eval(function(p,a,c,k,e,d","pippo = function(p,a,c,k,e,d")
+            script = script.replace("return p}(", "print(p)}\n\npippo(")
+            script = script.replace("))\n",");\n")
+
+            # duktape
+            ret = js_execute( script )
+            decoded = ret['data']
+            printDBG('------------------------------')
+            printDBG(decoded)
+            printDBG('------------------------------')
+            
+            # found a part similar to this one:
+            #MDCore.vsrc="//s-delivery4.mixdrop.co/v/cd5b9db3d4d79b8e27f4b8e9e01b0f89.mp4?s=n4gHzKKmauonkMNudSwDkQ&e=1573868130"
+            link = re.findall("vsrc=\"([^\"]+?)\"", decoded)
+            if link:
+                if link[0].startswith('//'):
+                    video_url = "https:" + link[0]
+                else:
+                    video_url = link[0]
+                video_url = urlparser.decorateUrl(video_url, {'Referer' : baseUrl})
+                
+                params = {'name': 'link', 'url': video_url}
+                printDBG(params)
+                urlsTab.append(params)
+        
+        return urlsTab
+                
