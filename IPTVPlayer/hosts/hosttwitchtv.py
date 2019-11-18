@@ -1,17 +1,4 @@
 # -*- coding: utf-8 -*-
-
-#
-#
-# @Codermik release, based on @Samsamsam's E2iPlayer public.
-# Released with kind permission of Samsamsam.
-# All code developed by Samsamsam is the property of the Samsamsam and the E2iPlayer project,  
-# all other work is © E2iStream Team, aka Codermik.  TSiPlayer is © Rgysoft, his group can be
-# found here:  https://www.facebook.com/E2TSIPlayer/
-#
-# https://www.facebook.com/e2iStream/
-#
-#
-
 ###################################################
 # LOCAL import
 ###################################################
@@ -54,9 +41,6 @@ class Twitch(CBaseHostClass):
         self.API1_URL = 'https://api.twitch.tv/'
         self.API2_URL = 'https://gql.twitch.tv/'
         
-        self.HOST_VER = '1.2 (26/08/2019) - Fixed Games section due to Twitch API changes.'
-        self.HOST_VER_DESC = '\c00????00 Info: \c00??????Twitch.tv Online Streaming \\n \c00????00Version: \c00??????'+self.HOST_VER+'\\n \c00????00Developers: \c00??????Codermik (fixes/rewrites), SamSamSam (original host) \\n'
-
         self.CHANNEL_TOKEN_URL = self.getFullUrl('/api/channels/%s/access_token')
         self.LIVE_URL = 'http://usher.justin.tv/api/channel/hls/%s.m3u8?token=%s&sig=%s&allow_source=true'
         self.CHANNEL_TOKEN_URL = self.API1_URL + 'api/channels/%s/access_token?need_https=false&oauth_token&platform=web&player_backend=mediaplayer&player_type=site'
@@ -65,7 +49,6 @@ class Twitch(CBaseHostClass):
         self.VOD_URL = 'https://usher.ttvnw.net/vod/%s.m3u8?token=%s&sig=%s&allow_source=true'
 
         self.platformFilters = [{'title':_('All Platforms'), 'platform_type':'all'}, {'title':_('Xbox One'), 'platform_type':'xbox'}, {'title':_('PlayStation 4'), 'platform_type':'ps4'}]
-        
         self.languagesFilters =     [
                                             # nice of them to change from meaningful identifers to guid
                                             # screwing things up with the language filtering.  CM
@@ -149,19 +132,21 @@ class Twitch(CBaseHostClass):
     def listMain(self, cItem):
         printDBG("Twitch.listMain")
 
-        MAIN_CAT_TAB = [{'category':'browse',         'title': _('Browse'), 'desc': self.HOST_VER_DESC },
-                        {'category':'search',         'title': _('Search'),       'search_item':True,  'desc': self.HOST_VER_DESC  },
-                        {'category':'search_history', 'title': _('Search history'), 'desc': self.HOST_VER_DESC  }]
+        MAIN_CAT_TAB = [{'category':'browse',         'title': _('Browse') },
+                        {'category':'search',         'title': _('Search'),       'search_item':True       },
+                        {'category':'search_history', 'title': _('Search history'),                        }]
         self.listsTab(MAIN_CAT_TAB, cItem)
 
     def listDirectories(self, cItem):
-        printDBG("Twitch >>>>>>>>> listDirectories >>>> cItem = %s" % cItem)
+        printDBG("Twitch.listDirectories")
+
         dirChannels = []
         for pItem in self.platformFilters:
             params = MergeDicts(cItem, pItem)
             subItems = [ MergeDicts(params, x, {'category':'dir_channels'}) for x in self.langItems ]
             params.update({'category':'sub_items', 'sub_items':subItems})
             dirChannels.append(params)
+
         TAB = [{'category':'dir_games',         'title': _('Games') },
                #{'category':'dir_communities',   'title': _('Communities') },
                #{'category':'dir_communities',   'title': _('Creative') },
@@ -170,7 +155,6 @@ class Twitch(CBaseHostClass):
         self.listsTab(TAB, cItem)
 
     def _listChannels(self, cItem, nextCategory, streamsData):
-        printDBG("Twitch >>>>>>>>>> _listChannels >>>> cItem %s" % cItem)
         try:
             cursor = ''
             for item in streamsData['edges']:
@@ -188,13 +172,15 @@ class Twitch(CBaseHostClass):
                         descTab.append(jstr(item['game'], '__typename') + ': ' + jstr(item['game'], 'name'))
                     params = {'good_for_fav':True, 'name':'category', 'type':'category', 'category':nextCategory, 'title':title, 'user_login':str(item['broadcaster']['login']), 'icon':icon, 'desc':'[/br]'.join( descTab )}
                     self.addDir(params)
+
             if cursor != '' and streamsData['pageInfo']['hasNextPage']:
                 self.addDir( MergeDicts(cItem, {'title':_('Next page'), 'cursor':cursor}) )
         except Exception:
             printExc()
 
     def listDirChannels(self, cItem, nextCategory):
-        printDBG("Twitch >>>>>>>>>> listDirChannels >>>> cItem %s" % cItem)
+        printDBG("Twitch.listDirChannels")
+
         lang = '"%s"' % cItem['lang'].upper() if 'lang' in cItem else ''
         cursor = ',"cursor":"%s"' % cItem['cursor'] if 'cursor' in cItem else ''
         type = cItem.get('platform_type', 'all')
@@ -209,13 +195,13 @@ class Twitch(CBaseHostClass):
             printExc()
 
     def listDirGames(self, cItem, nextCategory):
-        printDBG("Twitch >>>>>>>>>> listDirGames >>>> cItem %s" % cItem)
+        printDBG("Twitch.listDirGames")
+
         cursor = ',"cursor":"%s"' % cItem['cursor'] if 'cursor' in cItem else ''
         post_data = '[{"operationName":"BrowsePage_AllDirectories","variables":{"limit":30,"options":{"recommendationsContext":{"platform":"web"},"sort":"VIEWER_COUNT","tags":[]%s}},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"78957de9388098820e222c88ec14e85aaf6cf844adf44c8319c545c75fd63203"}}}]' % cursor
         url = self.getFullUrl('/gql', self.API2_URL)
         sts, data = self.getPage(url, MergeDicts(self.defaultParams, {'raw_post_data':True}), post_data)
         if not sts: return
-        printDBG("Twitch >>>>>>>>>> Response >>>> \n%s" % data)
         try:
             cursor = ''
             data = json.loads(data)
@@ -228,19 +214,19 @@ class Twitch(CBaseHostClass):
                     desc = jstr(item, '__typename') + ' | ' + _('%s viewers') % item['viewersCount']
                     params = {'good_for_fav':True, 'name':'category', 'category':nextCategory, 'title':title, 'game_id':str(item['id']), 'game_name':jstr(item, 'name'), 'icon':icon, 'desc':desc}
                     self.addDir(params)
+
             if cursor != '' and data[0]['data']['directories']['pageInfo']['hasNextPage']:
                 self.addDir( MergeDicts(cItem, {'title':_('Next page'), 'cursor':cursor}) )
+
         except Exception:
             printExc()
 
     def listGameChannels(self, cItem, nextCategory):
-        printDBG("Twitch >>>>>>>>>> listGameChannels >>>> cItem %s" % cItem)
+        printDBG("Twitch.listGameChannels")
         lang = '"%s"' % cItem['lang'].upper() if 'lang' in cItem else ''
         cursor = ',"cursor":"%s"' % cItem['cursor'] if 'cursor' in cItem else ''
+        # post_data updated as per changes to their api.  CM
         post_data = '[{"operationName":"DirectoryPage_Game","variables":{"name":"%s","options":{"sort":"VIEWER_COUNT","recommendationsContext":{"platform":"web"},"requestID":"a40436b85daf0810","tags":[%s]},"sortTypeIsRecency":false,"limit":30},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"c250a5fa4134a24c3d96abff9450391fd621b1c973c47f3d6adda3be6098c850"}}}]' % (cItem['game_name'], lang)        
-        
-        printDBG('listGameChannels >>>>>>>>>>> post_data = %s' %post_data)
-
         url = self.getFullUrl('/gql', self.API2_URL)
         sts, data = self.getPage(url, MergeDicts(self.defaultParams, {'raw_post_data':True}), post_data)
         if not sts: return
@@ -251,7 +237,8 @@ class Twitch(CBaseHostClass):
             printExc()
 
     def listChannel(self, cItem):
-        printDBG("Twitch >>>>>>>>>> listChannel >>>> cItem %s" % cItem)
+        printDBG("Twitch.listChannel %s" % cItem['user_login'])
+
         login = cItem['user_login']
         post_data = []
         post_data.append('{"operationName":"ChannelPage_StreamType_User","variables":{"channelLogin":"%s"},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"43b152e4f17090ece0b50a5bc41e4690c7a6992ad3ed876d88bf7292be2d2cba"}}}' % login)
@@ -297,7 +284,7 @@ class Twitch(CBaseHostClass):
         self.addDir(params)
 
     def _listVideos(self, cItem, videosData):
-        printDBG("Twitch >>>>>>>>>> _listVideos >>>> cItem %s" % cItem)
+        printDBG("Twitch.listVideos")
         try:
             cursor = ''
             for item in videosData['edges']:
@@ -315,7 +302,8 @@ class Twitch(CBaseHostClass):
                 if item.get('owner'):
                     descTab.append(jstr(item['owner'], '__typename') + ': ' + jstr(item['owner'], 'displayName'))
                 if item.get('game'):
-                    descTab.append(jstr(item['game'], '__typename') + ': ' + jstr(item['game'], 'name'))                     
+                    descTab.append(jstr(item['game'], '__typename') + ': ' + jstr(item['game'], 'name'))
+                     
                 params = {'good_for_fav':True, 'title':title, 'video_type':'video', 'video_id':jstr(item, 'id'), 'icon':icon, 'desc':'[/br]'.join( descTab )}
                 self.addVideo(params)
 
@@ -325,7 +313,7 @@ class Twitch(CBaseHostClass):
             printExc()
 
     def listVideos(self, cItem):
-        printDBG("Twitch >>>>>>>>>> listVideos >>>> cItem %s" % cItem)
+        printDBG("Twitch.listVideos")
         cursor = ',"cursor":"%s"' % cItem['cursor'] if 'cursor' in cItem else ''
         broadcastType = '"%s"' % cItem['videos_type'] if 'videos_type' in cItem else 'null'
         post_data = '[{"operationName":"FilterableVideoTower_Videos","variables":{"limit":30,"channelOwnerLogin":"%s","broadcastType":%s,"videoSort":"%s"%s},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"352ca6e327523f88b08390bf79d1b1d6e5f67b46981c900cf41eca56ef9d3cfc"}}}]' % (cItem['user_login'], broadcastType, cItem['sort'], cursor)
@@ -340,7 +328,7 @@ class Twitch(CBaseHostClass):
             printExc()
 
     def listGameVideos(self, cItem):
-        printDBG("Twitch >>>>>>>>>> listGameVideos >>>> cItem %s" % cItem)
+        printDBG("Twitch.listGameVideos")
         cursor = ',"followedCursor":"%s"' % cItem['cursor'] if 'cursor' in cItem else ''
         broadcastType = ',"broadcastTypes":["%s"]' % cItem['videos_type'].lower() if 'videos_type' in cItem else ''
         post_data = '[{"operationName":"DirectoryVideos_Game","variables":{"gameName":"%s","videoLimit":30,"tags":[%s],"videoSort":"%s"%s},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"643351f6cff5d248aa2b827f912c80bf387b918c01089526b05d628cf04a5706"}}}]' % (cItem['game_name'], broadcastType, cItem['sort'], cursor)
@@ -355,7 +343,6 @@ class Twitch(CBaseHostClass):
             printExc()
 
     def _listClips(self, cItem, clipsData):
-        printDBG("Twitch >>>>>>>>>>  _listClips >>>> cItem %s" % cItem)
         try:
             cursor = ''
             for item in clipsData['edges']:
@@ -380,13 +367,15 @@ class Twitch(CBaseHostClass):
 
                 params = {'good_for_fav':True, 'title':title, 'url': jstr(item, 'url'), 'video_type':'clip', 'clip_slug':jstr(item, 'slug'), 'clip_id':jstr(item, 'id'), 'icon':icon, 'desc':'[/br]'.join( descTab )}
                 self.addVideo(params)
+
             if cursor != '' and clipsData['pageInfo']['hasNextPage']:
                 self.addDir( MergeDicts(cItem, {'title':_('Next page'), 'cursor':cursor}) )
+
         except Exception:
             printExc()
 
     def listClips(self, cItem):
-        printDBG("Twitch >>>>>>>>>>  listClips >>>> cItem %s" % cItem)
+        printDBG("Twitch.listClips")
         cursor = ',"cursor":"%s"' % cItem['cursor'] if 'cursor' in cItem else ''
         post_data = '[{"operationName":"ClipsCards__User","variables":{"login":"%s","limit":20,"criteria":{"filter":"%s"}%s},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"b661fa0b88f774135c200d64b7248ff21263c12db79e0f7d33aeedb0315cdcbb"}}}]' % (cItem['user_login'], cItem['clips_filter'], cursor)
         url = self.getFullUrl('/gql', self.API2_URL)
@@ -400,13 +389,14 @@ class Twitch(CBaseHostClass):
             printExc()
 
     def listGameClips(self, cItem):
-        printDBG("Twitch >>>>>>>>>>  listGameClips >>>> cItem %s" % cItem)
+        printDBG("Twitch.listGameClips")
         lang = '"%s"' % cItem['lang'].upper() if 'lang' in cItem else ''
         cursor = ',"cursor":"%s"' % cItem['cursor'] if 'cursor' in cItem else ''
         post_data = '[{"operationName":"ClipsCards__Game","variables":{"gameName":"%s","limit":20,"criteria":{"tags":[%s],"filter":"%s"}%s},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"0d8d0eba9fc7ef77de54a7d933998e21ad7a1274c867ec565ac14ffdce77b1f9"}}}]' % (cItem['game_name'], lang, cItem['clips_filter'], cursor)
         url = self.getFullUrl('/gql', self.API2_URL)
         sts, data = self.getPage(url, MergeDicts(self.defaultParams, {'raw_post_data':True}), post_data)
         if not sts: return
+
         try:
             data = json.loads(data)
             self._listClips(cItem, data[0]['data']['game']['clips'])
@@ -414,11 +404,11 @@ class Twitch(CBaseHostClass):
             printExc()
 
     def listSubItems(self, cItem):
-        printDBG("Twitch >>>>>>>>>>  listSubItems >>>> cItem %s" % cItem)
+        printDBG("Twitch.listSubItems")
         self.currList = cItem['sub_items']
         
     def listV5Channels(self, cItem):
-        printDBG("Twitch >>>>>>>>>>  listV5Channels >>>> cItem %s" % cItem)
+        printDBG("Twitch.listV5Channels")
         offset = cItem.get('offset', 0)
         url = cItem['url'] + str(offset)
         sts, data = self.getPage(url)
@@ -438,7 +428,7 @@ class Twitch(CBaseHostClass):
             printExc()
 
     def listV5Channels(self, cItem):
-        printDBG("Twitch >>>>>>>>>>  listV5Channels >>>> cItem %s" % cItem)
+        printDBG("Twitch.listV5Channels")
         offset = cItem.get('offset', 0)
         url = cItem['url'] + str(offset)
         sts, data = self.getPage(url)
@@ -458,7 +448,7 @@ class Twitch(CBaseHostClass):
             printExc()
 
     def listV5Games(self, cItem):
-        printDBG("Twitch >>>>>>>>>>  listV5Games >>>> cItem %s" % cItem)
+        printDBG("Twitch.listV5Games")
         offset = cItem.get('offset', 0)
         url = cItem['url'] + str(offset)
         sts, data = self.getPage(url)
@@ -475,7 +465,7 @@ class Twitch(CBaseHostClass):
             printExc()
 
     def listV5Streams(self, cItem):
-        printDBG("Twitch >>>>>>>>>>  listV5Streams >>>> cItem %s" % cItem)
+        printDBG("Twitch.listV5Streams")
         offset = cItem.get('offset', 0)
         url = cItem['url'] + str(offset)
         sts, data = self.getPage(url)
@@ -552,6 +542,7 @@ class Twitch(CBaseHostClass):
         return urlTab
 
     def handleService(self, index, refresh = 0, searchPattern = '', searchType = ''):
+        printDBG('handleService start')
         
         CBaseHostClass.handleService(self, index, refresh, searchPattern, searchType)
 
@@ -637,5 +628,5 @@ class IPTVHost(CHostBase):
         searchTypesOptions = []
         searchTypesOptions.append((_("Games"), "games"))
         searchTypesOptions.append((_("Live streams"), "streams"))
-        searchTypesOptions.append((_("Channels"), "channels"))
+        searchTypesOptions.append((_("Channles"), "channels"))
         return searchTypesOptions
