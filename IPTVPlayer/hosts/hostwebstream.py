@@ -158,8 +158,9 @@ class HasBahCa(CBaseHostClass):
             {'alias_id' : 'webcamera.pl',       'name' : 'webcamera.pl',        'title' : 'https://webcamera.pl/',      'url' : 'https://www.webcamera.pl/',        'icon' : 'http://static.webcamera.pl/webcamera/img/loader-min.png'},\
             {'alias_id' : 'weeb.tv',            'name' : 'weeb.tv',             'title' : 'http://weeb.tv/',            'url' : '',                                 'icon' : 'http://xmtvplayer.com/wp-content/uploads/2014/07/weebtv.png'},\
             {'alias_id' : 'wiz1.net',           'name' : 'wiz1.net',            'title' : 'http://wiz1.net/',           'url' : '',                                 'icon' : 'http://i.imgur.com/yBX7fZA.jpg'},\
-            {'alias_id' : 'wizja.tv',           'name' : 'wizja.tv',            'title' : 'http://wizja.tv/',           'url' : 'http://wizja.tv/',                 'icon' : 'http://wizja.tv/logo.png'}
-    ] 
+            {'alias_id' : 'wizja.tv',           'name' : 'wizja.tv',            'title' : 'http://wizja.tv/',           'url' : 'http://wizja.tv/',                 'icon' : 'http://wizja.tv/logo.png'},\
+            {'alias_id' : 'crackstreams.com',   'name' : 'crackstreams.com',    'title' : 'http://crackstreams.com/',   'url' : 'http://crackstreams.com/',         'icon' : ''}
+	       ] 
     
     def __init__(self):
         CBaseHostClass.__init__(self)
@@ -763,6 +764,53 @@ class HasBahCa(CBaseHostClass):
             
         url = self.up.decorateUrl(url, urlMeta)
         return [{'name':'prognoza.pogody.tv', 'url':url}]
+		
+    def getCrackstreamsGroups(self, url):
+        printDBG("crackstreamsGroups start")
+        sts,data = self.cm.getPage(url)
+        if not sts: return
+        data = CParsingHelper.getDataBeetwenNodes(data, ('<div', '>', 'collapse navbar-collapse'), ('</div', '>'))[1]
+        data = data.split('</a>')
+        if len(data): del data[-1]
+        for item in data:
+            title = self.cleanHtmlStr(item)
+            url   = self.cm.ph.getSearchGroups(item, 'href="([^"]+?)"')[0]
+            if len(url) and not url.startswith('http'): url = 'http://crackstreams.com/'+url
+            try:
+                params = { 'name'     : 'crackstreams_streams',
+                           'url'      : url,
+                           'title'    : title,
+                           }
+                self.addDir(params)
+            except Exception:
+                printExc()
+
+    def getCrackstreamsList(self, url):
+        printDBG("crackstreamsList start")
+        sts,data = self.cm.getPage(url)
+        if not sts: return
+        data = self.cm.ph.getAllItemsBeetwenNodes(data, ('<a', '>', 'btn'), ('</a', '>'))
+        for item in data:
+            params = {'name':"crackstreams.com"}
+            params['url'] = self.cm.ph.getSearchGroups(item, '''\shref=['"]([^"^']+?)['"]''')[0]
+            params['icon'] = self.cm.ph.getSearchGroups(item, '''\ssrc=['"]([^"^']+?)['"]''')[0]
+            params['title'] = self.cleanHtmlStr(item)
+            if len(params['icon']) and not params['icon'].startswith('http'): params['icon'] = 'http://crackstreams.com/'+params['icon']
+            if len(params['url']) and not params['url'].startswith('http'): params['url'] = 'http://crackstreams.com/'+params['url']
+            self.addVideo(params)
+
+    def getCrackstreamsLink(self, url):
+        printDBG("crackstreamsLink url[%r]" % url)
+        sts,data = self.cm.getPage(url)
+        if not sts: return []
+        data = CParsingHelper.getDataBeetwenNodes(data, ('<iframe', '>', 'allowfullscreen'), ('</iframe', '>'))[1]
+        _url  = self.cm.ph.getSearchGroups(data, '''src=['"]([^"^']+?)['"]''')[0]
+        if len(_url) and not _url.startswith('http'): _url = url+_url
+        sts,data = self.cm.getPage(_url)
+        if not sts: return []
+        _url = self.cm.ph.getSearchGroups(data, '''source: ['"]([^"^']+?)['"]''')[0]
+        if '///' in _url: return []
+        return [{'name':'others', 'url':_url}]
 
     def handleService(self, index, refresh = 0, searchPattern = '', searchType = ''):
         printDBG('handleService start')
@@ -802,6 +850,8 @@ class HasBahCa(CBaseHostClass):
         elif name == 'mlbstream.tv':        self.getMLBStreamTVList(self.currItem)
         elif name == 'beinmatch.com':       self.getBeinmatchList(self.currItem)
         elif name == 'wiz1.net':            self.getWiz1NetList(self.currItem)
+        elif name == "crackstreams_streams":self.getCrackstreamsList(url)
+        elif name == 'crackstreams.com':    self.getCrackstreamsGroups(url)
         
         CBaseHostClass.endHandleService(self, index, refresh)
 
@@ -855,6 +905,7 @@ class IPTVHost(CHostBase):
         elif name == "mlbstream.tv":               urlList = self.host.getMLBStreamTVLink(cItem)
         elif name == "beinmatch.com":              urlList = self.host.getBeinmatchLink(cItem)
         elif name == "wiz1.net":                   urlList = self.host.getWiz1NetLink(cItem)
+        elif name == "crackstreams.com":           urlList = self.host.getCrackstreamsLink(url)
 
         if isinstance(urlList, list):
             for item in urlList:
