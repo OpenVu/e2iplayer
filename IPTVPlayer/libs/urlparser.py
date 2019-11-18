@@ -169,7 +169,8 @@ class urlparser:
                        'castflash.pw':          self.pp.parseCASTFLASHPW    ,
                        'caston.tv':             self.pp.parseCASTONTV       ,
                        'castto.me':             self.pp.parserCASTTOME      ,
-                       'cda.pl':                self.pp.parserCDA           ,
+                       'cercafilm.net':         self.pp.parserFEMBED        ,
+					   'cda.pl':                self.pp.parserCDA           ,
                        'cfiles.net':            self.pp.parserUPLOAD         ,
                        'chefti.info':           self.pp.parserEXASHARECOM   ,
                        'clicknupload.link':     self.pp.parserUPLOAD         ,
@@ -11916,6 +11917,7 @@ class pageParser(CaptchaHelper):
         #https://www.fembed.com/v/e706eb-elm180dp
         #https://www.fembed.com/api/source/e706eb-elm180dp
         #https://streamhoe.online/v/0w6p8blx3krz3r0
+        #https://cercafilm.net/v/80w1lh8z4w8-1en
         
         baseUrl = baseUrl + '?'
         m = re.search("/(v|api/source)/(?P<id>.+)\?", baseUrl)
@@ -11924,7 +11926,7 @@ class pageParser(CaptchaHelper):
             return []
         
         video_id = m.group('id')
-        url = 'https://www.fembed.com/api/source/' + video_id
+        url = urlparser.getDomain(baseUrl, False) + 'api/source/' + video_id
         h = {
                 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36',
                 'Accept': '*/*',
@@ -11950,7 +11952,9 @@ class pageParser(CaptchaHelper):
         for v in data['data']:
             urlsTab.append({'name': v['label'], 'url': v['file']})
             
+        
         return urlsTab
+
 		
     def parserONLYSTREAM(self, baseUrl):
         printDBG("parserONLYSTREAM baseUrl[%s]" % baseUrl)
