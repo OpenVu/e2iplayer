@@ -45,7 +45,7 @@ class EgyBest(CBaseHostClass):
     
     def __init__(self):
         CBaseHostClass.__init__(self, {'history':'egy.best', 'cookie':'egy.best.cookie'})
-        self.DEFAULT_ICON_URL = 'https://xoxo.egybest.cz/android-chrome-192x192.png'
+        self.DEFAULT_ICON_URL = 'https://ww.egybest1.com/wp-content/uploads/2019/06/icon.png'
         self.USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0'
         self.MAIN_URL = 'https://beal.egybest.xyz/'
         self.HEADER = {'User-Agent': self.USER_AGENT, 'DNT':'1', 'Accept': 'text/html', 'Accept-Encoding':'gzip, deflate', 'Referer':self.getMainUrl(), 'Origin':self.getMainUrl()}
