@@ -1,17 +1,4 @@
 # -*- coding: utf-8 -*-
-
-#
-#
-# @Codermik release, based on @Samsamsam's E2iPlayer public.
-# Released with kind permission of Samsamsam.
-# All code developed by Samsamsam is the property of the Samsamsam and the E2iPlayer project,  
-# all other work is Â© E2iStream Team, aka Codermik.  TSiPlayer is Â© Rgysoft, his group can be
-# found here:  https://www.facebook.com/E2TSIPlayer/
-#
-# https://www.facebook.com/e2iStream/
-#
-#
-
 ###################################################
 # LOCAL import
 ###################################################
@@ -74,19 +61,19 @@ class Filmotopia(CBaseHostClass):
         return url
         
     def listMoviesTab(self, cItem, category):
-        printDBG("Filmotopia >>>>>> listMoviesTab >>>>>> %s" % cItem)
+        printDBG("Filmotopia.listMoviesTab")
         cItem = dict(cItem)
         cItem['category'] = category
         self.listsTab(self.MOVIES_TAB, cItem)
         
     def listSeriesTab(self, cItem, category):
-        printDBG("Filmotopia >>>>>> listSeriesTab >>>>>> %s" % cItem)
+        printDBG("Filmotopia.listSeriesTab")
         cItem = dict(cItem)
         cItem['category'] = category
         self.listsTab(self.SERIES_TAB, cItem)
         
     def _listItems(self, cItem, category):
-        printDBG("Filmotopia >>>>>> _listItems >>>>>> %s" % cItem)
+        printDBG("Filmotopia._listItems")
         url = cItem['url']
         page = cItem.get('page', 1)
         if page > 1:
@@ -131,52 +118,56 @@ class Filmotopia(CBaseHostClass):
             self.addDir(params)
             
     def listMovies(self, cItem):
-        printDBG("Filmotopia >>>>>> listMovies >>>>>> %s" % cItem)
+        printDBG("Filmotopia.listMovies")
         self._listItems(cItem, 'video')
         
     def listSeries(self, cItem, category):
-        printDBG("Filmotopia >>>>>> listSeries >>>>>> %s" % cItem)
+        printDBG("Filmotopia.listSeries")
         self._listItems(cItem, category)
         
     def listSeasons(self, cItem, category):
-        printDBG("Filmotopia >>>>>> listSeasons >>>>>> %s" % cItem)
-        vidozaUrl = 'https://vidoza.net/embed-{0}.html'
-        veryUrl = 'https://verystream.com/e/{0}/'
-        openloadUrl = 'https://openload.co/embed/{0)/'
+        printDBG("Filmotopia.listSeasons")
         sts, data = self.cm.getPage(cItem['url'])
-        if not sts: return        
+        if not sts: return
+        
         tvShowTitle = cItem['title']
         self.seriesCache = {}
         self.seasons = []
-        block = self.cm.ph.getAllItemsBeetwenNodes(data,'<div class="seasons">', ('</script>'))[0]
-        block = block.split('</dd>')
-        if len(block): del block[-1]
-        for item in block:
+        data = self.cm.ph.getDataBeetwenMarkers(data, '<div class="seasons">', '<script>', False)[1]
+        
+        data = data.split('</dd>')
+        if len(data): del data[-1]
+        for item in data:
             season = self.cm.ph.getDataBeetwenMarkers(item, '<dt>', '</dt>', False)[1]
             if '' != season:
                 self.seasons.append({'title':season, 'season':season})
             if 0 == len(self.seasons): continue
             item = item.split('</dt>')[-1]
             season = self.seasons[-1]['season']
-            tmp = item.split('<dd class="without_torrents loaded"')
-            episodeTitle = self.cm.ph.getSearchGroups(tmp[-1], '"title">([^"]+?)<')[0]
-            episodeTitle = episodeTitle[:0] + episodeTitle[25:]
-            linkVery = self.cm.ph.getSearchGroups(tmp[-1], 'data-very="([^"]+?)"')[0]
-            linkVidoza = self.cm.ph.getSearchGroups(tmp[-1], 'data-vidoza="([^"]+?)"')[0]
-            linkOpenload = self.cm.ph.getSearchGroups(tmp[-1], 'data-open="([^"]+?)"')[0]
-            if '' != linkVery: linkUrl = veryUrl.format(linkVery)
-            elif '' != linkVidoza: linkUrl = vidozaUrl.format(linkVidoza)
-            elif '' != linkOpenload: linkUrl = openloadUrl.format(linkOpenload)
+            tmp = item.split('<button class="download-button">')
+            linkUrl = self.cm.ph.getSearchGroups(tmp[-1], 'data="([^"]+?)"')[0]
+            
+            if '' != linkUrl:  linkUrl = 'http://videomega.tv/view.php?ref={0}&width=700&height=460&val=1'.format(linkUrl)
+            if '' == linkUrl:
+                linkUrl = self.cm.ph.getSearchGroups(tmp[-1], 'data-open="([^"]+?)"')[0]
+                linkHosting = self.cm.ph.getSearchGroups(tmp[-1], 'data-source="([^"]+?)"')[0]
+                if '' != linkUrl: 
+                    if 'vidoza' in linkHosting: linkUrl = 'https://vidoza.net/embed-{0}.html'.format(linkUrl)
+                    else: linkUrl = 'http://openload.co/embed/{0}/'.format(linkUrl)
+            if '' == linkUrl: linkUrl = self.cm.ph.getSearchGroups(item, '''['"](http[^'^"]+?openload[^'^"]+?)['"]''')[0]
+            if '' == linkUrl: continue
+            episodeTitle = self.cleanHtmlStr( tmp[0] )
             if 0 == len(self.seriesCache.get(season, [])):
                 self.seriesCache[season] = []
             sNum = season.upper().replace('SEZONA', '').strip()
-            self.seriesCache[season].append({'title':'{0}: {1}'.format(tvShowTitle, episodeTitle), 'url':linkUrl, 'direct':True})
+            self.seriesCache[season].append({'title':'{0}: s{1}e{2}'.format(tvShowTitle, sNum, episodeTitle), 'url':linkUrl, 'direct':True})
+            
         cItem = dict(cItem)
         cItem['category'] = category
         self.listsTab(self.seasons, cItem)
         
     def listEpisodes(self, cItem):
-        printDBG("Filmotopia >>>>>> listEpisodes >>>>>> %s" % cItem)
+        printDBG("Filmotopia.listEpisodes")
         season = cItem.get('season', '')
         cItem = dict(cItem)
         self.listsTab(self.seriesCache.get(season, []), cItem, 'video')
@@ -192,7 +183,7 @@ class Filmotopia(CBaseHostClass):
             self.listSeries(cItem, 'list_seasons')
         
     def getLinksForVideo(self, cItem):
-        printDBG("Filmotopia >>>>>> getLinksForVideo >>>>>> %s" % cItem)
+        printDBG("Filmotopia.getLinksForVideo [%s]" % cItem)
         urlTab = []
         
         if cItem.get('direct', False):
@@ -200,9 +191,8 @@ class Filmotopia(CBaseHostClass):
         else:
             sts, data = self.cm.getPage(cItem['url'])
             if not sts: return urlTab
-            
-            data = self.cm.ph.getDataBeetwenMarkers(data, '<div class="trailer">', '</div>', False)[1]
-            url = self.cm.ph.getSearchGroups(data, 'src="([^"]+?)"')[0]
+            tmp = self.cm.ph.getDataBeetwenMarkers(data, '<div class="trailer">', '</div>', False)[1]
+            url = self.cm.ph.getSearchGroups(tmp, 'src="([^"]+?)"')[0]
             if 'videomega.tv/validatehash.php?' in url:
                 sts, data = self.cm.getPage(url, {'header':{'Referer':cItem['url'], 'User-Agent':'Mozilla/5.0'}})
                 if sts:
@@ -211,11 +201,18 @@ class Filmotopia(CBaseHostClass):
                     urlTab.append({'name':'videomega.tv', 'url':linkUrl, 'need_resolve':1})
             elif url.startswith('http://') or url.startswith('https://'):
                 urlTab.append({'name':'link', 'url':url, 'need_resolve':1})
-        
+
+            data = self.cm.ph.getAllItemsBeetwenNodes(data, ('<button', '>', 'myButton'), ('</button', '>'))
+            for item in data:
+                url = self.getFullUrl( self.cm.ph.getSearchGroups(item, '''\sdata-url=['"]([^"^']+?)['"]''')[0] )
+                title  = self.cleanHtmlStr(item)
+                if not self.cm.isValidUrl(url): continue
+                urlTab.append({'name':title, 'url':url, 'need_resolve':1})
+
         return urlTab
         
     def getVideoLinks(self, baseUrl):
-        printDBG("Filmotopia >>>>>> getVideoLinks >>>>>> %s" % baseUrl)
+        printDBG("Filmotopia.getVideoLinks [%s]" % baseUrl)
         urlTab = []
         urlTab = self.up.getVideoLinkExt(baseUrl)
         return urlTab
