@@ -474,7 +474,6 @@ class urlparser:
                        'vidcloud.icu':          self.pp.parserVIDCLOUD      ,
                        'videa.hu':              self.pp.parserVIDEA         ,
                        'videa.hu':              self.pp.parserVIDEAHU        ,
-                       'vidia.tv':              self.pp.parserONLYSTREAMTV   ,
                        'video.meta.ua':         self.pp.parseMETAUA         ,
                        'video.rutube.ru':       self.pp.parserRUTUBE        ,
                        'video.sibnet.ru':       self.pp.parserSIBNET        ,
