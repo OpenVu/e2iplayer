@@ -1,17 +1,4 @@
 # -*- coding: utf-8 -*-
-
-#
-#
-# @Codermik release, based on @Samsamsam's E2iPlayer public.
-# Released with kind permission of Samsamsam.
-# All code developed by Samsamsam is the property of the Samsamsam and the E2iPlayer project,  
-# all other work is Â© E2iStream Team, aka Codermik.  TSiPlayer is Â© Rgysoft, his group can be
-# found here:  https://www.facebook.com/E2TSIPlayer/
-#
-# https://www.facebook.com/e2iStream/
-#
-#
-
 ###################################################
 # LOCAL import
 ###################################################
@@ -487,21 +474,21 @@ class EFilmyTv(CBaseHostClass):
         
         errorMessage = self.cleanHtmlStr(self.cm.ph.getDataBeetwenNodes(data, ('<div', '>', 'deleted'), ('<div', '>'))[1])
         SetIPTVPlayerLastHostError(errorMessage)
-        
         data = self.cm.ph.getAllItemsBeetwenNodes(data, ('<span', '>', 'playername'), ('</div></div', '>'))
-        printDBG(data)
+        printDBG("EFilmyTv.getLinksForVideo playername[%s]" % data)
         for item in data:
-            movieId = self.cm.ph.getDataBeetwenNodes(item, ('<div', '>', 'play'), ('<div', '>'))[1]
+            movieId = self.cm.ph.getDataBeetwenNodes(item, ('<div', '>', 'embedbg'), ('</div', '>'))[1]
             movieId = self.cm.ph.getSearchGroups(movieId, '''\sid=['"]([0-9]+?(?:_s)?)['"]''')[0]
             if movieId == '': continue
             if movieId.endswith('_s'): baseUrl = '/seriale.php'
             else: baseUrl = '/filmy.php'
             
-            item = item.split('</div>', 1)
-            name = self.cleanHtmlStr(item[0]).replace('Odtwarzacz', '').replace('Wersja', '')
-            
-            item = self.cm.ph.getAllItemsBeetwenMarkers(item[-1], '<input', '>')
+#            item = item.split('</div>', 1)
+            name = self.cleanHtmlStr(item).replace('Odtwarzacz', '').replace('Wersja', '')
+
+            item = self.cm.ph.getAllItemsBeetwenMarkers(item, '<input', '>')
             for it in item:
+                printDBG("EFilmyTv.getLinksForVideo it[%s]" % it)
                 val = self.cm.ph.getSearchGroups(it, '''\svalue=['"]([^'^"]+?)['"]''')[0]
                 if 'bez' in val.lower(): 
                     if not self.loggedIn: continue
@@ -509,6 +496,7 @@ class EFilmyTv(CBaseHostClass):
                 else: 
                     type = 'show_player'
                 url = self.getFullUrl(baseUrl + '?cmd=%s&id=%s' % (type, movieId), cUrl)
+                printDBG("EFilmyTv.getLinksForVideo url[%s]" % url)
                 retTab.append({'name':'%s - %s' % (name, val), 'url':strwithmeta(url, {'Referer':cUrl, 'f_type':type}), 'need_resolve':1})
         if len(retTab):
             self.cacheLinks[cacheKey] = retTab
