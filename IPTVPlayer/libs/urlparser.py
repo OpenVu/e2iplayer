@@ -474,6 +474,7 @@ class urlparser:
                        'vidcloud.icu':          self.pp.parserVIDCLOUD      ,
                        'videa.hu':              self.pp.parserVIDEA         ,
                        'videa.hu':              self.pp.parserVIDEAHU        ,
+                       'vidia.tv':              self.pp.parserONLYSTREAMTV   ,
                        'video.meta.ua':         self.pp.parseMETAUA         ,
                        'video.rutube.ru':       self.pp.parserRUTUBE        ,
                        'video.sibnet.ru':       self.pp.parserSIBNET        ,
@@ -11968,6 +11969,13 @@ class pageParser(CaptchaHelper):
                 txt = txt.replace('label:', '"label":')
             if txt.find('kind:'):
                 txt = txt.replace('kind:', '"kind":')
+            if txt.find('src:'):
+                txt = txt.replace('src:', '"file":')
+            if txt.find('res:'):
+                txt = txt.replace('res:', '"res":')
+            if txt.find('type:'):
+                txt = txt.replace('type:', '"type":')
+            
             return txt
                 
         sts, data = self.cm.getPage(baseUrl)
@@ -11999,8 +12007,12 @@ class pageParser(CaptchaHelper):
         # stream search
         s = re.findall("sources: \[(.*?)\]", data, re.S)
         if not s:
-            return []
-        
+            # alternative form:
+            # player.updateSrc([{src: "https://za2l95b.ostreamcdn.com/u5kj744xflhlsdgge7hweikfl5p6ls2jejk4lomgktk76pc3kph2ysew72ga/v.mp4", type: "video/mp4", res: 720, label: "720"}]
+            s = re.findall("player.updateSrc\(\[(.*?)\]", data, re.S)
+            if not s:
+                return []
+
         txt = checkTxt("[" + s[0] + "]")
         printDBG(txt)
         
@@ -12009,9 +12021,12 @@ class pageParser(CaptchaHelper):
         for l in links:
             if 'file' in l:
                 url = urlparser.decorateUrl(l['file'], {'Referer' : baseUrl, 'external_sub_tracks':subTracks})
-                params = {'name': l.get('label', 'link') , 'url': url}
-                printDBG(params)
-                urlsTab.append(params)
+                if url.endswith('.m3u8'):
+                    urlsTab.extend(getDirectM3U8Playlist(url, checkExt=False, variantCheck=True, checkContent=True, sortWithMaxBitrate=99999999))
+                else:
+                    params = {'name': l.get('label', 'link') , 'url': url}
+                    printDBG(params)
+                    urlsTab.append(params)
         
         return urlsTab
 
@@ -12199,9 +12214,12 @@ class pageParser(CaptchaHelper):
         if videoUrls:
             for l in videoUrls:
                 url = urlparser.decorateUrl(l, {'Referer' : baseUrl})
-                params = {'name': 'link' , 'url': url}
-                printDBG(params)
-                urlsTab.append(params)
+                if l.endswith('.m3u8'):
+                    urlsTab.extend(getDirectM3U8Playlist(url, checkExt=False, variantCheck=True, checkContent=True, sortWithMaxBitrate=99999999))
+                else:
+                    params = {'name': 'link' , 'url': url}
+                    printDBG(params)
+                    urlsTab.append(params)
             
         return urlsTab
 			
