@@ -1482,7 +1482,8 @@ class E2iPlayerWidget(Screen):
                 _temp = __import__('Plugins.Extensions.IPTVPlayer.hosts.hosttsiplayer', globals(), locals(), ['IPTVHost'], -1)
                 py_file = '/usr/lib/enigma2/python/Plugins/Extensions/TSmedia/addons/'+section+'/'+plugin_id+'/default.py'
                 icon = 'file:///usr/lib/enigma2/python/Plugins/Extensions/TSmedia/addons/'+section+'/'+plugin_id+'/icon.png'
-                Item={'category': 'tsmedia', 'gnr': 'menu2', 'title': 'TSMedia', 'py_file': py_file , 'section': section, 'icon': icon, 'type': 'category', 'plugin_id': plugin_id, 'desc': ''}
+                import_='from Plugins.Extensions.IPTVPlayer.tsiplayer.modules.host_tsmedia import '
+                Item={'import':import_,'category': 'host2', 'gnr': 'menu2', 'title': 'TSMedia', 'py_file': py_file , 'section': section, 'icon': icon, 'type': 'category', 'plugin_id': plugin_id, 'desc': '','mode':'20'}
                 self.host = _temp.IPTVHost(Item)
             else:
                 _temp = __import__('Plugins.Extensions.IPTVPlayer.hosts.host' + self.hostName, globals(), locals(), ['IPTVHost'], -1)
