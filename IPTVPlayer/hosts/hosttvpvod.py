@@ -1,17 +1,4 @@
-# -*- coding: utf-8 -*-
-
-#
-#
-# @Codermik release, based on @Samsamsam's E2iPlayer public.
-# Released with kind permission of Samsamsam.
-# All code developed by Samsamsam is the property of the Samsamsam and the E2iPlayer project,  
-# all other work is Â© E2iStream Team, aka Codermik.  TSiPlayer is Â© Rgysoft, his group can be
-# found here:  https://www.facebook.com/E2TSIPlayer/
-#
-# https://www.facebook.com/e2iStream/
-#
-#
-
+﻿# -*- coding: utf-8 -*-
 
 ###################################################
 # LOCAL import
@@ -22,6 +9,7 @@ from Plugins.Extensions.IPTVPlayer.tools.iptvtools import CSelOneLink, printDBG,
 from Plugins.Extensions.IPTVPlayer.libs.urlparserhelper import getDirectM3U8Playlist
 from Plugins.Extensions.IPTVPlayer.libs import ph
 from Plugins.Extensions.IPTVPlayer.libs.e2ijson import loads as json_loads, dumps as json_dumps
+from Plugins.Extensions.IPTVPlayer.components.recaptcha_v2helper import CaptchaHelper
 ###################################################
 
 ###################################################
@@ -67,10 +55,10 @@ def GetConfigList():
     optionList.append(getConfigListEntry("Strefa Widza", config.plugins.iptvplayer.tvpvod_premium))
     if config.plugins.iptvplayer.tvpvod_premium.value:
         optionList.append(getConfigListEntry("  email:", config.plugins.iptvplayer.tvpvod_login))
-        optionList.append(getConfigListEntry("  hasÅo:", config.plugins.iptvplayer.tvpvod_password))
+        optionList.append(getConfigListEntry("  hasło:", config.plugins.iptvplayer.tvpvod_password))
     optionList.append(getConfigListEntry("Peferowany format wideo",               config.plugins.iptvplayer.tvpVodPreferedformat))
-    optionList.append(getConfigListEntry("DomyÅlna jakoÅÄ wideo",           config.plugins.iptvplayer.tvpVodDefaultformat))
-    optionList.append(getConfigListEntry("UÅ¼ywaj domyÅlnej jakoÅci wideo:", config.plugins.iptvplayer.tvpVodUseDF))
+    optionList.append(getConfigListEntry("Domyślna jakość wideo",           config.plugins.iptvplayer.tvpVodDefaultformat))
+    optionList.append(getConfigListEntry("Używaj domyślnej jakości wideo:", config.plugins.iptvplayer.tvpVodUseDF))
     optionList.append(getConfigListEntry("Korzystaj z proxy?",              config.plugins.iptvplayer.tvpVodProxyEnable))
     return optionList
 ###################################################
@@ -78,13 +66,14 @@ def GetConfigList():
 def gettytul():
     return 'https://vod.tvp.pl/'
 
-class TvpVod(CBaseHostClass):
+class TvpVod(CBaseHostClass, CaptchaHelper):
     DEFAULT_ICON_URL = 'https://s.tvp.pl/files/vod.tvp.pl/img/menu/logo_vod.png' #'http://sd-xbmc.org/repository/xbmc-addons/tvpvod.png'
     PAGE_SIZE = 12
     ALL_FORMATS = [{"video/mp4":"mp4"}, {"application/x-mpegurl":"m3u8"}, {"video/x-ms-wmv":"wmv"}] 
     REAL_FORMATS = {'m3u8':'ts', 'mp4':'mp4', 'wmv':'wmv'}
     MAIN_VOD_URL = "https://vod.tvp.pl/"
-    LOGIN_URL = "https://www.tvp.pl/sess/user-2.0/login.php?ref="
+    LOGIN_URL    = "https://www.tvp.pl/sess/user-2.0/login.php?ref="
+    ACCOUNT_URL  = "https://www.tvp.pl/sess/user-2.0/account.php"
     STREAMS_URL_TEMPLATE = 'http://www.api.v3.tvp.pl/shared/tvpstream/listing.php?parent_id=13010508&type=epg_item&direct=false&filter={%22release_date_dt%22:%22[iptv_date]%22,%22epg_play_mode%22:{%22$in%22:[0,1,3]}}&count=-1&dump=json'
     SEARCH_VOD_URL = MAIN_VOD_URL + 'szukaj?query=%s'
     IMAGE_URL = 'http://s.v3.tvp.pl/images/%s/%s/%s/uid_%s_width_500_gs_0.%s'
@@ -93,8 +82,8 @@ class TvpVod(CBaseHostClass):
     RIGI_DEFAULT_ICON_URL = 'https://pbs.twimg.com/profile_images/999586990650638337/YHEsWRTs_400x400.jpg'
     
     VOD_CAT_TAB  = [{'category':'tvp_sport',           'title':'TVP Sport',                 'url':'http://sport.tvp.pl/wideo'},
-                    {'category':'streams',             'title':'TVP na Å¼ywo',               'url':'http://tvpstream.tvp.pl/'},
-                    {'category':'vods_explore_item',   'title':'PrzegapiÅeÅ w TV?',         'url':MAIN_VOD_URL + 'przegapiles-w-tv'},
+                    {'category':'streams',             'title':'TVP na żywo',               'url':'http://tvpstream.tvp.pl/'},
+                    {'category':'vods_explore_item',   'title':'Przegapiłeś w TV?',         'url':MAIN_VOD_URL + 'przegapiles-w-tv'},
                     {'category':'vods_list_cats',      'title':'Katalog',                   'url':MAIN_VOD_URL},
                     {'category':'digi_menu',           'title':'Rekonstrukcja cyfrowa TVP', 'url':'https://cyfrowa.tvp.pl/', 'icon':RIGI_DEFAULT_ICON_URL},
                     
@@ -207,26 +196,34 @@ class TvpVod(CBaseHostClass):
         self.loginMessage = ''
         email = config.plugins.iptvplayer.tvpvod_login.value
         password = config.plugins.iptvplayer.tvpvod_password.value
-        msg = 'WystÄpiÅ problem z zalogowaniem uÅ¼ytkownika "%s"!' % email
+        msg = 'Wystąpił problem z zalogowaniem użytkownika "%s"!' % email
         params = dict(self.defaultParams)
-        params.update({'load_cookie': False})
-        sts, data = self._getPage(TvpVod.LOGIN_URL, params)
-        if sts:
-            data = self.cm.ph.getDataBeetwenMarkers(data, '<fieldset>', '</fieldset>', False)[1]
-            ref = self.cm.ph.getSearchGroups(data, 'name="ref".+?value="([^"]+?)"')[0]
-            login = self.cm.ph.getSearchGroups(data, 'name="login".+?value="([^"]+?)"')[0]
-            post_data = {'ref':ref, 'email':email, 'password':password, 'login':login, 'action':'login'}
-            sts, data = self._getPage(TvpVod.LOGIN_URL + ref, self.defaultParams, post_data)
-            if sts and 'action=sign-out' in data:
-                printDBG(">>>\n%s\n<<<" % data)
-                data = self.cm.ph.getDataBeetwenNodes(data, ('<section', '>', 'abo__section'), ('</section', '>'), False)[1]
-                data = self.cleanHtmlStr( self.cm.ph.getDataBeetwenNodes(data, ('<p', '>'), ('</p', '>'), False)[1] )
-                msg = ['UÅ¼ytkownik "%s"' % email]
-                msg.append('Strefa Abo %s' % data)
-                self.loginMessage = '[/br]'.join(msg)
-                msg = self.loginMessage.replace('[/br]', '\n')
-            else: 
-                sts = False
+        sts, data = self._getPage(TvpVod.ACCOUNT_URL, params)
+        if not sts or 'action=sign-out' not in data:
+            params.update({'load_cookie': False})
+            sts, data = self._getPage(TvpVod.LOGIN_URL, params)
+            if sts:
+                ref = self.cm.ph.getSearchGroups(data, 'name="ref".+?value="([^"]+?)"')[0]
+                post_data = {'ref':ref, 'email':email, 'password':password, 'action':'login'}
+                sitekey = self.cm.ph.getSearchGroups(data, '''sitekey=['"]([^'^"]+?)['"]''')[0]
+                if sitekey != '':
+                    token, errorMsgTab = self.processCaptcha(sitekey, self.cm.meta['url'])
+                    if token == '':
+                        return False
+                    post_data['g-recaptcha-response'] = token 
+                sts, data = self._getPage(TvpVod.LOGIN_URL + ref, self.defaultParams, post_data)
+        if sts and 'action=sign-out' in data:
+            printDBG(">>>\n%s\n<<<" % data)
+            tmp = self.cm.ph.getDataBeetwenNodes(data, ('<section', '>', 'abo__section'), ('</section', '>'), False)[1]
+            if tmp == '':
+                tmp = self.cm.ph.getDataBeetwenNodes(data, ('<section', '>', 'abo-inactive'), ('</section', '>'), False)[1]
+            data = self.cleanHtmlStr( self.cm.ph.getDataBeetwenNodes(tmp, ('<p', '>'), ('</p', '>'), False)[1] )
+            msg = ['Użytkownik "%s"' % email]
+            msg.append('Strefa Abo %s' % data)
+            self.loginMessage = '[/br]'.join(msg)
+            msg = self.loginMessage.replace('[/br]', '\n')
+        else: 
+            sts = False
         return sts, msg
         
     def _addNavCategories(self, data, cItem, category):
@@ -559,8 +556,8 @@ class TvpVod(CBaseHostClass):
                 sectionTitle  = self.cleanHtmlStr(sectionHeader)
                 
                 if self.cm.isValidUrl(sectionUrl):
-                    if '>OglÄdaj<' in section: continue
-                    if sectionTitle.startswith('Zobacz takÅ¼e:'): continue
+                    if '>Oglądaj<' in section: continue
+                    if sectionTitle.startswith('Zobacz także:'): continue
                 
                 itemsTab = []
                 tmp = self.cm.ph.getAllItemsBeetwenNodes(section, ('<div', '>', 'item'), ('</a', '>'))
@@ -597,7 +594,7 @@ class TvpVod(CBaseHostClass):
             
             allItems = []
             for sectionItem in sectionItems:
-                if sectionItem['title'] in ['PrzeglÄdaj', 'Wideo', 'OglÄdaj'] and not isSearch:
+                if sectionItem['title'] in ['Przeglądaj', 'Wideo', 'Oglądaj'] and not isSearch:
                     self.currList = sectionItem['items']
                     break
                 else:
@@ -957,7 +954,7 @@ class TvpVod(CBaseHostClass):
         currItem = dict(self.currItem)
         currItem.pop('good_for_fav', None)
         
-        if None != name and  self.currItem.get('desc', '').startswith('UÅ¼ytkownik'):
+        if None != name and  self.currItem.get('desc', '').startswith('Użytkownik'):
             currItem.pop('desc', None)
         
         if None == name:
