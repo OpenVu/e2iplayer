@@ -25,6 +25,6 @@
   <widget source="key_yellow" render="Label" position="513,780" size="155,27" zPosition="1" font="Regular; 22" halign="left" backgroundColor="#191919" transparent="1" foregroundColor="white" shadowColor="black" shadowOffset="-1,-1" />
   <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/IPTVPlayer/icons/blue.png" position="702,779" size="35,27" alphatest="blend" transparent="1" />
   <widget source="key_blue" render="Label" position="743,779" size="150,27" zPosition="1" font="Regular; 22" halign="left" backgroundColor="#191919" transparent="1" foregroundColor="white" shadowColor="black" shadowOffset="-1,-1" />
-  <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/IPTVPlayer/icons/back iptv3.png" position="0,1" size="1720,819" zPosition="-1" alphatest="on" transparent="0" />
+  <ePixmap pixmap="/usr/lib/enigma2/python/Plugins/Extensions/IPTVPlayer/icons/backiptv3.png" position="0,1" size="1720,819" zPosition="-1" alphatest="on" transparent="0" />
   
 </screen>
