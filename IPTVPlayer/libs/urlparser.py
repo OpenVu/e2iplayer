@@ -170,7 +170,7 @@ class urlparser:
                        'caston.tv':             self.pp.parseCASTONTV       ,
                        'castto.me':             self.pp.parserCASTTOME      ,
                        'cercafilm.net':         self.pp.parserFEMBED        ,
-					   'cda.pl':                self.pp.parserCDA           ,
+                       'cda.pl':                self.pp.parserCDA           ,
                        'cfiles.net':            self.pp.parserUPLOAD         ,
                        'chefti.info':           self.pp.parserEXASHARECOM   ,
                        'clicknupload.link':     self.pp.parserUPLOAD         ,
@@ -253,8 +253,9 @@ class urlparser:
                        'hdpass.online':         self.pp.parserHDPASSONLINE,
                        'hdvid.tv':              self.pp.parserHDVIDTV       ,
                        'hlstester.com':         self.pp.parserHLSTESTER,
-					   'hofoot.allvidview.tk':  self.pp.parserVIUCLIPS, 
-					   'hqq.none':              self.pp.parseNETUTV         ,
+	               'hofoot.allvidview.tk':  self.pp.parserVIUCLIPS, 
+                       'hofoot.vidcrt.net':     self.pp.parserVIUCLIPS,
+                       'hqq.none':              self.pp.parseNETUTV         ,
                        'hqq.tv':                self.pp.parseNETUTV         ,
                        'hqq.watch':             self.pp.parseNETUTV         ,
                        'hxload.io':             self.pp.parserVIDBOMCOM      ,
@@ -265,7 +266,7 @@ class urlparser:
                        'jacvideo.com':          self.pp.parseJACVIDEOCOM    ,
                        'jawcloud.co':           self.pp.parserJAWCLOUDCO     ,
                        'jetload.net':           self.pp.parserJETLOAD       ,
-					   'junkyvideo.com':        self.pp.parserJUNKYVIDEO    ,
+	               'junkyvideo.com':        self.pp.parserJUNKYVIDEO    ,
                        'justupload.io':         self.pp.parserJUSTUPLOAD     ,
                        'kabab.lima-city.de':    self.pp.parserKABABLIMA     ,
                        'kingfiles.net':         self.pp.parserKINGFILESNET   ,
@@ -294,7 +295,7 @@ class urlparser:
                        'megom.tv':              self.pp.paserMEGOMTV        ,
                        'megustavid.com':        self.pp.parserMEGUSTAVID    ,
                        'mixdrop.co':            self.pp.parserMIXDROP       ,
-	                   'mightyupload.com':      self.pp.parserMIGHTYUPLOAD  ,
+                       'mightyupload.com':      self.pp.parserMIGHTYUPLOAD  ,
                        'miplayer.net':          self.pp.parserMIPLAYERNET   ,
                        'moevideo.net':          self.pp.parserPLAYEREPLAY   ,
                        'moonwalk.cc':           self.pp.parserMOONWALKCC    ,
@@ -338,7 +339,7 @@ class urlparser:
                        'onet.pl':               self.pp.parserONETTV        ,
                        'onet.tv':               self.pp.parserONETTV        ,
                        'onlystream.tv':         self.pp.parserONLYSTREAM    ,
-	                   'openlive.org':          self.pp.parserOPENLIVEORG   ,
+                       'openlive.org':          self.pp.parserOPENLIVEORG   ,
                        'openload.co':           self.pp.parserOPENLOADIO    ,
                        'openload.info':         self.pp.parserEXASHARECOM   ,
                        'openload.io':           self.pp.parserOPENLOADIO    ,
@@ -402,6 +403,7 @@ class urlparser:
                        'stream.moe':            self.pp.parseSTREAMMOE      ,
                        'stream4k.to':           self.pp.parserSTREAM4KTO    ,
                        'streamable.com':        self.pp.parserSTREAMABLECOM  ,
+                       'streamatus.tk':         self.pp.parserVIUCLIPS,
                        'streamango.com':        self.pp.parserSTREAMANGOCOM  ,
                        'streamcherry.com':      self.pp.parserSTREAMANGOCOM  ,
                        'streamcloud.eu':        self.pp.parserSTREAMCLOUD   ,
@@ -411,7 +413,7 @@ class urlparser:
                        'streamlive.to':         self.pp.paserSTREAMLIVETO   ,
                        'streamo.tv':            self.pp.parserIITV          ,
                        'streamhoe.online':      self.pp.parserFEMBED     ,
-					   'streamplay.cc':         self.pp.parserSTREAMPLAYCC  ,
+	               'streamplay.cc':         self.pp.parserSTREAMPLAYCC  ,
                        'streamplay.me':         self.pp.parserSTREAMPLAYTO   ,
                        'streamplay.to':         self.pp.parserSTREAMPLAYTO   ,
                        'superfilm.pl':          self.pp.parserSUPERFILMPL   ,
@@ -433,7 +435,7 @@ class urlparser:
                        'tune.pk':               self.pp.parseTUNEPK         ,
                        'tunein.com':            self.pp.parserTUNEINCOM      ,
                        'tunestream.net':        self.pp.parserONLYSTREAM    ,
-					   'tusfiles.com':          self.pp.parserUSERSCLOUDCOM ,
+		       'tusfiles.com':          self.pp.parserUSERSCLOUDCOM ,
                        'tusfiles.net':          self.pp.parserUSERSCLOUDCOM ,
                        'tvad.me':               self.pp.parserTHEVIDEOME    ,
                        'tvope.com':             self.pp.parserTVOPECOM      ,
@@ -459,12 +461,12 @@ class urlparser:
                        'ustream.tv':            self.pp.parserUSTREAMTV     ,
                        'ustreamix.com':         self.pp.parserUSTREAMIXCOM  ,
                        'vcrypt.net':            self.pp.parserVCRYPT        ,
-					   'vcstream.to':           self.pp.parserVCSTREAMTO     ,
+	               'vcstream.to':           self.pp.parserVCSTREAMTO     ,
                        'veehd.com':             self.pp.parseVEEHDCOM       ,
                        'veoh.com':              self.pp.parserVEOHCOM        ,
                        'verystream.com':        self.pp.parserVERYSTREAM     ,
-                       'very.streamango.to':    self.pp.parserONLYSTREAM  ,
-					   'veuclips.com':          self.pp.parserVIUCLIPS	   ,
+                       'very.streamango.to':    self.pp.parserONLYSTREAM   ,
+                       'veuclips.com':          self.pp.parserVIUCLIPS	   ,
                        'vev.io':                self.pp.parserTHEVIDEOME    ,
                        'vevo.com':              self.pp.parserVEVO          ,
                        'vid.ag':                self.pp.parserVIDAG         ,
@@ -11769,7 +11771,9 @@ class pageParser(CaptchaHelper):
         #         http://oms.upclips.online/player/PopUpIframe/CsAJ8IjxE8?iframe=popup&u=
         #         https://hofoot.toclipit.com/player/PopUpIframe/CsAJ8IjxE8?iframe=popup&u=
         #         https://hofoot.allvidview.tk/player/PopUpIframe/rU81KreFct?iframe=popup&u=
-        
+        #         https://oms.streamatus.tk/player/html/Mi5nzmttSZ?popup=yes&autoplay=1
+        #         https://hofoot.vidcrt.net
+
         baseUrl = baseUrl + "?"
             
         video_id = re.findall("/player/PopUpIframe/(.*?)\?", baseUrl)
