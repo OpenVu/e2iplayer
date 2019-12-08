@@ -32,7 +32,7 @@ class FilmPalastTo(CBaseHostClass):
         
         self.defaultParams = {'header':self.HEADER, 'use_cookie': True, 'load_cookie': True, 'save_cookie': True, 'cookiefile': self.COOKIE_FILE}
         
-        self.DEFAULT_ICON_URL = 'https://www.free4fisher.de/wp-content/uploads/2017/02/filmpalast-Fanart.png'
+        self.DEFAULT_ICON_URL = 'https://filmpalast.to/themes/downloadarchive/images/logo.png'
         self.MAIN_URL = None
         self.cacheSeries = {}
         self.cacheSeasons = {}
