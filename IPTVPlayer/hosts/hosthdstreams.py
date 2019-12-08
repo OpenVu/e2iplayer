@@ -58,7 +58,7 @@ class HDStreams(CBaseHostClass):
         
         self.defaultParams = {'header':self.HEADER, 'use_cookie': True, 'load_cookie': True, 'save_cookie': True, 'cookiefile': self.COOKIE_FILE}
         
-        self.DEFAULT_ICON_URL = 'http://s-media-cache-ak0.pinimg.com/originals/82/63/59/826359efee44e19824912cdf45b3bd59.jpg'
+        self.DEFAULT_ICON_URL = 'https://hd-streams.org/images/logo_xmas.png'
         self.MAIN_URL = None
         self.cacheLinks    = {}
         self.cacheFilters  = {}
