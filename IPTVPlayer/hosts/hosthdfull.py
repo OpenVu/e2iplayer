@@ -26,11 +26,11 @@ def GetConfigList():
 
 
 def gettytul():
-    return 'https://hdfull.me/'
+    return 'https://hdfull.io/'
 
 
 class SuggestionsProvider():
-    MAIN_URL = 'https://hdfull.me/'
+    MAIN_URL = 'https://hdfull.io/'
     COOKIE_FILE = ''
 
     def __init__(self):
@@ -79,6 +79,7 @@ def jstr(item, key, default = ''):
 
 class HDFull(CBaseHostClass, CaptchaHelper):
 
+    USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0'
     def __init__(self):
         CBaseHostClass.__init__(self, {'history': 'hdfull.me',
          'cookie': 'hdfull.me.cookie'})
@@ -91,7 +92,7 @@ class HDFull(CBaseHostClass, CaptchaHelper):
          'save_cookie': True,
          'cookiefile': self.COOKIE_FILE,
          'cookie_items': {'language': language}}
-        self.MAIN_URL = 'https://hdfull.me/'
+        self.MAIN_URL = 'https://hdfull.io/'
         self.DEFAULT_ICON_URL = 'https://ocio.farodevigo.es/img_contenido/noticias/2018/02/642946/web_cine_pirata.jpg'
         self.filters = []
         self.cacheLinks = {}
@@ -100,10 +101,17 @@ class HDFull(CBaseHostClass, CaptchaHelper):
         self.password = ''
         return
 
+    # def getPage(self, baseUrl, addParams = {}, post_data = None):
+        # if addParams == {}:
+            # addParams = dict(self.defaultParams)
+        # return self.cm.getPage(baseUrl, addParams, post_data)
+
     def getPage(self, baseUrl, addParams = {}, post_data = None):
         if addParams == {}:
             addParams = dict(self.defaultParams)
-        return self.cm.getPage(baseUrl, addParams, post_data)
+        addParams['cloudflare_params'] = {'cookie_file': self.COOKIE_FILE,
+         'User-Agent': self.USER_AGENT}
+        return self.cm.getPageCFProtection(baseUrl, addParams, post_data)
 
     def setMainUrl(self, url):
         CBaseHostClass.setMainUrl(self, url)
@@ -112,6 +120,7 @@ class HDFull(CBaseHostClass, CaptchaHelper):
     def listMain(self, cItem):
         printDBG('HDFull.listMain')
         sts, data = self.getPage(self.getMainUrl())
+        printDBG(data)
         if not sts:
             return
         self.setMainUrl(self.cm.meta['url'])
