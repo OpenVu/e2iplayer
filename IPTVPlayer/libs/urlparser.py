@@ -252,7 +252,9 @@ class urlparser:
                        'hdgo.cx':               self.pp.parserHDGOCC        ,
                        'hdpass.online':         self.pp.parserHDPASSONLINE,
                        'hdvid.tv':              self.pp.parserHDVIDTV       ,
-                       'hqq.none':              self.pp.parseNETUTV         ,
+                       'hlstester.com':         self.pp.parserHLSTESTER,
+					   'hofoot.allvidview.tk':  self.pp.parserVIUCLIPS, 
+					   'hqq.none':              self.pp.parseNETUTV         ,
                        'hqq.tv':                self.pp.parseNETUTV         ,
                        'hqq.watch':             self.pp.parseNETUTV         ,
                        'hxload.io':             self.pp.parserVIDBOMCOM      ,
@@ -461,7 +463,8 @@ class urlparser:
                        'veehd.com':             self.pp.parseVEEHDCOM       ,
                        'veoh.com':              self.pp.parserVEOHCOM        ,
                        'verystream.com':        self.pp.parserVERYSTREAM     ,
-                       'veuclips.com':          self.pp.parserVIUCLIPS	   ,
+                       'very.streamango.to':    self.pp.parserONLYSTREAM  ,
+					   'veuclips.com':          self.pp.parserVIUCLIPS	   ,
                        'vev.io':                self.pp.parserTHEVIDEOME    ,
                        'vevo.com':              self.pp.parserVEVO          ,
                        'vid.ag':                self.pp.parserVIDAG         ,
@@ -11765,7 +11768,7 @@ class pageParser(CaptchaHelper):
         #         https://oms.vidstreamup.com/player/html/vElkr1qfLm?popup=yes&autoplay=1
         #         http://oms.upclips.online/player/PopUpIframe/CsAJ8IjxE8?iframe=popup&u=
         #         https://hofoot.toclipit.com/player/PopUpIframe/CsAJ8IjxE8?iframe=popup&u=
-        
+        #         https://hofoot.allvidview.tk/player/PopUpIframe/rU81KreFct?iframe=popup&u=
         
         baseUrl = baseUrl + "?"
             
@@ -11956,8 +11959,8 @@ class pageParser(CaptchaHelper):
         
         return urlsTab
 
-		
     def parserONLYSTREAM(self, baseUrl):
+		#links like this: https://very.streamango.to/e/1wu3s8ocmuex redirect to onlystream.tv
         printDBG("parserONLYSTREAM baseUrl[%s]" % baseUrl)
 
         def checkTxt(txt):
@@ -12221,4 +12224,19 @@ class pageParser(CaptchaHelper):
                     urlsTab.append(params)
             
         return urlsTab
+		
+    def parserHLSTESTER(self, baseUrl):
+        printDBG("parserHLSTESTER baseUrl[%s]" % baseUrl)
+                #example: https://hlstester.com/embed/?url=https://1107942067.rsc.cdn77.org/UpFiles/2019/12/7/34/131917/720p.m3u8
+        
+        link = re.findall("url=(.*?)&", baseUrl + "&")
+        
+        urlsTab=[]
+        
+        if link:
+            params = {'name': 'link' , 'url': link[0]}
+            printDBG(params)
+            urlsTab.append(params)
+        
+        return urlsTab	
 			
