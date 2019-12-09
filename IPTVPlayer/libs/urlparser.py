@@ -1865,7 +1865,8 @@ class pageParser(CaptchaHelper):
                     tmpTab = getDirectM3U8Playlist(media_url, False, checkContent=True, cookieParams={'header':HTTP_HEADER, 'cookiefile':COOKIE_FILE, 'use_cookie': True, 'save_cookie':True})
                     cookieHeader = self.cm.getCookieHeader(COOKIE_FILE)
                     for tmp in tmpTab:
-                        redirectUrl =  strwithmeta(tmp['url'], {'iptv_proto':'m3u8', 'Cookie':cookieHeader, 'User-Agent': HTTP_HEADER['User-Agent']})
+                        hlsUrl = self.cm.ph.getSearchGroups(tmp['url'], """(https?://[^'^"]+?\.m3u8[^'^"]*?)#?""")[0]
+                        redirectUrl =  strwithmeta(hlsUrl, {'iptv_proto':'m3u8', 'Cookie':cookieHeader, 'User-Agent': HTTP_HEADER['User-Agent']})
                         vidTab.append({'name':'dailymotion.com: %sp hls' % (tmp.get('heigth', '0')), 'url':redirectUrl, 'quality':tmp.get('heigth', '0')})
                         
         if 0 == len(vidTab):
