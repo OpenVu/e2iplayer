@@ -69,6 +69,7 @@ def gettytul():
 class TvpVod(CBaseHostClass, CaptchaHelper):
     DEFAULT_ICON_URL = 'https://s.tvp.pl/files/vod.tvp.pl/img/menu/logo_vod.png' #'http://sd-xbmc.org/repository/xbmc-addons/tvpvod.png'
     PAGE_SIZE = 12
+    SPORT_PAGE_SIZE = 20
     ALL_FORMATS = [{"video/mp4":"mp4"}, {"application/x-mpegurl":"m3u8"}, {"video/x-ms-wmv":"wmv"}] 
     REAL_FORMATS = {'m3u8':'ts', 'mp4':'mp4', 'wmv':'wmv'}
     MAIN_VOD_URL = "https://vod.tvp.pl/"
@@ -209,8 +210,10 @@ class TvpVod(CBaseHostClass, CaptchaHelper):
                 if sitekey != '':
                     token, errorMsgTab = self.processCaptcha(sitekey, self.cm.meta['url'])
                     if token == '':
-                        return False
-                    post_data['g-recaptcha-response'] = token 
+                        msg = _('Link protected with google recaptcha v2.') + '\n' + msg
+                        sts = False
+                    else:
+                        post_data['g-recaptcha-response'] = token
                 sts, data = self._getPage(TvpVod.LOGIN_URL + ref, self.defaultParams, post_data)
         if sts and 'action=sign-out' in data:
             printDBG(">>>\n%s\n<<<" % data)
@@ -397,7 +400,7 @@ class TvpVod(CBaseHostClass, CaptchaHelper):
         except Exception:
             printExc()
                 
-        if videosNum >= self.PAGE_SIZE:
+        if videosNum >= self.SPORT_PAGE_SIZE:
             params = dict(cItem)
             params.update({'page':page+1})
             if config.plugins.iptvplayer.tvpVodNextPage.value:
@@ -756,7 +759,8 @@ class TvpVod(CBaseHostClass, CaptchaHelper):
             
             params = dict(self.defaultParams)
             params['header'] = {'User-Agent':'okhttp/3.8.1', 'Authorization':'Basic YXBpOnZvZA==', 'Accept-Encoding':'gzip'}
-            sts, data = self.cm.getPage( 'https://apivod.tvp.pl/tv/video/%s/default/default?device=android' % asset_id, params)
+#            sts, data = self.cm.getPage( 'https://apivod.tvp.pl/tv/video/%s/default/default?device=android' % asset_id, params)
+            sts, data = self.cm.getPage( 'https://apivod.tvp.pl/tv/video/%s/' % asset_id, params)
             printDBG("%s -> [%s]" % (sts, data))
             try:
                 data = json_loads(data, '', True)
