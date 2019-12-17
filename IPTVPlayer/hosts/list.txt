@@ -23,6 +23,7 @@ hostbsto
 hostcartoonhd
 hostcb01
 hostcb01uno
+hostcdafilmy
 hostcdapl
 hostchomikuj
 hostchristusvincit
