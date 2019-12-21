@@ -2645,7 +2645,7 @@ class pageParser(CaptchaHelper):
                         #    printDBG(wordList[i])
 
                         # search for second list of vars
-                        tmpVar2 = re.findall(";e\(\);(var .*?)\$\('\*'\)", script, re.S)
+                        tmpVar2 = re.findall(";q\(\);(var .*?)\$\('\*'\)", script, re.S)
                         if tmpVar2:
                             printDBG("------------")
                             printDBG(tmpVar2[0])
