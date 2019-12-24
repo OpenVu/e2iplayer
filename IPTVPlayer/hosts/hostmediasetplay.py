@@ -1,17 +1,4 @@
 # -*- coding: utf-8 -*-
-
-#
-#
-# @Codermik release, based on @Samsamsam's E2iPlayer public.
-# Released with kind permission of Samsamsam.
-# All code developed by Samsamsam is the property of the Samsamsam and the E2iPlayer project,  
-# all other work is Â© E2iStream Team, aka Codermik.  TSiPlayer is Â© Rgysoft, his group can be
-# found here:  https://www.facebook.com/E2TSIPlayer/
-#
-# https://www.facebook.com/e2iStream/
-#
-#
-
 ###################################################
 # LOCAL import
 ###################################################
@@ -232,7 +219,7 @@ class MediasetPlay(CBaseHostClass):
     def listDates(self, cItem):
         printDBG("MediasetPlay.listDates")
 
-        days = ["Domenica", "LunedÃ¬", "MartedÃ¬", "MercoledÃ¬", "GiovedÃ¬", "VenerdÃ¬", "Sabato"]
+        days = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"]
         months = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
     
         for i in range(7):
@@ -270,7 +257,9 @@ class MediasetPlay(CBaseHostClass):
             if item["mediasetprogram$hasVod"]:
                 # video on demand available
                 desc = []
-                desc.append(item['mediasetprogram$publishInfo']['last_published'].split('T', 1)[0]) 
+                if 'last_published' in item['mediasetprogram$publishInfo']: 
+                    desc.append(item['mediasetprogram$publishInfo']['last_published'].split('T', 1)[0]) 
+                
                 desc.append(item['mediasetprogram$publishInfo']['description']) 
                 desc.append(str(timedelta(seconds=int(item['mediasetprogram$duration']))))
                 if 'mediasetprogram$numberOfViews' in item:
