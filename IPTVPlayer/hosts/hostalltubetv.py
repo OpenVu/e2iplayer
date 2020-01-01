@@ -1,17 +1,4 @@
 # -*- coding: utf-8 -*-
-
-#
-#
-# @Codermik release, based on @Samsamsam's E2iPlayer public.
-# Released with kind permission of Samsamsam.
-# All code developed by Samsamsam is the property of the Samsamsam and the E2iPlayer project,  
-# all other work is ï¿½ E2iStream Team, aka Codermik.  TSiPlayer is ï¿½ Rgysoft, his group can be
-# found here:  https://www.facebook.com/E2TSIPlayer/
-#
-# https://www.facebook.com/e2iStream/
-#
-#
-
 ###################################################
 # LOCAL import
 ###################################################
@@ -117,7 +104,7 @@ class AlltubeTV(CBaseHostClass):
             
         pageM1 = '<div id="pager"'
         
-        if ('strona[%s]+' % (page + 1)) in data or 'NastÄpna strona' in data:
+        if ('strona[%s]+' % (page + 1)) in data or 'Następna strona' in data:
             nextPage = True
         else: nextPage = False
         
@@ -315,7 +302,7 @@ class AlltubeTV(CBaseHostClass):
         
         printDBG(data)
         
-        data = self.cm.ph.rgetDataBeetwenMarkers(data, '<div class="container-fluid">', 'Kontakt')[1]
+        data = self.cm.ph.rgetDataBeetwenMarkers(data, '<div class="container-fluid">', 'Regulamin')[1]
         data = data.split('<h2 class="headline">')
         if len(data): del data[0]
         
@@ -439,7 +426,10 @@ class AlltubeTV(CBaseHostClass):
             videoUrl = url
             if url.startswith('//'):
                 videoUrl = 'http:' + videoUrl
+            from Plugins.Extensions.IPTVPlayer.libs.urlparser import urlparser 
+            videoUrl = urlparser.decorateUrl(videoUrl, {'Referer': baseUrl}) 
             urlTab = self.up.getVideoLinkExt(videoUrl)
+
         return urlTab
 
     def handleService(self, index, refresh = 0, searchPattern = '', searchType = ''):
