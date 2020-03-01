@@ -20,7 +20,7 @@ except Exception: import simplejson as json
 
 
 def gettytul():
-    return 'http://movs4u.tv/'
+    return 'https://www.mvs4u.tv/'
 
 class Movs4uCOM(CBaseHostClass):
  
@@ -30,7 +30,7 @@ class Movs4uCOM(CBaseHostClass):
         self.HEADER = {'User-Agent': self.USER_AGENT, 'DNT':'1', 'Accept': 'text/html'}
         self.AJAX_HEADER = dict(self.HEADER)
         self.AJAX_HEADER.update( {'X-Requested-With': 'XMLHttpRequest'} )
-        self.MAIN_URL = 'http://www.movs4u.tv/' 
+        self.MAIN_URL = 'https://www.mvs4u.tv/' 
         self.DEFAULT_ICON_URL = self.getFullIconUrl('/wp-content/uploads/2018/03/TcCsO2w.png')
         self.cacheLinks    = {}
         self.cacheSeasons = {}
