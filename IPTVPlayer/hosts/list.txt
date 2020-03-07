@@ -49,6 +49,7 @@ hostdsda
 hostefilmytv
 hostegybest
 hostekinotv
+hostekinomaniak
 hostekstraklasatv
 hosteskago
 hosteurosportplayer
@@ -205,6 +206,7 @@ hostvimeo
 hostvodpl
 hostvumedicom
 hostwatchcartoononline
+hostwatchmovies
 hostwatchwrestling
 hostwatchwrestlinguno
 hostwebstream
