@@ -1,17 +1,4 @@
-# -*- coding: utf-8 -*-
-
-#
-#
-# @Codermik release, based on @Samsamsam's E2iPlayer public.
-# Released with kind permission of Samsamsam.
-# All code developed by Samsamsam is the property of the Samsamsam and the E2iPlayer project,  
-# all other work is ï¿½ E2iStream Team, aka Codermik.  TSiPlayer is ï¿½ Rgysoft, his group can be
-# found here:  https://www.facebook.com/E2TSIPlayer/
-#
-# https://www.facebook.com/e2iStream/
-#
-#
-
+﻿# -*- coding: utf-8 -*-
 
 ###################################################
 # LOCAL import
@@ -51,7 +38,7 @@ config.plugins.iptvplayer.cda_password   = ConfigText(default = "", fixed_size =
 def GetConfigList():
     optionList = []
     optionList.append(getConfigListEntry("Login:", config.plugins.iptvplayer.cda_login))
-    optionList.append(getConfigListEntry("HasÅo:", config.plugins.iptvplayer.cda_password))
+    optionList.append(getConfigListEntry("Hasło:", config.plugins.iptvplayer.cda_password))
     optionList.append( getConfigListEntry( "Sortuj wyniki wyszukiwania po:", config.plugins.iptvplayer.cda_searchsort ) )
     return optionList
 ###################################################
@@ -75,24 +62,24 @@ class cda(CBaseHostClass, CaptchaHelper):
         
         self.MAIN_TAB = [{'category':'video',             'title': 'Filmy wideo',  'url':''},
                          {'category':'premium',           'title': 'CDA Premium',  'url':self.getFullUrl('premium')},
-                         {'category':'channels_cats',     'title': 'KanaÅy',       'url':''},
+                         {'category':'channels_cats',     'title': 'Kanały',       'url':''},
                          {'category':'search',            'title': _('Search'), 'search_item':True},
                          {'category':'search_history',    'title': _('Search history')}]
         
-        self.VIDEO_TAB = [{'category':'categories',       'title': 'GÅÃ³wna',       'base_url':'video'},
+        self.VIDEO_TAB = [{'category':'categories',       'title': 'Główna',       'base_url':'video'},
                           {'category':'categories',       'title': 'Poczekalnia',  'base_url':'video/poczekalnia'}]
 
         self.CATEGORIES_TAB = [{'url' : '',       'category':'category', 'title' : '--Wszystkie--'}, 
-                               {'url' : '/kat26', 'category':'category', 'title' : 'KrÃ³tkie filmy i animacje'}, 
+                               {'url' : '/kat26', 'category':'category', 'title' : 'Krótkie filmy i animacje'}, 
                                {'url' : '/kat24', 'category':'category', 'title' : 'Filmy Extremalne'}, 
                                {'url' : '/kat27', 'category':'category', 'title' : 'Motoryzacja, wypadki'}, 
                                {'url' : '/kat28', 'category':'category', 'title' : 'Muzyka'}, 
                                {'url' : '/kat29', 'category':'category', 'title' : 'Prosto z Polski'}, 
                                {'url' : '/kat30', 'category':'category', 'title' : 'Rozrywka'}, 
                                {'url' : '/kat31', 'category':'category', 'title' : 'Sport'}, 
-                               {'url' : '/kat32', 'category':'category', 'title' : 'Åmieszne filmy'}, 
-                               {'url' : '/kat33', 'category':'category', 'title' : 'RÃ³Å¼noÅci'}, 
-                               {'url' : '/kat34', 'category':'category', 'title' : 'Å»ycie studenckie'} ]
+                               {'url' : '/kat32', 'category':'category', 'title' : 'Śmieszne filmy'}, 
+                               {'url' : '/kat33', 'category':'category', 'title' : 'Różności'}, 
+                               {'url' : '/kat34', 'category':'category', 'title' : 'Życie studenckie'} ]
         self.cacheFilters = {}
         self.filtersTab = []
         self.loggedIn = None
@@ -260,10 +247,10 @@ class cda(CBaseHostClass, CaptchaHelper):
             if page == None:
                 page = cItem.get('page', 1)
                 nextPage = ph.find(data, ('<span', '>', 'next-wrapper'), '</span>', flags=0)[1]
-                if not nextPage: nextPage = ph.find(data, ('<a', '>', 'btn-large'))[1]
+                if not nextPage: nextPage = ph.find(data, ('<a', '>', 'btn-large '))[1]
                 nextPage = self.getFullUrl(ph.clean_html(ph.getattr(nextPage, 'href')), self.cm.meta['url'])
             else:
-                nextPage = url if 'NastÄpna strona' in data else ''
+                nextPage = url if 'Następna strona' in data else ''
 
             if search:
                 data = self.cm.ph.getAllItemsBeetwenNodes(data, ('<div', '>', 'video-clip-wrapper'), ('</label', '>'))
@@ -306,7 +293,7 @@ class cda(CBaseHostClass, CaptchaHelper):
                     self.addDir(params)
 
             if nextPage:
-                self.addDir(MergeDicts(cItem, {'good_for_fav':False, 'url':nextPage, 'title':'NastÄpna strona', 'page':page+1}))
+                self.addDir(MergeDicts(cItem, {'good_for_fav':False, 'url':nextPage, 'title':'Następna strona', 'page':page+1}))
 
     def listChannelsCategories(self, cItem, nextCategory):
         printDBG("cda.listChannelsCategories [%s]" % cItem['url'])
@@ -566,8 +553,8 @@ class IPTVHost(CHostBase):
 
     def getSearchTypes(self):
         searchTypesOptions = []
-        searchTypesOptions.append(("kaÅ¼da dÅugoÅÄ", "all"))
-        searchTypesOptions.append(("krÃ³tkie (poniÅ¼ej 5 minut)",  "krotkie"))
-        searchTypesOptions.append(("Årednie (powyÅ¼ej 20 minut)", "srednie"))
-        searchTypesOptions.append(("dÅugie (powyÅ¼ej 60 minut)",  "dlugie"))
+        searchTypesOptions.append(("każda długość", "all"))
+        searchTypesOptions.append(("krótkie (poniżej 5 minut)",  "krotkie"))
+        searchTypesOptions.append(("średnie (powyżej 20 minut)", "srednie"))
+        searchTypesOptions.append(("długie (powyżej 60 minut)",  "dlugie"))
         return searchTypesOptions
