@@ -15,6 +15,7 @@
 "hostandrijaiandjelka": "https://andrija-i-andjelka.com/",
 "hostanimeodcinki": "https://anime-odcinki.pl/",
 "hostappletrailers": "https://trailers.apple.com/",
+"hostarbcinema": "https://m.arbcinema.com",
 "hostarconaitvme": "http://arconaitv.us/",
 "hostardmediathek": "ARDmediathek",
 "hostartetv": "https://www.arte.tv/",
