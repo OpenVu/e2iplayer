@@ -23,7 +23,7 @@ def GetConfigList():
 ###################################################
 
 def gettytul():
-    return 'https://m.arbcinema.com/'
+    return 'https://w.arbcinema.com//'
 
 class arbcinema(CBaseHostClass):
     
@@ -31,7 +31,7 @@ class arbcinema(CBaseHostClass):
         CBaseHostClass.__init__(self, {'history':'arbcinema', 'cookie':'arbcinema.cookie'})
         self.DEFAULT_ICON_URL = 'https://i.ibb.co/LzkK4G4/4.png' 
         self.USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0'
-        self.MAIN_URL = 'https://m.arbcinema.com/'
+        self.MAIN_URL = 'https://https://w.arbcinema.com/'
         self.HEADER = {'User-Agent': self.USER_AGENT, 'DNT':'1', 'Accept': 'text/html', 'Accept-Encoding':'gzip, deflate', 'Referer':self.getMainUrl(), 'Origin':self.getMainUrl()}
         self.AJAX_HEADER = dict(self.HEADER)
         self.AJAX_HEADER.update( {'X-Requested-With': 'XMLHttpRequest', 'Accept-Encoding':'gzip, deflate', 'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8', 'Accept':'application/json, text/javascript, */*; q=0.01'} )
