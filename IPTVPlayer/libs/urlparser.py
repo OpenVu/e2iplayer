@@ -9284,9 +9284,9 @@ class pageParser(CaptchaHelper):
         printDBG("parseNETUTV url[%s]" % url)
         if 'hqq.none' in urlparser.getDomain(url):
             url = strwithmeta(url.replace('hqq.none', 'hqq.watch'), strwithmeta(url).meta)
-        
+
         url += '&'
-        vid = self.cm.ph.getSearchGroups(url, '''vid=([0-9a-zA-Z]+?)[^0-9^a-z^A-Z]''')[0]
+        vid = self.cm.ph.getSearchGroups(url, '''vi?d?=([0-9a-zA-Z]+?)[^0-9^a-z^A-Z]''')[0]
         hashFrom = self.cm.ph.getSearchGroups(url, '''hash_from=([0-9a-zA-Z]+?)[^0-9^a-z^A-Z]''')[0]
         
         # User-Agent - is important!!!
@@ -9297,7 +9297,7 @@ class pageParser(CaptchaHelper):
 
         COOKIE_FILE = self.COOKIE_PATH + "netu.tv.cookie"
         # remove old cookie file
-        rm(COOKIE_FILE)
+#        rm(COOKIE_FILE)
         params = {'with_metadata':True, 'header':HTTP_HEADER, 'use_cookie': True, 'save_cookie': True, 'load_cookie': True, 'cookiefile': COOKIE_FILE}
         sts, ipData = self.cm.getPage('http://hqq.watch/player/ip.php?type=json', params)
         ipData = json_loads(ipData)
@@ -9326,22 +9326,42 @@ class pageParser(CaptchaHelper):
         if not sts: return False
         cUrl = data.meta['url']
         
-        def _getEvalData(data):
-            jscode = ['eval=function(t){return function(){print(arguments[0]);try{return t.apply(this,arguments)}catch(t){}}}(eval);']
-            tmp = self.cm.ph.getAllItemsBeetwenNodes(data, ('<script', '>'), ('</script', '>'), False)
-            for item in tmp:
-                if 'eval(' in item and 'check(' not in item:
-                    jscode.append(item)
-            ret = js_execute( '\n'.join(jscode) )
-            return ret['data']
+#        def _getEvalData(data):
+#            jscode = ['eval=function(t){return function(){print(arguments[0]);try{return t.apply(this,arguments)}catch(t){}}}(eval);']
+#            tmp = self.cm.ph.getAllItemsBeetwenNodes(data, ('<script', '>'), ('</script', '>'), False)
+#            for item in tmp:
+#                if 'eval(' in item and 'check(' not in item:
+#                    jscode.append(item)
+#            ret = js_execute( '\n'.join(jscode) )
+#            return ret['data']
         
-        tmp = _getEvalData(data)
-        jscode = self.cm.ph.getDataBeetwenMarkers(tmp, 'location.replace(', ')', False)[1]
-        jscode = 'var token="03"; var need_captcha="0"; var rand=Math.random().toString().substring(2); var data=' + json_dumps(ipData) + ';print(' + jscode + ');'
-        
+#        tmp = _getEvalData(data)
+
+        sub_tracks = []
+        subData = self.cm.ph.getDataBeetwenMarkers(data, 'addRemoteTextTrack({', ');', False)[1]
+        subData = self.cm.getFullUrl(self.cm.ph.getSearchGroups(subData, '''src:\s?['"]([^'^"]+?)['"]''')[0], cUrl)
+        if (subData.endswith('.srt') or subData.endswith('.vtt')):
+            sub_tracks.append({'title':'attached', 'url':subData, 'lang':'unk', 'format':'srt'})
+
+        data = self.cm.ph.getAllItemsBeetwenMarkers(data, '<script>', '</script>', False)
+        wise = ''
+        tmp  = ''
+        for item in data:
+            if 'orig_vid = "' in item:
+                tmp = item
+            if "w,i,s,e" in item:
+                wise = item
+
+        orig_vid = self.cm.ph.getDataBeetwenMarkers(tmp, 'orig_vid = "', '"', False)[1]
+        jscode = self.cm.ph.getDataBeetwenMarkers(tmp, 'location.replace(', ');', False)[1]
+        jscode = 'var need_captcha="0"; var server_referer="http://hqq.watch/"; var orig_vid="'+orig_vid+'"; print(' + jscode + ');'
+
+        gt = self.cm.getCookieItem(COOKIE_FILE,'gt')
         ret = js_execute( jscode )
         if ret['sts'] and 0 == ret['code']:
-            secPlayerUrl = self.cm.getFullUrl(ret['data'].strip(), self.cm.getBaseUrl(cUrl)) #'https://hqq.tv/'
+            secPlayerUrl = self.cm.getFullUrl(ret['data'].strip(), self.cm.getBaseUrl(cUrl)).replace('$secured', '0') #'https://hqq.tv/'
+            if 'need_captcha=1' in secPlayerUrl and ipData['need_captcha'] == 0 and gt != '':
+                secPlayerUrl = secPlayerUrl.replace('need_captcha=1', 'need_captcha=0')
 
         HTTP_HEADER['Referer'] = referer
         sts, data = self.cm.getPage(secPlayerUrl, params)
@@ -9372,11 +9392,11 @@ class pageParser(CaptchaHelper):
                     sts, data = self.cm.getPage(action, params)
                     if sts: cUrl = self.cm.meta['url']
 
-        data = re.sub('document\.write\(unescape\("([^"]+?)"\)', lambda m: urllib.unquote(m.group(1)), data)
-        data += _getEvalData(data)
-        printDBG("+++")
-        printDBG(data)
-        printDBG("+++")
+#        data = re.sub('document\.write\(unescape\("([^"]+?)"\)', lambda m: urllib.unquote(m.group(1)), data)
+#        data += _getEvalData(data)
+#        printDBG("+++")
+#        printDBG(data)
+#        printDBG("+++")
 
         def getUtf8Str(st):
             try:
@@ -9391,26 +9411,30 @@ class pageParser(CaptchaHelper):
 
         linksCandidates = re.compile('''['"](#[^'^"]+?)['"]''').findall(data)
         try:
-            jscode = [data.rsplit('//document.domain="hqq.watch";')[-1]]
-            tmp = ph.findall(data, '//document.domain="hqq.watch";', '</script>', flags=0)
-            for item in tmp:
-                if 'var at' in item:
-                    jscode.append(item)
-                    break
-            jscode.append('var adb = "0/"; ext = "";')
+#            jscode = [data.rsplit('//document.domain="hqq.watch";')[-1]]
+#            tmp = ph.findall(data, '//document.domain="hqq.watch";', '</script>', flags=0)
+#            for item in tmp:
+#                if 'var at' in item:
+#                    jscode.append(item)
+#                    break
+#            jscode.append('var adb = "0/"; ext = "";')
+            jscode = ['var token = ""; var adb = "0/"; var wasmcheck="1"; var videokeyorig="%s";' % vid]
+            jscode.append(wise)
             tmp = ph.search(data, '''(['"][^'^"]*?get_md5\.php[^;]+?);''')[0]
             jscode.append('print(%s)' % tmp)
             ret = js_execute( '\n'.join(jscode) )
 
-            playerUrl = ret['data'].strip()
+            playerUrl = self.cm.getFullUrl(ret['data'].strip(), cUrl)
             params['header']['Accept'] = '*/*'
             params['header']['Referer'] = cUrl
             sts, data = self.cm.getPage(playerUrl, params)
-
-            printDBG(self.cm.meta['url'])
-            linksCandidates.insert(0, self.cm.meta['url'])
+            obf = json_loads(data)
+            linksCandidates.insert(0, obf['obf_link'])
         except Exception:
             printExc()
+            rm(COOKIE_FILE)
+            SetIPTVPlayerLastHostError(_('Link protected with google recaptcha v2.')+'\n'+_('Download again'))
+            return False
 
         printDBG("linksCandidates >> %s" % linksCandidates)
         retUrls = []
@@ -9418,7 +9442,7 @@ class pageParser(CaptchaHelper):
             if file_url.startswith('#') and 3 < len(file_url): file_url = getUtf8Str(file_url[1:])
             if file_url.startswith('//'): file_url = 'https:' + file_url
             if self.cm.isValidUrl(file_url): 
-                file_url = urlparser.decorateUrl(file_url, {'iptv_livestream':False, 'User-Agent':HTTP_HEADER['User-Agent'], 'Referer':cUrl})
+                file_url = urlparser.decorateUrl(file_url, {'iptv_livestream':False, 'User-Agent':HTTP_HEADER['User-Agent'], 'Referer':cUrl, 'external_sub_tracks':sub_tracks})
                 if file_url.split('?')[0].endswith('.m3u8') or '/hls-' in file_url:
                     file_url = strwithmeta(file_url, {'iptv_proto':'m3u8'})
                     retUrls.extend( getDirectM3U8Playlist(file_url, False, checkContent=True) )
@@ -10476,39 +10500,44 @@ class pageParser(CaptchaHelper):
         return False
     
     def parserGOUNLIMITEDTO(self, baseUrl):
-        printDBG("parserGOUNLIMITEDTO baseUrl[%s]" % baseUrl)
-        domain = urlparser.getDomain(baseUrl) 
+        printDBG("parserGOUNLIMITEDTO baseUrl[%r]" % baseUrl)
         
         baseUrl = strwithmeta(baseUrl)
-        referer = baseUrl.meta.get('Referer', '')
+        HTTP_HEADER= self.cm.getDefaultHeader(browser='chrome')
+        HTTP_HEADER['Referer'] = baseUrl.meta.get('Referer', baseUrl)
+        urlParams = {'header':HTTP_HEADER}
         
-        HTTP_HEADER = self.cm.getDefaultHeader(browser='chrome')
-        if referer != '': HTTP_HEADER['Referer'] = referer
-        
-        sts, data = self.cm.getPage(baseUrl, {'header': HTTP_HEADER})
+        sts, data = self.cm.getPage(baseUrl, urlParams)
         if not sts: return False
-        
-        jscode = [self.jscode['jwplayer']]
-        jscode.append('var element=function(n){print(JSON.stringify(n)),this.on=function(){}},Clappr={};Clappr.Player=element,Clappr.Events={PLAYER_READY:1,PLAYER_TIMEUPDATE:1,PLAYER_PLAY:1,PLAYER_ENDED:1};')
-        tmp = self.cm.ph.getAllItemsBeetwenNodes(data, ('<script', '>'), ('</script', '>'), False)
-        for item in tmp:
-            if 'eval(' in item: jscode.append(item)
-        urlTab = []
-        ret = js_execute( '\n'.join(jscode) )
-        if ret['sts'] and 0 == ret['code']:
-            data = json_loads(ret['data'].strip())
-            for item in data['sources']:
-                name = 'direct'
-                if isinstance(item, dict):
-                    url = item['file']
-                    name = item.get('label', name)
-                else:
-                    url = item
-                if self.cm.isValidUrl(url):
-                    url = strwithmeta(url, {'User-Agent':HTTP_HEADER['User-Agent'], 'Referer':baseUrl})
-                    urlTab.append({'name':name, 'url':url})
-        printDBG(urlTab)
-        return urlTab
+        cUrl = self.cm.meta['url']
+        domain = urlparser.getDomain(cUrl)
+       
+        if 'embed' not in cUrl:
+            baseUrl = self.cm.getFullUrl(self.cm.ph.getSearchGroups(data, '''<iframe[^>]+?src=['"]([^"^']+?)['"]''', 1, True)[0], domain)
+
+#            if 'embed' in url:
+#                urlParams['header']['Referer'] = cUrl
+#                sts, data = self.cm.getPage(url, urlParams)
+#                if not sts: return False
+#        
+#        jscode = [self.jscode['jwplayer'], "Clappr={Player:jwplayer()['setup']};"]
+#        tmp = self.cm.ph.getAllItemsBeetwenNodes(data, ('<script', '>'), ('</script', '>'), False)
+#        for item in tmp:
+#            if 'eval(' in item and 'sources' in item:
+#                jscode.append(item)
+#        urlTab = []
+#        jscode = '\n'.join(jscode)
+#        ret = js_execute( jscode )
+#        printDBG(ret['data'])
+#        data = json_loads(ret['data'])
+#        for item in data['sources']:
+#            url = self.cm.getFullUrl(item, domain)
+#            url = strwithmeta(url, {'Referer':baseUrl, 'User-Agent':HTTP_HEADER['User-Agent'], 'Range':'bytes=0-'})
+#            urlTab.append({'name':domain, 'url':url})
+#            
+#        return urlTab
+
+        return self.parserONLYSTREAMTV(strwithmeta(baseUrl, {'Host':domain}))
         
     def parserNADAJECOM(self, baseUrl):
         printDBG("parserNADAJECOM baseUrl[%s]" % baseUrl)
