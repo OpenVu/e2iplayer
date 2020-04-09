@@ -39,7 +39,7 @@ def GetConfigList():
 ###################################################
 
 def gettytul():
-    return 'https://vidcorn.org/'
+    return 'https://vidcorn.tv/'
 
 class VidCorn(CBaseHostClass, CaptchaHelper):
 
@@ -49,8 +49,8 @@ class VidCorn(CBaseHostClass, CaptchaHelper):
         self.HTTP_HEADER = self.cm.getDefaultHeader(browser='chrome')
         self.defaultParams = {'header':self.HTTP_HEADER, 'use_cookie': True, 'load_cookie': True, 'save_cookie': True, 'cookiefile': self.COOKIE_FILE}
 
-        self.MAIN_URL    = 'https://vidcorn.org/'
-        self.DEFAULT_ICON_URL = 'https://vidcorn.org/assets/img/favicons/android-chrome-384x384.png'
+        self.MAIN_URL    = 'https://vidcorn.tv/'
+        self.DEFAULT_ICON_URL = 'https://vidcorn.tv/assets/img/favicons/android-chrome-384x384.png'
 
         self.filters = []
         self.cacheLinks = {}
