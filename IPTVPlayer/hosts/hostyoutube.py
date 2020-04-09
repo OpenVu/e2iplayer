@@ -1,17 +1,4 @@
-# -*- coding: utf-8 -*-
-
-#
-#
-# @Codermik release, based on @Samsamsam's E2iPlayer public.
-# Released with kind permission of Samsamsam.
-# All code developed by Samsamsam is the property of the Samsamsam and the E2iPlayer project,  
-# all other work is Â© E2iStream Team, aka Codermik.  TSiPlayer is Â© Rgysoft, his group can be
-# found here:  https://www.facebook.com/E2TSIPlayer/
-#
-# https://www.facebook.com/e2iStream/
-#
-#
-
+﻿# -*- coding: utf-8 -*-
 
 ###################################################
 # LOCAL import
@@ -45,6 +32,7 @@ def GetConfigList():
     optionList.append(getConfigListEntry(_("Video format:"), config.plugins.iptvplayer.ytformat))
     optionList.append(getConfigListEntry(_("Default video quality:"), config.plugins.iptvplayer.ytDefaultformat))
     optionList.append(getConfigListEntry(_("Use default video quality:"), config.plugins.iptvplayer.ytUseDF))
+    optionList.append(getConfigListEntry(_("Age-gate bypass:"), config.plugins.iptvplayer.ytAgeGate))
     # temporary, the ffmpeg must be in right version to be able to merge file without transcoding
     # checking should be moved to setup
     if IsExecutable('ffmpeg'): 
@@ -52,7 +40,6 @@ def GetConfigList():
         if config.plugins.iptvplayer.ytShowDash.value != 'false':
             optionList.append(getConfigListEntry(_("Allow VP9 codec:"), config.plugins.iptvplayer.ytVP9))
     return optionList
-
 ###################################################
 ###################################################
 
