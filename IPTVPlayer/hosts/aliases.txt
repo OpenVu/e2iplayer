@@ -220,6 +220,7 @@
 "hostyifytv": "https://ymovies.tv/",
 "hostyoutube": "https://youtube.com/",
 "hostzalukajcom": "http://zalukaj.com/",
+"hostzalukajvip": "https://zalukaj.vip/",
 "hostzdfmediathek": "ZDFmediathek",
 }
 
