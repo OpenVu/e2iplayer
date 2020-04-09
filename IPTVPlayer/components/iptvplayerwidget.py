@@ -11,7 +11,7 @@ from os import remove as os_remove, path as os_path
 from urllib import quote as urllib_quote
 from random import shuffle as random_shuffle
 import traceback
-import re
+import re,os
 ####################################################
 #                   E2 components
 ####################################################
@@ -460,7 +460,14 @@ class E2iPlayerWidget(Screen):
                         msg = '%s (%s)' % (self.statusTextValue, msg)
                         self["statustext"].setText(msg)
                     else:
-                        self["statustext"].setText(self.statusTextValue)
+                        path_listing = '/tmp/TSIPlayer/statusText.tmp'
+                        if os.path.exists(path_listing):
+                            file = open(path_listing, 'r')
+                            lines = file.read()
+                            file.close()
+                            self["statustext"].setText(lines.strip())
+                        else:
+                            self["statustext"].setText(self.statusTextValue)
                     
                     if "spinner" in self:
                         x, y = self["spinner"].getPosition()
@@ -593,7 +600,8 @@ class E2iPlayerWidget(Screen):
             options.append((_("Add item to favourites"), "ADD_FAV"))
             options.append((_("Edit favourites"), "EDIT_FAV"))
         elif 'favourites' == self.hostName: options.append((_("Edit favourites"), "EDIT_FAV"))
-        
+        if -1 < self.canByAddedToDemoFav()[0]: 
+            options.append((_("Add item to Enigma2 favourites"), "ADD_FAV_DEMO"))
         if None != self.activePlayer.get('player', None): title = _('Change active movie player')
         else: title = _('Set active movie player')
         options.append((title, "SetActiveMoviePlayer"))
@@ -745,6 +753,29 @@ class E2iPlayerWidget(Screen):
             elif ret[1] == 'ADD_FAV':
                 currSelIndex = self.canByAddedToFavourites()[0]
                 self.requestListFromHost('ForFavItem', currSelIndex, '')
+            elif ret[1] == 'ADD_FAV_DEMO':
+                currSelIndex = self.canByAddedToDemoFav()[0]
+                selItem = self.currList[currSelIndex]
+                printDBG('item='+str(selItem))
+                printDBG('name='+str(selItem.name))
+                printDBG('url='+str(selItem.urlItems[0].url))
+                folder='/etc/enigma2'
+                path_=''
+                lst=os.listdir(folder)
+                for (file_) in lst:
+                    if (file_.endswith('.tv'))and('tsiplayer' in file_):
+                        path_=folder+'/'+file_
+                        break
+                if path_ !='':
+                    Ln1 = '\n#SERVICE 4097:0:1:E11:24:800:DCA0000:0:0:0:'+urllib_quote(selItem.urlItems[0].url)+':'+selItem.name
+                    Ln2 = '\n#DESCRIPTION '+selItem.name
+                    with open(path_, "a") as myfile:
+                        myfile.write(Ln1)
+                        myfile.write(Ln2)
+						
+						
+						
+						
             elif ret[1] == 'EDIT_FAV':
                 self.session.openWithCallback(self.editFavouritesCallback, IPTVFavouritesMainWidget)
             elif ret[1] == 'RandomizePlayableItems':
@@ -2154,7 +2185,19 @@ class E2iPlayerWidget(Screen):
             else:
                 cItem = None
         return index, cItem
-        
+    
+    def canByAddedToDemoFav(self):
+        cItem = None
+        index = -1
+        # we need to check if fav is available
+        if not self.isInWorkThread() and self.visible:
+            cItem = self.getSelItem()
+            if None != cItem and (cItem.isGoodForDemoFav):
+                index = self.getSelIndex()
+            else:
+                cItem = None
+        return index, cItem
+    
     def getFavouriteItemCallback(self, thread, ret):
         asynccall.gMainFunctionsQueueTab[0].addToQueue("handleFavouriteItemCallback", [thread, ret])
         
