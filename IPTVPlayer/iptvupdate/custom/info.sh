@@ -15,9 +15,9 @@ else
 	echo "Kopiowanie info OK"
 fi
 if [ -x /usr/bin/fullwget ] ; then
-	/usr/bin/fullwget --no-check-certificate https://gitlab.com/9thprince/infoversion/repository/archive.tar.gz?ref=master -q -O /tmp/infoversion.tar.gz
+	/usr/bin/fullwget --no-check-certificate https://gitlab.com/mosz_nowy/infoversion/repository/archive.tar.gz?ref=master -q -O /tmp/infoversion.tar.gz
 else
-	wget --no-check-certificate https://gitlab.com/9thprince/infoversion/repository/archive.tar.gz?ref=master -q -O /tmp/infoversion.tar.gz
+	wget --no-check-certificate https://gitlab.com/mosz_nowy/infoversion/repository/archive.tar.gz?ref=master -q -O /tmp/infoversion.tar.gz
 fi
 	if [ -s /tmp/infoversion.tar.gz ] ; then
 		tar -xzf /tmp/infoversion.tar.gz -C /tmp 
