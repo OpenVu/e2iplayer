@@ -67,7 +67,8 @@ class CDisplayListItem:
                 possibleTypesOfSearch = None, \
                 pinLocked = False, \
                 isGoodForFavourites = False, \
-                isWatched = False, \
+                isGoodForDemoFav = False, \
+				isWatched = False, \
                 textColor = '', \
                 pinCode = ''):
                 
@@ -91,6 +92,9 @@ class CDisplayListItem:
         if isGoodForFavourites: self.isGoodForFavourites = True
         else: self.isGoodForFavourites = False
         
+        if isGoodForDemoFav: self.isGoodForDemoFav = True
+        else: self.isGoodForDemoFav = False
+		
         if isWatched: self.isWatched = True
         else: self.isWatched = False
         
@@ -595,6 +599,7 @@ class CHostBase(IHost):
         icon        =  self.getFullIconUrl( cItem.get('icon', '') )
         if icon == '': icon = self.getDefaulIcon(cItem)
         isGoodForFavourites = cItem.get('good_for_fav', False)
+        isGoodForDemoFav = cItem.get('demo', False)
         pinLocked = cItem.get('pin_locked', False)
         pinCode   = cItem.get('pin_code', '')
         textColor = cItem.get('text_color', '')
@@ -608,7 +613,8 @@ class CHostBase(IHost):
                                     possibleTypesOfSearch = possibleTypesOfSearch,
                                     pinLocked = pinLocked,
                                     isGoodForFavourites = isGoodForFavourites,
-                                    textColor = textColor,
+                                    isGoodForDemoFav = isGoodForDemoFav,
+									textColor = textColor,
                                     pinCode = pinCode)
     # end converItem
 
