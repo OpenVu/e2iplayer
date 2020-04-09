@@ -1,3 +1,4 @@
+# Embedded file name: /IPTVPlayer/hosts/hostsagasclasicas.py
 from Plugins.Extensions.IPTVPlayer.components.iptvplayerinit import TranslateTXT as _
 from Plugins.Extensions.IPTVPlayer.components.ihost import CHostBase, CBaseHostClass, CDisplayListItem, RetHost, CUrlItem
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG, GetLogoDir
@@ -22,62 +23,30 @@ def GetConfigList():
 def gettytul():
     return _('Sagas Clasicas')
 
+
 class Urllist(CBaseHostClass):
     URLLIST_FILE = 'urllist.estrenos'
-    URRLIST_STREAMS = 'urllist.saga'
+    URRLIST_STREAMS = 'urllist.stream'
     URRLIST_USER = 'urllist.disney'
-    URRLIST_IPTV = 'urllist.clemente'
-    URRLIST_ANIME = 'urllist.anime'
-    URRLIST_CINE4K = 'urllist.cine4k'
-    URRLIST_SERIECOLOMBO = 'urllist.seriecolombo'
-    URRLIST_NETFLIX = 'urllist.netflix'
-    URRLIST_CULTO = 'urllist.culto'
-    URRLIST_MARVEL = 'urllist.marvel'
-    URRLIST_BOND = 'urllist.bond'
 
     def __init__(self):
         printDBG('Urllist.__init__')
         path = config.plugins.iptvplayer.Sciezkaurllist.value + '/'
 
-#       self.MAIN_GROUPED_TAB = [{'category': 'all',
-#         'title': _('All in one'),
-#         'desc': _('Links from all files without categories'),
-#         'icon': 'https://mikeharwood.files.wordpress.com/2011/01/all-in-one-logo-on-blue.jpg'}]
+#        self.MAIN_GROUPED_TAB = [{'category': 'all',
+#          'title': _('All in one'),
+#          'desc': _('Links from all files without categories'),
+#          'icon': 'https://mikeharwood.files.wordpress.com/2011/01/all-in-one-logo-on-blue.jpg'}]
         self.MAIN_GROUPED_TAB = ([{'category': Urllist.URLLIST_FILE,
+          #'title': _('Videos'),
+          #'desc': _('Links from the file %s') % normpath(path + 'urllist.txt'),
+          #'icon': 'https://st2.depositphotos.com/3000465/12281/v/950/depositphotos_122812390-stock-illustration-video-play-sign-with-letter.jpg'}, {'category': Urllist.URRLIST_STREAMS,
           'title': _('Cine Estrenos'),
           'desc': _('Links from the file %s') % normpath(path + 'urllist.estrenos'),
-          'icon': 'http://elrinconenigma2.hol.es/E2iplayericons/cineestrenos.jpg'}, {'category': Urllist.URRLIST_STREAMS,
-          'title': _('Sagas Clasicas'),
-          'desc': _('Links from the file %s') % normpath(path + 'urllist.saga'),
-          'icon': 'http://elrinconenigma2.hol.es/E2iplayericons/sagasclasicas135.png'}, {'category': Urllist.URRLIST_USER,
+          'icon': 'http://elrinconenigma2.hol.es/E2iplayericons/cineestrenos.jpg'}, {'category': Urllist.URRLIST_USER,
           'title': _('Clasicos Disney'),
           'desc': _('Links from the file %s') % normpath(path + 'urllist.disney'),
-          'icon': 'http://elrinconenigma2.hol.es/E2iplayericons/Disney_logo.jpg'}, {'category': Urllist.URRLIST_IPTV,
-          'title': _('Clasicos Adultos'),
-          'desc': _('Links from the file %s') % normpath(path + 'urllist.clemente'),
-          'icon': 'http://elrinconenigma2.hol.es/E2iplayericons/sca.jpg'}, {'category': Urllist.URRLIST_ANIME,
-          'title': _('Peliculas Anime'),
-          'desc': _('Links from the file %s') % normpath(path + 'urllist.anime'),
-          'icon': 'http://elrinconenigma2.hol.es/E2iplayericons/anime.jpg'}, {'category': Urllist.URRLIST_CINE4K,
-          'title': _('Cine Mejor Calidad (FHD&4K)'),
-          'desc': _('Links from the file %s') % normpath(path + 'urllist.cine4k'),
-          'icon': 'http://elrinconenigma2.hol.es/E2iplayericons/sagasclasicas135.png'}, {'category': Urllist.URRLIST_SERIECOLOMBO,
-          'title': _('Serie Colombo (Tributo al Maestro)'),
-          'desc': _('Links from the file %s') % normpath(path + 'urllist.seriecolombo'),
-          'icon': 'http://elrinconenigma2.hol.es/E2iplayericons/sagasclasicas135.png'}, {'category': Urllist.URRLIST_NETFLIX,
-          'title': _('Cine Netflix Hbo y Amazon Prime'),
-          'desc': _('Links from the file %s') % normpath(path + 'urllist.netflix'),
-          'icon': 'http://elrinconenigma2.hol.es/E2iplayericons/sagasclasicas135.png'}, {'category': Urllist.URRLIST_CULTO,
-          'title': _('Cine De Culto'),
-          'desc': _('Links from the file %s') % normpath(path + 'urllist.culto'),
-          'icon': 'http://elrinconenigma2.hol.es/E2iplayericons/sagasclasicas135.png'}, {'category': Urllist.URRLIST_MARVEL,
-          'title': _('Saga Peliculas Marvel (EL INFINITO)'),
-          'desc': _('Links from the file %s') % normpath(path + 'urllist.marvel'),
-          'icon': 'http://elrinconenigma2.hol.es/E2iplayericons/sagasclasicas135.png'}, {'category': Urllist.URRLIST_BOND,
-          'title': _('Saga James Bond 007'),
-          'desc': _('Links from the file %s') % normpath(path + 'urllist.bond'),
-          'icon': 'http://elrinconenigma2.hol.es/E2iplayericons/sagasclasicas135.png'}])
-
+          'icon': 'http://elrinconenigma2.hol.es/E2iplayericons/Disney_logo.jpg'}])
         CBaseHostClass.__init__(self)
         self.currFileHost = None
         return
@@ -101,15 +70,7 @@ class Urllist(CBaseHostClass):
         if cItem['category'] in ['all',
          Urllist.URLLIST_FILE,
          Urllist.URRLIST_STREAMS,
-         Urllist.URRLIST_USER,
-         Urllist.URRLIST_IPTV,
-         Urllist.URRLIST_ANIME,
-         Urllist.URRLIST_CINE4K,
-         Urllist.URRLIST_SERIECOLOMBO,
-         Urllist.URRLIST_NETFLIX,
-         Urllist.URRLIST_CULTO,
-         Urllist.URRLIST_MARVEL,
-         Urllist.URRLIST_BOND]:
+         Urllist.URRLIST_USER]:
             self.currFileHost = IPTVFileHost()
             if cItem['category'] in ['all', Urllist.URLLIST_FILE]:
                 self.currFileHost.addFile(filespath + Urllist.URLLIST_FILE, encoding='utf-8')
@@ -117,22 +78,6 @@ class Urllist(CBaseHostClass):
                 self.currFileHost.addFile(filespath + Urllist.URRLIST_STREAMS, encoding='utf-8')
             if cItem['category'] in ['all', Urllist.URRLIST_USER]:
                 self.currFileHost.addFile(filespath + Urllist.URRLIST_USER, encoding='utf-8')
-            if cItem['category'] in ['all', Urllist.URRLIST_IPTV]:
-                self.currFileHost.addFile(filespath + Urllist.URRLIST_IPTV, encoding='utf-8')
-            if cItem['category'] in ['all', Urllist.URRLIST_ANIME]:
-                self.currFileHost.addFile(filespath + Urllist.URRLIST_ANIME, encoding='utf-8')
-            if cItem['category'] in ['all', Urllist.URRLIST_CINE4K]:
-                self.currFileHost.addFile(filespath + Urllist.URRLIST_CINE4K, encoding='utf-8')
-            if cItem['category'] in ['all', Urllist.URRLIST_SERIECOLOMBO]:
-                self.currFileHost.addFile(filespath + Urllist.URRLIST_SERIECOLOMBO, encoding='utf-8')
-            if cItem['category'] in ['all', Urllist.URRLIST_NETFLIX]:
-                self.currFileHost.addFile(filespath + Urllist.URRLIST_NETFLIX, encoding='utf-8')
-            if cItem['category'] in ['all', Urllist.URRLIST_CULTO]:
-                self.currFileHost.addFile(filespath + Urllist.URRLIST_CULTO, encoding='utf-8')
-            if cItem['category'] in ['all', Urllist.URRLIST_MARVEL]:
-                self.currFileHost.addFile(filespath + Urllist.URRLIST_MARVEL, encoding='utf-8')
-            if cItem['category'] in ['all', Urllist.URRLIST_BOND]:
-                self.currFileHost.addFile(filespath + Urllist.URRLIST_BOND, encoding='utf-8')
             if 'all' != cItem['category'] and groupList:
                 tmpList = self.currFileHost.getGroups(sortList)
                 for item in tmpList:
