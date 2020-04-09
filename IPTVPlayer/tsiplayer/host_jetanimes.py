@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,tscolor
 from Plugins.Extensions.IPTVPlayer.tools.iptvtypes import strwithmeta
 from Plugins.Extensions.IPTVPlayer.libs import ph
 from Plugins.Extensions.IPTVPlayer.libs.e2ijson import loads as json_loads
@@ -22,7 +22,7 @@ def getinfo():
 	info_['name']='Jetanimes.Com'
 	info_['version']='1.0 05/10/2019'
 	info_['dev']='RGYSoft'
-	info_['cat_id']='302'
+	info_['cat_id']='104'
 	info_['desc']='Animes et Mangas'
 	info_['update']='New Host'		
 	info_['icon']='https://i.ibb.co/zJh34S1/web-horizontal.png'
@@ -89,7 +89,7 @@ class TSIPHost(TSCBaseHostClass):
 		self.addDir({'import':cItem['import'],'category' : 'host2','title':'En Cours'  ,'url':self.MAIN_URL+'/episodes/'    ,'icon':cItem['icon'],'mode':'31','sub_mode':2})
 		self.addDir({'import':cItem['import'],'category' : 'host2','title':'FILMS Animes'  ,'url':self.MAIN_URL+'/films/'    ,'icon':cItem['icon'],'mode':'31'})
 		self.addDir({'import':cItem['import'],'category' : 'host2','title':'ANIMES VF/Vostfr'  ,'url':self.MAIN_URL+'/serie/'    ,'icon':cItem['icon'],'mode':'31'})
-		self.addDir({'import':cItem['import'],'category' : 'host2','title':'\c0000????Par Genres|Années' ,'icon':cItem['icon'],'mode':'21'})
+		self.addDir({'import':cItem['import'],'category' : 'host2','title':tscolor('\c0000????')+'Par Genres|Années' ,'icon':cItem['icon'],'mode':'21'})
 		self.addDir({'import':cItem['import'],'category':'search','title': _('Search'), 'search_item':True,'page':1,'hst':'tshost','icon':cItem['icon']})
 
 
@@ -97,14 +97,14 @@ class TSIPHost(TSCBaseHostClass):
 		url   = self.MAIN_URL
 		sts, data = self.getPage(url)
 		if sts:
-			self.addMarker({'title':'\c0000????Par Genres'  ,'icon':cItem['icon']})
+			self.addMarker({'title':tscolor('\c0000????')+'Par Genres'  ,'icon':cItem['icon']})
 			Liste_els = re.findall('<ul class="genres(.*?)</ul', data, re.S)
 			if 	Liste_els:
 				Liste_els = re.findall('<li.*?href="(.*?)">(.*?)<', Liste_els[0], re.S)
 				for (url,titre) in Liste_els:
 					self.addDir({'import':cItem['import'],'category' : 'host2','title':ph.clean_html(titre)  ,'url':url    ,'icon':cItem['icon'],'mode':'31'})
 
-			self.addMarker({'title':'\c0000????Par Années'  ,'icon':cItem['icon']})	
+			self.addMarker({'title':tscolor('\c0000????')+'Par Années'  ,'icon':cItem['icon']})	
 			Liste_els = re.findall('<ul class="releases(.*?)</ul', data, re.S)
 			if 	Liste_els:
 				Liste_els = re.findall('<li.*?href="(.*?)">(.*?)<', Liste_els[0], re.S)
@@ -126,8 +126,8 @@ class TSIPHost(TSCBaseHostClass):
 				for (x1,image,titre,rate,x2,qual,url,desc1) in Liste_els:
 					if 'featured' not in x1:
 						image=strwithmeta(image,{'Cookie':cookieHeader, 'User-Agent':self.USER_AGENT})
-						titre = ph.clean_html(titre) + ' \c00????00'+ph.clean_html(qual)
-						desc ='IMDB:'+ ' \c00????00'+ph.clean_html(rate)
+						titre = ph.clean_html(titre) + ' '+tscolor('\c00????00')+ph.clean_html(qual)
+						desc ='IMDB: '+ tscolor('\c00????00')+ph.clean_html(rate)
 						self.addDir({'import':cItem['import'],'category' : 'host2','title':ph.clean_html(titre)  ,'url':url ,'EPG':True,'good_for_fav':True,'hst':'tshost','desc':desc,'icon':image,'mode':'32'})
 						i=i+1
 				if i>28:
@@ -142,8 +142,8 @@ class TSIPHost(TSCBaseHostClass):
 				i=0	
 				for (image,titre,url,x1,x2,qual,x3,x4,date_) in Liste_els:
 					image=strwithmeta(image,{'Cookie':cookieHeader, 'User-Agent':self.USER_AGENT})
-					titre = ph.clean_html(titre) + ' \c00????00('+ph.clean_html(x4)+')'
-					desc ='\c00????00'+ph.clean_html(qual)+' \c00??????| \c0000????'+ph.clean_html(date_)
+					titre = ph.clean_html(titre) + ' '+tscolor('\c00????00')+'('+ph.clean_html(x4)+')'
+					desc =tscolor('\c00????00')+ph.clean_html(qual)+' '+tscolor('\c00??????')+'| '+tscolor('\c0000????')+ph.clean_html(date_)
 					self.addDir({'import':cItem['import'],'category' : 'host2','title':ph.clean_html(titre)  ,'url':url ,'EPG':True,'good_for_fav':True,'hst':'tshost','desc':desc,'icon':image,'mode':'32'})
 					i=i+1
 				if i>28:
@@ -159,8 +159,8 @@ class TSIPHost(TSCBaseHostClass):
 				Liste_els = re.findall("class='imagen.*?src='(.*?)'.*?numerando'>(.*?)<.*?href='(.*?)'>(.*?)<.*?date'>(.*?)<", data, re.S)
 				for (image,titre,url,x1,desc) in Liste_els:
 					image=strwithmeta(image,{'Cookie':cookieHeader, 'User-Agent':self.USER_AGENT})
-					titre = ph.clean_html(titre) + ' \c00????00'+ph.clean_html(x1)
-					desc ='\c00????00'+ph.clean_html(desc)
+					titre = ph.clean_html(titre) + ' '+tscolor('\c00????00')+ph.clean_html(x1)
+					desc =tscolor('\c00????00')+ph.clean_html(desc)
 					self.addVideo({'import':cItem['import'],'category' : 'host2','title':titre  ,'url':url ,'desc':desc,'icon':image,'EPG':True,'good_for_fav':True,'hst':'tshost'})
 					
 	def SearchResult(self,str_ch,page,extra):
@@ -173,7 +173,7 @@ class TSIPHost(TSCBaseHostClass):
 			for (url,image,titre,type_,meta_,desc) in Liste_els:
 				image=strwithmeta(image,{'Cookie':cookieHeader, 'User-Agent':self.USER_AGENT})
 				desc= ph.clean_html(meta_.replace('</span><span',' |<'))+'\\n'+ph.clean_html(desc)
-				titre = ph.clean_html(titre)+ ' \c00????00('+type_+')'
+				titre = ph.clean_html(titre)+ ' '+tscolor('\c00????00')+'('+type_+')'
 				self.addDir({'import':extra,'category' : 'host2','title':titre,'desc':desc,'url':url,'icon':image,'hst':'tshost','good_for_fav':True,'EPG':True,'mode':'32'})
 
 

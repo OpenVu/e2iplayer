@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname,cryptoJS_AES_decrypt
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname,cryptoJS_AES_decrypt,tscolor
 from Plugins.Extensions.IPTVPlayer.libs.e2ijson import loads as json_loads
 from Plugins.Extensions.IPTVPlayer.tools.iptvtypes import strwithmeta
 from Plugins.Extensions.IPTVPlayer.libs.urlparserhelper import getDirectM3U8Playlist
@@ -15,13 +15,13 @@ import hashlib
 def getinfo():
 	info_={}
 	info_['name']='Vumoo.To'
-	info_['version']='1.1 11/09/2019'
+	info_['version']='1.2 08/03/2019'
 	info_['dev']='RGYSoft'
 	info_['cat_id']='401'#'401'
 	info_['desc']='Films & Series'
 	info_['icon']='http://vumoo.to/images/logo.png'
 	info_['recherche_all']='1'
-	info_['update']='Fix search'
+	info_['update']='Fix Links'
 	return info_
 	
 	
@@ -68,7 +68,7 @@ class TSIPHost(TSCBaseHostClass):
 					url=self.MAIN_URL+url
 				self.addDir({'import':cItem['import'],'EPG':True,'category' : 'host2','url': url,'title':titre,'desc':'','icon':image,'hst':'tshost','good_for_fav':True,'mode':'31'})	
 			if i>23:
-				self.addDir({'import':cItem['import'],'title':'\c0000????Next Page','page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
+				self.addDir({'import':cItem['import'],'title':tscolor('\c0000????')+'Next Page','page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
 
 	
 	
@@ -80,10 +80,10 @@ class TSIPHost(TSCBaseHostClass):
 			data_list = re.findall('class="tab-pane.*?id="(.*?)".*?<ul(.*?)</ul', data, re.S)
 			for (server,data1) in data_list:
 				server=server.replace('server-','Server ')
-				self.addMarker({'title':'\c00????00'+server,'icon':cItem['icon']} )
+				self.addMarker({'title':tscolor('\c00????00')+server,'icon':cItem['icon']} )
 				data_list = re.findall('embedUrl="(.*?)">(.*?)<', data1, re.S)
 				for (Url,titre) in data_list:
-					data_h={'name':titre, 'url':'hst#tshost#'+Url, 'need_resolve':1}
+					data_h={'name':titre, 'url':'hst#tshost#'+Url+'|'+URL, 'need_resolve':1}
 					self.addVideo({'import':cItem['import'],'category' : 'host2','url': Url,'title':titre,'desc':'','icon':cItem['icon'],'hst':'tshost','good_for_fav':True,'data_h':data_h})	
 	
 	def SearchResult(self,str_ch,page,extra):
@@ -96,7 +96,7 @@ class TSIPHost(TSCBaseHostClass):
 				url      = elm['data']['href']
 				image    = elm['data']['image']		
 				typ_     = elm['data']['type']
-				titre=titre+' \c0000????('+typ_+')'
+				titre=titre+' '+tscolor('\c0000????')+'('+typ_+')'
 				if not url.startswith('http'):
 					url=self.MAIN_URL+url			
 				self.addDir({'import':extra,'category' : 'host2','url': url,'title':titre,'desc':'','icon':image,'hst':'tshost','EPG':True,'good_for_fav':True,'mode':'31'})	
@@ -111,8 +111,19 @@ class TSIPHost(TSCBaseHostClass):
 
 	def getVideos(self,videoUrl):
 		urlTab = []	
-		sts, data = self.getPage(videoUrl)
-		if sts:
+		videoUrl,referer = videoUrl.split('|')
+		# New methode
+		if 'meomeo' in videoUrl:
+			self.defaultParams['header']['Referer']=referer
+			sts, data = self.getPage(videoUrl)
+			if sts:			
+				printDBG('data='+data)
+				Liste_els_5 = re.findall('"playlist":.*?"file":"(.*?)"', data, re.S)
+				if Liste_els_5:
+					url_1=Liste_els_5[0]
+					if url_1.startswith('//'): url_1 = 'https:'+url_1
+					urlTab.append((url_1,'3'))				
+		# Old methode
 			Liste_els_3 = re.findall('embedVal="(.+?)"', data, re.S)	
 			if Liste_els_3:
 				encrypted = base64.b64decode(Liste_els_3[0])

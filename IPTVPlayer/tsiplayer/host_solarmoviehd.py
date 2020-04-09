@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname,tscolor
 from Plugins.Extensions.IPTVPlayer.libs.e2ijson import loads as json_loads
 from Plugins.Extensions.IPTVPlayer.tools.iptvtypes import strwithmeta
 from Plugins.Extensions.IPTVPlayer.libs.urlparserhelper import unpackJSPlayerParams, SAWLIVETV_decryptPlayerParams
@@ -43,7 +43,7 @@ class TSIPHost(TSCBaseHostClass):
 		Cat_TAB = [
 					{'category':hst,'title': 'MOVIES',  'mode':'20'},
 					{'category':hst,'title': 'TV-SERIES','url': self.MAIN_URL+'/movie/filter/series/latest/all/all/all/all/all/', 'mode':'30'},
-					{'category':hst,'title': '\c00????00Filter', 'mode':'21'},													
+					{'category':hst,'title': tscolor('\c00????00')+'Filter', 'mode':'21'},													
 					{'category':'search','name':'search','title': _('Search'), 'search_item':True,'hst':'tshost'},
 					]
 		self.listsTab(Cat_TAB, {'import':cItem['import'],'icon':img_})				
@@ -56,11 +56,11 @@ class TSIPHost(TSCBaseHostClass):
 		if sts:
 			films_list = re.findall('class="sub-menu">(.*?)</ul', data, re.S)		
 			if films_list:
-				self.addMarker({'title':'\c0000??00'+'Genre','desc':'','icon':cItem['icon']})
+				self.addMarker({'title':tscolor('\c0000??00')+'Genre','desc':'','icon':cItem['icon']})
 				films_list1 = re.findall('<li>.*?href="(.*?)".*?title.*?">(.*?)<', films_list[0], re.S)
 				for (url,titre) in films_list1:
 					self.addDir({'import':cItem['import'],'category' : 'host2','url': url.replace('.html','/'),'title':titre,'desc':'','icon':cItem['icon'],'hst':'tshost','mode':'30'})		
-				self.addMarker({'title':'\c0000??00'+'Country','desc':'','icon':cItem['icon']})		
+				self.addMarker({'title':tscolor('\c0000??00')+'Country','desc':'','icon':cItem['icon']})		
 				films_list1 = re.findall('<li>.*?href="(.*?)".*?title.*?">(.*?)<', films_list[-1], re.S)
 				for (url,titre) in films_list1:
 					self.addDir({'import':cItem['import'],'category' : 'host2','url': url.replace('.html','/'),'title':titre,'desc':'','icon':cItem['icon'],'hst':'tshost','mode':'30'})	
@@ -76,13 +76,13 @@ class TSIPHost(TSCBaseHostClass):
 				films_list = re.findall('<ul class="fc(.*?)</ul', data, re.S)		
 				if films_list:
 					data=films_list
-					self.addMarker({'title':'\c0000??00'+'Film Type:','desc':'','icon':cItem['icon']})		
+					self.addMarker({'title':tscolor('\c0000??00')+'Film Type:','desc':'','icon':cItem['icon']})		
 					elm_list = re.findall('<li>.*?value="(.*?)".*?">(.*?)<', data[1], re.S)
 					for (url1,titre) in elm_list:
 						urlo=url+url1+'/'
 						self.addDir({'import':cItem['import'],'count':1,'data':data,'category' : 'host2','url': urlo,'title':titre.strip(),'desc':urlo,'icon':cItem['icon'],'hst':'tshost','mode':'21'})	
 		elif count==1:			
-			self.addMarker({'title':'\c0000??00'+'Sort by:','desc':'','icon':cItem['icon']})		
+			self.addMarker({'title':tscolor('\c0000??00')+'Sort by:','desc':'','icon':cItem['icon']})		
 			elm_list = re.findall('<li>.*?href.*?movies/(.*?)/.*?">(.*?)</li>', data[0], re.S)
 			for (url1,titre) in elm_list:
 				urlo=url+url1+'/'
@@ -90,7 +90,7 @@ class TSIPHost(TSCBaseHostClass):
 				self.addDir({'import':cItem['import'],'count':2,'data':data,'category' : 'host2','url': urlo,'title':titre.strip(),'desc':urlo,'icon':cItem['icon'],'hst':'tshost','mode':'21'})	
 
 		elif count==2:			
-			self.addMarker({'title':'\c0000??00'+'Genre:','desc':'','icon':cItem['icon']})		
+			self.addMarker({'title':tscolor('\c0000??00')+'Genre:','desc':'','icon':cItem['icon']})		
 			elm_list = re.findall('<li>.*?value="(.*?)".*?>(.*?)<', data[3], re.S)
 			self.addDir({'import':cItem['import'],'count':3,'data':data,'category' : 'host2','url': url+'all/','title':'All','desc':url+'all/','icon':cItem['icon'],'hst':'tshost','mode':'21'})			
 			for (url1,titre) in elm_list:
@@ -98,7 +98,7 @@ class TSIPHost(TSCBaseHostClass):
 				self.addDir({'import':cItem['import'],'count':3,'data':data,'category' : 'host2','url': urlo,'title':titre.strip(),'desc':urlo,'icon':cItem['icon'],'hst':'tshost','mode':'21'})	
 
 		elif count==3:			
-			self.addMarker({'title':'\c0000??00'+'Country:','desc':'','icon':cItem['icon']})		
+			self.addMarker({'title':tscolor('\c0000??00')+'Country:','desc':'','icon':cItem['icon']})		
 			elm_list = re.findall('<li>.*?value="(.*?)".*?>(.*?)<', data[4], re.S)
 			self.addDir({'import':cItem['import'],'count':4,'data':data,'category' : 'host2','url': url+'all/','title':'All','desc':url+'all/','icon':cItem['icon'],'hst':'tshost','mode':'21'})			
 			for (url1,titre) in elm_list:
@@ -106,14 +106,14 @@ class TSIPHost(TSCBaseHostClass):
 				self.addDir({'import':cItem['import'],'count':4,'data':data,'category' : 'host2','url': urlo,'title':titre.strip(),'desc':urlo,'icon':cItem['icon'],'hst':'tshost','mode':'21'})	
 
 		elif count==4:			
-			self.addMarker({'title':'\c0000??00'+'Release:','desc':'','icon':cItem['icon']})		
+			self.addMarker({'title':tscolor('\c0000??00')+'Release:','desc':'','icon':cItem['icon']})		
 			elm_list = re.findall('<li>.*?value="(.*?)".*?>(.*?)<', data[5], re.S)
 			for (url1,titre) in elm_list:
 				urlo=url+url1+'/'
 				self.addDir({'import':cItem['import'],'count':5,'data':data,'category' : 'host2','url': urlo,'title':titre.strip(),'desc':urlo,'icon':cItem['icon'],'hst':'tshost','mode':'21'})	
 
 		elif count==5:			
-			self.addMarker({'title':'\c0000??00'+'Quality:','desc':'','icon':cItem['icon']})		
+			self.addMarker({'title':tscolor('\c0000??00')+'Quality:','desc':'','icon':cItem['icon']})		
 			elm_list = re.findall('<li>.*?value="(.*?)".*?>(.*?)<', data[2], re.S)
 			for (url1,titre) in elm_list:
 				urlo=url+'all/'+url1+'/'
@@ -129,9 +129,9 @@ class TSIPHost(TSCBaseHostClass):
 		if sts:
 			films_list = re.findall('ml-item">.*?href="(.*?)".*?title="(.*?)".*?class="mli-.*?">(.*?)</.*?original="(.*?)"', data, re.S)		
 			for (url,titre,desc,image) in films_list:
-				titre=titre+'\c0000??00 '+ph.clean_html(desc)
+				titre=titre+tscolor('\c0000??00')+' '+ph.clean_html(desc)
 				self.addDir({'import':cItem['import'],'good_for_fav':True,'EPG':True,'category' : 'host2','url': url,'title':titre,'desc':ph.clean_html(desc),'icon':image,'hst':'tshost','mode':'31'})	
-			self.addDir({'import':cItem['import'],'title':'\c0000??00Page '+str(page+1),'page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
+			self.addDir({'import':cItem['import'],'title':tscolor('\c0000??00')+'Page '+str(page+1),'page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
 
 	def showelms(self,cItem):
 		urlo=cItem['url']
@@ -145,9 +145,9 @@ class TSIPHost(TSCBaseHostClass):
 			self.addVideo({'import':cItem['import'],'good_for_fav':True,'category' : 'host2','url': urlo,'title':cItem['title'],'desc':cItem['desc'],'icon':cItem['icon'],'hst':'tshost'} )
 			films_list = re.findall('ml-item">.*?href="(.*?)".*?title="(.*?)".*?class="mli-.*?">(.*?)</.*?original="(.*?)"', data, re.S)
 			if films_list:
-				self.addMarker({'title':'\c00????00You May Also Like','category' : 'host2','icon':img_} )
+				self.addMarker({'title':tscolor('\c00????00')+'You May Also Like','category' : 'host2','icon':img_} )
 				for (url,titre,desc,image) in films_list:
-					titre=titre+'\c0000??00 '+ph.clean_html(desc)
+					titre=titre+tscolor('\c0000??00')+' '+ph.clean_html(desc)
 					self.addVideo({'import':cItem['import'],'good_for_fav':True,'EPG':True,'category' : 'host2','url': url,'title':titre,'desc':ph.clean_html(desc),'icon':image,'hst':'tshost'})	
 
 	def SearchResult(self,str_ch,page,extra):
@@ -156,7 +156,7 @@ class TSIPHost(TSCBaseHostClass):
 		if sts:
 			films_list = re.findall('ml-item">.*?href="(.*?)".*?title="(.*?)".*?class="mli-.*?">(.*?)</.*?original="(.*?)"', data, re.S)		
 			for (url,titre,desc,image) in films_list:
-				titre=titre+'\c0000??00 '+ph.clean_html(desc)
+				titre=titre+tscolor('\c0000??00')+' '+ph.clean_html(desc)
 				self.addDir({'import':extra,'good_for_fav':True,'EPG':True,'category' : 'host2','url': url,'title':titre,'desc':ph.clean_html(desc),'icon':image,'hst':'tshost','mode':'31'})	
 
 

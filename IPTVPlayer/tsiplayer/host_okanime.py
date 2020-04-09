@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,tscolor
 from Plugins.Extensions.IPTVPlayer.libs.e2ijson import loads as json_loads
 import re
 import urllib
@@ -61,7 +61,7 @@ class TSIPHost(TSCBaseHostClass):
 				for (titre,url,image,rate,desc) in films_list:
 					if not url.startswith('http'): url=self.MAIN_URL+url
 					if not image.startswith('http'): image=self.MAIN_URL+image
-					desc='Rating: \c00????00'+ph.clean_html(rate)+'\c00??????\\nGenre: \c00????00'+ph.clean_html('<a'+desc)
+					desc='Rating: '+tscolor('\c00????00')+ph.clean_html(rate)+tscolor('\c00??????')+'\\nGenre: '+tscolor('\c00????00')+ph.clean_html('<a'+desc)
 					self.addDir({'import':cItem['import'],'good_for_fav':True,'EPG':True,'category' : 'host2','url': url,'title':titre,'desc':desc,'icon':image,'hst':'tshost','mode':'31'})	
 			else:
 				films_list0 = re.findall('animes-carousel">(.*?)</ul', data, re.S)	
@@ -103,7 +103,7 @@ class TSIPHost(TSCBaseHostClass):
 			for (url,image,rate,titre) in films_list:
 				if not url.startswith('http'): url=self.MAIN_URL+url
 				if not image.startswith('http'): image=self.MAIN_URL+image
-				desc='Rating: \c00????00'+ph.clean_html(rate)
+				desc='Rating: '+tscolor('\c00????00')+ph.clean_html(rate)
 				self.addDir({'import':extra,'good_for_fav':True,'category' : 'host2','url': url,'title':titre,'desc':desc,'icon':image,'hst':'tshost','mode':'31'})	
 
 

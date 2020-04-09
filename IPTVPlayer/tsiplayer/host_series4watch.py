@@ -86,7 +86,7 @@ class TSIPHost(TSCBaseHostClass):
 				desc=desc1+ph.clean_html(inf2)
 				titre = ph.clean_html(name_eng)
 				titre = titre.replace('اونلاين','').replace('كامل','').replace('فيلم','').replace('اون لاين','').strip()
-				self.addVideo({'import':extra,'good_for_fav':True,'EPG':True,'hst':'tshost','category' : 'host2','url': url1,'title':titre,'desc':ph.clean_html(desc),'icon':image})			
+				self.addVideo({'import':extra,'good_for_fav':True,'EPG':True,'hst':'tshost','category' : 'video','url': url1,'title':titre,'desc':ph.clean_html(desc),'icon':image})			
 
 		
 	def get_links(self,cItem): 	
@@ -101,8 +101,10 @@ class TSIPHost(TSCBaseHostClass):
 				url_post = self.MAIN_URL+'/wp-admin/admin-ajax.php'
 				sts, data = self.getPage(url_post,post_data=post_data)
 				if sts:
-					server_data = re.findall('<li.*?src="(.*?)".*?<strong>(.*?)<', data, re.S)
+					server_data = re.findall('<li.*?src="(.*?)".*?<strong>(.*?)<', data,  re.S | re.IGNORECASE)
 					for (url,titre) in server_data:
+						if url.startswith('//'): url = 'http:'+url
+						if 'سيرفر' in titre: titre = self.up.getDomain(url)
 						urlTab.append({'name':titre, 'url':url, 'need_resolve':1})
 		return urlTab
 		

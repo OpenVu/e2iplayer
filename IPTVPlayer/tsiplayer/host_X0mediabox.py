@@ -1,26 +1,27 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname
+from tsiplayer.libs.tstools import TSCBaseHostClass,gethostname,tscolor
 from Plugins.Extensions.IPTVPlayer.libs.e2ijson import loads as json_loads
 from Plugins.Extensions.IPTVPlayer.tools.iptvtypes import strwithmeta
 from Plugins.Extensions.IPTVPlayer.components.recaptcha_v2helper import CaptchaHelper
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.packer import cPacker
+from tsiplayer.libs.packer import cPacker
 ###################################################
 
 import re
 import base64
+import difflib
 
 def getinfo():
 	info_={}
-	info_['name']='MediaBox HD (Android App)'
-	info_['version']='1.2 21/09/2019'
+	info_['name']='MediaBox HD'
+	info_['version']='2.0 23/11/2019'
 	info_['dev']='RGYSoft'
 	info_['cat_id']='401'
 	info_['desc']='Watch Movies & TV shows'
 	info_['icon']='https://i.ibb.co/HGnvGvy/Screen-Shot-2018-10-08-at-3-39-11-PM.png'
 	info_['recherche_all']='1'
-	info_['update']='Add Person search and add Cast in Movies section'
+	info_['update']='Add Arabic links'
 	return info_
 	
 	
@@ -48,7 +49,7 @@ class TSIPHost(TSCBaseHostClass,CaptchaHelper):
 		self.addDir({'import':cItem['import'],'category' : 'host2','title':'MENU','desc':'','icon':cItem['icon'],'hst':'tshost','mode':'20'})	
 		self.addDir({'import':cItem['import'],'category' : 'host2','title':'Movies','url': '/movies/XXVV?genre=&sort=trending','desc':'','icon':cItem['icon'],'hst':'tshost','mode':'30'})	
 		self.addDir({'import':cItem['import'],'category' : 'host2','title':'TV Shows','url': '/shows/XXVV?genre=&sort=trending','desc':'','icon':cItem['icon'],'hst':'tshost','mode':'30'})	
-		self.addDir({'import':cItem['import'],'category' : 'host2','title':'\c00????00Filter','desc':'','icon':cItem['icon'],'hst':'tshost','mode':'21'})	
+		self.addDir({'import':cItem['import'],'category' : 'host2','title':tscolor('\c00????00')+'Filter','desc':'','icon':cItem['icon'],'hst':'tshost','mode':'21'})	
 		self.addDir({'import':cItem['import'],'category':'search','name':'search','title': _('Search'), 'search_item':True,'icon':cItem['icon'],'hst':'tshost'})	
 
 	def showmenu1(self,cItem):
@@ -56,7 +57,7 @@ class TSIPHost(TSCBaseHostClass,CaptchaHelper):
 		sts, data = self.getPage(url,self.defaultParams)
 		if sts:
 			data = json_loads(data)
-			self.addMarker({'title':'\c0000??00'+'Showcases','desc':'','icon':cItem['icon']})
+			self.addMarker({'title':tscolor('\c0000??00')+'Showcases','desc':'','icon':cItem['icon']})
 			data1=data['showcases']
 			for elm in data1:
 				titre = elm['title']
@@ -64,7 +65,7 @@ class TSIPHost(TSCBaseHostClass,CaptchaHelper):
 				image = elm['image']
 				self.addDir({'import':cItem['import'],'category' : 'host2','title':titre,'url': id_,'desc':'','icon':image,'hst':'tshost','mode':'22'})	
 			
-			self.addMarker({'title':'\c0000??00'+'Articles','desc':'','icon':cItem['icon']})
+			self.addMarker({'title':tscolor('\c0000??00')+'Articles','desc':'','icon':cItem['icon']})
 			data1=data['articles']
 			for elm in data1:
 				titre = elm['title']
@@ -77,18 +78,18 @@ class TSIPHost(TSCBaseHostClass,CaptchaHelper):
 		count=cItem.get('count',0)
 		url=cItem.get('url','')
 		if count==0:
-			self.addMarker({'title':'\c0000??00'+'Type:','desc':'','icon':cItem['icon']})	
+			self.addMarker({'title':tscolor('\c0000??00')+'Type:','desc':'','icon':cItem['icon']})	
 			self.addDir({'import':cItem['import'],'count':1,'category' : 'host2','url': url+'/movies/XXVV','title':'Movies','desc':'Movies','icon':cItem['icon'],'hst':'tshost','mode':'21'})	
 			self.addDir({'import':cItem['import'],'count':1,'category' : 'host2','url': url+'/shows/XXVV','title':'TV Shows','desc':'TV Shows','icon':cItem['icon'],'hst':'tshost','mode':'21'})	
 		elif count==1:
-			self.addMarker({'title':'\c0000??00'+'Genre:','desc':'','icon':cItem['icon']})	
+			self.addMarker({'title':tscolor('\c0000??00')+'Genre:','desc':'','icon':cItem['icon']})	
 			Genre  = ('All','action','adventure','animation','biography','comedy','crime','documentary','drama','family','fantasy','game-show','history','horror','music','musical','mystery','romance','sci-fi','short','sport','thriller','war','western')
 			for elm in Genre:
 				titre = elm.capitalize()
 				if elm =='All': elm=''
 				self.addDir({'import':cItem['import'],'count':2,'category' : 'host2','url': url+'?genre='+elm,'title':titre,'desc':cItem['desc']+' | '+titre,'icon':cItem['icon'],'hst':'tshost','mode':'21'})	
 		elif count==2:
-			self.addMarker({'title':'\c0000??00'+'Sort by:','desc':'','icon':cItem['icon']})					
+			self.addMarker({'title':tscolor('\c0000??00')+'Sort by:','desc':'','icon':cItem['icon']})					
 			Sort = ('trending','seeds','rating','last%20added','year')
 			for elm in Sort:
 				titre = elm.replace('%20',' ')
@@ -106,15 +107,15 @@ class TSIPHost(TSCBaseHostClass,CaptchaHelper):
 			data = json_loads(data)
 			for elm in data['items']:
 				desc  = self.get_inf(elm)
-				self.addDir({'import':cItem['import'],'good_for_fav':True,'EPG':True,'category' : 'host2','url': elm['imdb_id'],'title':elm['title'],'desc':desc,'icon':elm['images']['poster'],'hst':'tshost','mode':'31'})	
-			self.addDir({'import':cItem['import'],'title':'\c0000??00Page '+str(page+1),'page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'22'} )									
+				self.addDir({'import':cItem['import'],'good_for_fav':True,'EPG':True,'category' : 'host2','year':elm.get('year',''),'url': elm['imdb_id'],'title':elm['title'],'desc':desc,'icon':elm['images']['poster'],'hst':'tshost','mode':'31'})	
+			self.addDir({'import':cItem['import'],'title':tscolor('\c0000??00')+'Page '+str(page+1),'page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'22'} )									
 			 
 	def showitms_01(self,cItem):
 			mode_='31'
 			if cItem['title']=='Collection': mode_='22'
 			for elm in cItem['url']:
 				desc  = self.get_inf(elm)
-				self.addDir({'import':cItem['import'],'good_for_fav':True,'EPG':True,'category' : 'host2','url': elm['imdb_id'],'title':elm['title'],'desc':desc,'icon':elm['images']['poster'],'hst':'tshost','mode':mode_})	
+				self.addDir({'import':cItem['import'],'good_for_fav':True,'EPG':True,'category' : 'host2','year':elm.get('year',''),'url': elm['imdb_id'],'title':elm['title'],'desc':desc,'icon':elm['images']['poster'],'hst':'tshost','mode':mode_})	
 		
 	def showitms_02(self,cItem):
 			mode_='31'
@@ -144,7 +145,7 @@ class TSIPHost(TSCBaseHostClass,CaptchaHelper):
 								data = json_loads(data)
 								for elm in data:
 									desc  = self.get_inf(elm)
-									self.addDir({'import':cItem['import'],'good_for_fav':True,'EPG':True,'category' : 'host2','url': elm['imdb_id'],'title':elm['title'],'desc':desc,'icon':elm['images']['poster'],'hst':'tshost','mode':'31'})	
+									self.addDir({'import':cItem['import'],'good_for_fav':True,'EPG':True,'category' : 'host2','year':elm.get('year',''),'url': elm['imdb_id'],'title':elm['title'],'desc':desc,'icon':elm['images']['poster'],'hst':'tshost','mode':'31'})	
 			
 	def showitms_03(self,cItem):
 		url='https://api.trakt.tv/movies/'+cItem['url'].replace('S00E000','')+'/people'
@@ -187,14 +188,14 @@ class TSIPHost(TSCBaseHostClass,CaptchaHelper):
 		runtime   =  elm.get('runtime','')
 		country   =  elm.get('country','null')
 		synopsis  =  elm.get('synopsis','')
-		if qual     !=''  : desc=desc+'\c0000??00Qual: \c00??????'      +qual+' | '
-		if year     !=''  : desc=desc+'\c0000??00Year: \c00??????'      +year+' | '
-		if imdb     !=0   : desc=desc+'\c0000??00Rating: \c00??????'    +str(imdb)+'% | '
-		if runtime  !=''  : desc=desc+'\c0000??00Runtime: \c00??????'   +runtime+'mn | '
-		if (cert!='N/A') and (cert!='NOT RATED'): desc=desc+'\c0000??00Cert: \c00??????' +cert+' | '
-		if country!='null': desc=desc+'\c0000??00Country: \c00??????'   +country+' | '
-		if genre    !=[]  : desc=desc+'\n\c0000??00Genres: \c00??????'  +str(genre).replace('[','').replace(']','').replace('\'','')		
-		if synopsis !=''  : desc=desc+'\n\c0000??00Synopsis: \c00??????'+synopsis
+		if qual     !=''  : desc=desc+tscolor('\c0000??00')+'Qual: '+tscolor('\c00??????') +qual+' | '
+		if year     !=''  : desc=desc+tscolor('\c0000??00')+'Year: '+tscolor('\c00??????')      +year+' | '
+		if imdb     !=0   : desc=desc+tscolor('\c0000??00')+'Rating: '+tscolor('\c00??????')    +str(imdb)+'% | '
+		if runtime  !=''  : desc=desc+tscolor('\c0000??00')+'Runtime: '+tscolor('\c00??????')   +runtime+'mn | '
+		if (cert!='N/A') and (cert!='NOT RATED'): desc=desc+tscolor('\c0000??00')+'Cert: \c00??????' +cert+' | '
+		if country!='null': desc=desc+tscolor('\c0000??00')+'Country: '+tscolor('\c00??????')   +country+' | '
+		if genre    !=[]  : desc=desc+'\n'+tscolor('\c0000??00')+'Genres: '+tscolor('\c00??????')+ str(genre).replace('[','').replace(']','').replace('\'','')		
+		if synopsis !=''  : desc=desc+'\n'+tscolor('\c0000??00')+'Synopsis: '+tscolor('\c00??????')+synopsis
 		return desc
 
 
@@ -210,8 +211,8 @@ class TSIPHost(TSCBaseHostClass,CaptchaHelper):
 				desc  = self.get_inf(elm)
 				trailer      =  elm.get('trailer','')
 				img_ = elm.get('images',{}).get('poster',cItem['icon'])
-				self.addDir({'import':cItem['import'],'good_for_fav':True,'EPG':True,'category' : 'host2','url': elm['imdb_id'],'trailer':trailer,'title':elm['title'],'desc':desc,'icon':img_,'hst':'tshost','mode':'31'})	
-			self.addDir({'import':cItem['import'],'title':'\c0000??00Page '+str(page+1),'page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
+				self.addDir({'import':cItem['import'],'good_for_fav':True,'EPG':True,'category' : 'host2','year':elm.get('year',''),'url': elm['imdb_id'],'trailer':trailer,'title':elm['title'],'desc':desc,'icon':img_,'hst':'tshost','mode':'31'})	
+			self.addDir({'import':cItem['import'],'title':tscolor('\c0000??00')+'Page '+str(page+1),'page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
 
 	def showelms(self,cItem):
 		urlo=cItem['url']
@@ -228,121 +229,146 @@ class TSIPHost(TSCBaseHostClass,CaptchaHelper):
 			for elm in data_episodes:
 				printDBG('eeeeeeeeeeeeeee'+str(elm))
 				titre = elm.get('title','')
+				if titre=='Episode 0':
+					titre = cItem['title']
+					elm['title']=cItem['title']
 				imdb_id = elm.get('tvdb_id','')
 				ep = elm.get('episode',0)
 				se = elm.get('season',0)
 				order = elm.get('order','00000')
 				if se+ep > 0:
-					titre = '>> '+cItem['title']+' S'+str(se).zfill(2)+'E'+str(ep).zfill(2)+' - \c0000????'+titre
+					titre = '>> '+cItem['title']+' S'+str(se).zfill(2)+'E'+str(ep).zfill(2)+' - '+tscolor('\c0000????')+titre
 				else:
 					titre = '>> '+titre
 				img = elm.get('images',{}).get('fanart',cItem['icon'])
 				img = img.replace('https:/img','https://img')
 				tab_elm.append((order,titre,img,elm)) 
 				tab_elm = sorted(tab_elm, key=lambda x: x[0], reverse=False)
+		self.addDir({'import':cItem['import'],'good_for_fav':True,'elm':elm,'category' : 'host2','year':cItem.get('year',''),'url': '','title':titre+' [Arabic]','desc':cItem['desc'],'icon':img,'hst':'tshost','mode':'40','lng':'ar'} )
 		for (order,titre,img,elm) in tab_elm:
-			self.addDir({'import':cItem['import'],'good_for_fav':True,'elm':elm,'category' : 'host2','url': '','title':titre,'desc':cItem['desc'],'icon':img,'hst':'tshost','mode':'40'} )
+			self.addDir({'import':cItem['import'],'good_for_fav':True,'elm':elm,'category' : 'host2','year':cItem.get('year',''),'url': '','title':titre,'desc':cItem['desc'],'icon':img,'hst':'tshost','mode':'40'} )
+
 		if 'tt' in imdb_id:
 			self.addDir({'import':cItem['import'],'good_for_fav':True,'category' : 'host2','url': imdb_id,'title':'CAST','desc':cItem['desc'],'icon':img,'hst':'tshost','mode':'25'} )
 
 
 	def showhosts(self,cItem):
 		urlTab = []
+		lng=cItem.get('lng','eng')
 		elm=cItem['elm']
-		printDBG('fffffffffffffffffffffff'+str(elm))
-		streams=elm.get('streams',[])
-		if streams==[]:
-			streams=elm.get('tvdb_id','')	
-			URL=self.MAIN_URL+'/episode/'+streams
-			sts, data = self.getPage(URL,self.defaultParams)
-			if sts:
-				data = json_loads(data)
-				streams = data.get('streams',[])
+		if lng=='eng':
+			printDBG('start showhosts'+str(elm))
+			streams=elm.get('streams',[])
+			if streams==[]:
+				streams=elm.get('tvdb_id','')	
+				URL=self.MAIN_URL+'/episode/'+streams
+				sts, data = self.getPage(URL,self.defaultParams)
+				if sts:
+					data = json_loads(data)
+					streams = data.get('streams',[])
+				
+			Image = cItem['icon']
+			stream_lst=[]
+			titre_ = cItem['title'].replace('>> ','')
 			
-		Image = cItem['icon']
-		stream_lst=[]
-		titre_ = cItem['title'].replace('>> ','')
-		
-		if ' - \c0000????' in titre_:
-			titre_=titre_.split(' - \c0000????')[0]
-		for elm1 in streams:
-			stream = elm1['stream']
-			name   = elm1.get('source','!!')
-			type_  = elm1.get('type',0)
-			if (stream not in stream_lst):
-				stream_lst.append(stream)
-				if type_ in [98,99]:
-					Name  = 'VIP ['+name.replace('VIP','').strip()+']'
-					Url   = stream
-					Type_ = 'VIP'
-					Desc  = 'Direct Links'
-					Image = 'https://i.ibb.co/L6vctvL/VIP-1024x672.png'
-				elif type_ in [39]:
-					Name  = 'Vidcloud [Multi]'
-					Url   = stream
-					Type_ = 'Vidcloud'
-					Desc  = 'Multi Hosts'
-					Image = 'https://vidcloud.icu/img/logo_vid.png?1'
-				elif type_ in [27,28,29,30,31]:
-					Name  = 'Youtube'
-					Url   = stream
-					Type_ = 'Resolve'
-					Desc  = 'Youtube'
-				elif type_ in [77]:
-					Name  = '123Movies [Multi]'
-					Url   = stream
-					Type_ = '123Movies'
-					Desc  = 'Multi Hosts'					
-					Image = 'https://i.ibb.co/kQGDxLc/x123.png'
-				elif type_ in [20]:
-					Name  = 'Vidlink [Multi]'
-					Url   = stream
-					Type_ = 'Vidlink'
-					Desc  = 'Multi Hosts\nM3u8 server\nWith subs'					
-					Image = 'https://i.ibb.co/bJwn22Q/vidlink.png'
-				elif type_ in [71]:
-					Name  = 'Seehd.pl [Multi]'
-					Url   = stream
-					Type_ = 'Seehd'
-					Desc  = 'Multi Hosts'					
-					Image = 'https://i.ibb.co/mJymy06/seehd.png'					
-				elif type_ in [73]:
-					Name  = 'Chillax [Multi]'
-					Url   = stream
-					Type_ = 'Chillax'
-					Desc  = '---- >  \c00????00Work only in eplayer3 \c0000??00WITH BUFFERING \c00??????<----'
-					Desc  = Desc + '\n\c00??????Good M3u8 Server\nMust wait for cloudflare bypass'					
-					Image = 'https://i.ibb.co/r2kKX5s/chillax.png'					
-				elif type_ in [61,62,63]:
-					Name  = 'Gomostream [Multi]'
-					Url   = stream
-					Type_ = 'Gomostream'
-					Desc  = 'Multi Hosts'
-					Image = 'https://i.ibb.co/TH2kJm6/putstream.png'	
-				elif type_ in [11]:
-					Name  = 'DB-Media [Multi]'
-					Url   = stream
-					Type_ = 'DB-Media'
-					Desc  = 'Multi Hosts, Need To Resolve captcha'
-					Image = 'https://i.ibb.co/6tTVtx5/Logo-d-B-Media.png'	
-				elif type_ in [2,4,9,6]:
-					printDBG('eeeeeeeeeeeeeee'+str(elm1))
-					Name  = gethostname(stream).capitalize()
-					Url   = stream					
-					Type_ = 'Resolve'
-					Desc  = stream	
-				elif type_ in [53,15,64]:				
-					Type_ = 'Non'						
-				else:
-					printDBG('eeeeeeeeeeeeeee'+str(elm1))
-					Name  = '|'+str(type_)+'| '+name
-					Url   = stream
-					Type_ = 'Non'#'na'
-					Desc  = stream
-				if 	Type_ != 'Non':				
-					self.addVideo({'import':cItem['import'],'category' : 'host2','url': Url,'title':titre_,'desc':'\c00????00'+Name+'\c00??????\n'+Desc,'icon':Image,'hst':'tshost','Type_':Type_} )
+			if ' - '+tscolor('\c0000????') in titre_:
+				titre_=titre_.split(' - '+tscolor('\c0000????'))[0]
+			for elm1 in streams:
+				stream = elm1['stream']
+				name   = elm1.get('source','!!')
+				type_  = elm1.get('type',0)
+				if (stream not in stream_lst):
+					stream_lst.append(stream)
+					if type_ in [98,99]:
+						Name  = 'VIP ['+name.replace('VIP','').strip()+']'
+						Url   = stream
+						Type_ = 'VIP'
+						Desc  = 'Direct Links'
+						Image = 'https://i.ibb.co/L6vctvL/VIP-1024x672.png'
+					elif type_ in [39]:
+						Name  = 'Vidcloud [Multi]'
+						Url   = stream
+						Type_ = 'Vidcloud'
+						Desc  = 'Multi Hosts'
+						Image = 'https://vidcloud.icu/img/logo_vid.png?1'
+					elif type_ in [27,28,29,30,31]:
+						Name  = 'Youtube'
+						Url   = stream
+						Type_ = 'Resolve'
+						Desc  = 'Youtube'
+					elif type_ in [77]:
+						Name  = '123Movies [Multi]'
+						Url   = stream
+						Type_ = '123Movies'
+						Desc  = 'Multi Hosts'					
+						Image = 'https://i.ibb.co/kQGDxLc/x123.png'
+					elif type_ in [20]:
+						Name  = 'Vidlink [Multi]'
+						Url   = stream
+						Type_ = 'Vidlink'
+						Desc  = 'Multi Hosts\nM3u8 server\nWith subs'					
+						Image = 'https://i.ibb.co/bJwn22Q/vidlink.png'
+					elif type_ in [71]:
+						Name  = 'Seehd.pl [Multi]'
+						Url   = stream
+						Type_ = 'Seehd'
+						Desc  = 'Multi Hosts'					
+						Image = 'https://i.ibb.co/mJymy06/seehd.png'					
+					elif type_ in [73]:
+						Name  = 'Chillax [Multi]'
+						Url   = stream
+						Type_ = 'Chillax'
+						Desc  = '---- >  '+tscolor('\c00????00')+'Work only in eplayer3 '+tscolor('\c0000??00')+'WITH BUFFERING '+tscolor('\c00??????')+'<----'
+						Desc  = Desc + '\n'+tscolor('\c00??????')+'Good M3u8 Server\nMust wait for cloudflare bypass'					
+						Image = 'https://i.ibb.co/r2kKX5s/chillax.png'					
+					elif type_ in [61,62,63]:
+						Name  = 'Gomostream [Multi]'
+						Url   = stream
+						Type_ = 'Gomostream'
+						Desc  = 'Multi Hosts'
+						Image = 'https://i.ibb.co/TH2kJm6/putstream.png'	
+					elif type_ in [11]:
+						Name  = 'DB-Media [Multi]'
+						Url   = stream
+						Type_ = 'DB-Media'
+						Desc  = 'Multi Hosts, Need To Resolve captcha'
+						Image = 'https://i.ibb.co/6tTVtx5/Logo-d-B-Media.png'	
+					elif type_ in [2,4,9,6]:
+						printDBG('eeeeeeeeeeeeeee'+str(elm1))
+						Name  = gethostname(stream).capitalize()
+						Url   = stream					
+						Type_ = 'Resolve'
+						Desc  = stream	
+					elif type_ in [53,15,64]:				
+						Type_ = 'Non'						
+					else:
+						printDBG('eeeeeeeeeeeeeee'+str(elm1))
+						Name  = '|'+str(type_)+'| '+name
+						Url   = stream
+						Type_ = 'Non'#'na'
+						Desc  = stream
+					if 	Type_ != 'Non':				
+						self.addVideo({'import':cItem['import'],'category' : 'host2','url': Url,'title':titre_,'desc':tscolor('\c00????00')+Name+tscolor('\c00??????')+'\n'+Desc,'icon':Image,'hst':'tshost','Type_':Type_} )
+		elif lng=='ar':
+			hsts = ['host_egybest','host_faselhd','host_akoam','host_movs4u']
+			for hst in hsts:
+				Extra= 'from tsiplayer.'+hst+' import '
+				exec (Extra+'TSIPHost')
+				host = TSIPHost()				
+				printDBG('elm='+str(elm))
+				printDBG('citem='+str(cItem))
+				str_ch = elm.get('title','')
+				urlTab = host.MediaBoxResult(str_ch,cItem.get('year',''),Extra)				
+				printDBG('result='+str(urlTab))
+				if len(urlTab)>0:
+					elm_1 = urlTab[0]
+					ratio = difflib.SequenceMatcher(None,elm_1['titre'], str_ch).ratio()
+					elm_1['title'] = elm_1['title']+' ('+str(ratio)+')'
+					if elm_1.get('category','')=='video':
+						self.addVideo(elm_1)
+					else: self.addDir(elm_1)
+			
 					
-
 	def get_links(self,cItem):
 		urlTab = []
 		Type_ = cItem.get('Type_', 'na')
@@ -358,24 +384,24 @@ class TSIPHost(TSCBaseHostClass,CaptchaHelper):
 		elif Type_ == 'Resolve':	
 			urlTab.append({'name':Name, 'url':Url, 'need_resolve':1})			
 		elif Type_ == '123Movies':
-			from Plugins.Extensions.IPTVPlayer.tsiplayer.host_X123movies import TSIPHost
+			from tsiplayer.host_X123movies import TSIPHost
 			host = TSIPHost()				
 			urlTab.extend(host.get_links({'url': Url}))	
 		elif Type_ == 'Vidcloud':
-			from Plugins.Extensions.IPTVPlayer.tsiplayer.host_vidcloud import TSIPHost
+			from tsiplayer.host_vidcloud import TSIPHost
 			host = TSIPHost()				
 			urlTab.extend(host.get_links({'url': Url}))	
 		elif Type_ == 'Vidlink':
-			from Plugins.Extensions.IPTVPlayer.tsiplayer.host_vidlink import TSIPHost
+			from tsiplayer.host_vidlink import TSIPHost
 			host = TSIPHost()				
 			urlTab.extend(host.get_links({'url': Url}))	
 		elif Type_ == 'Seehd':
-			from Plugins.Extensions.IPTVPlayer.tsiplayer.host_seehdpl import TSIPHost
+			from tsiplayer.host_seehdpl import TSIPHost
 			host = TSIPHost()				
 			urlTab.extend(host.get_links({'url': Url}))
 
 		elif Type_ == 'Chillax':
-			from Plugins.Extensions.IPTVPlayer.tsiplayer.host_chillax import TSIPHost
+			from tsiplayer.host_chillax import TSIPHost
 			host = TSIPHost()
 			urlTab.extend(host.get_links({'url': Url}))									
 		return urlTab
@@ -385,23 +411,23 @@ class TSIPHost(TSCBaseHostClass,CaptchaHelper):
 		urlTab = []
 		videoUrl0,gnr = videoUrl.split('|',1)
 		if 'XX123' in gnr:	
-			from Plugins.Extensions.IPTVPlayer.tsiplayer.host_X123movies import TSIPHost
+			from tsiplayer.host_X123movies import TSIPHost
 			host = TSIPHost()
 			urlTab = host.getVideos(videoUrl)
 		if 'XXVID' in gnr:	
-			from Plugins.Extensions.IPTVPlayer.tsiplayer.host_vidlink import TSIPHost
+			from tsiplayer.host_vidlink import TSIPHost
 			host = TSIPHost()
 			urlTab = host.getVideos(videoUrl)
 		if 'XXCHI' in gnr:	
-			from Plugins.Extensions.IPTVPlayer.tsiplayer.host_chillax import TSIPHost
+			from tsiplayer.host_chillax import TSIPHost
 			host = TSIPHost()
 			urlTab = host.getVideos(videoUrl)
 		if 'XXSEE' in gnr:	
-			from Plugins.Extensions.IPTVPlayer.tsiplayer.host_seehdpl import TSIPHost
+			from tsiplayer.host_seehdpl import TSIPHost
 			host = TSIPHost()
 			urlTab = host.getVideos(videoUrl)
 		if 'XXVIC' in gnr:	
-			from Plugins.Extensions.IPTVPlayer.tsiplayer.host_vidcloud import TSIPHost
+			from tsiplayer.host_vidcloud import TSIPHost
 			host = TSIPHost()
 			urlTab = host.getVideos(videoUrl)
 		if 'XXGOM' in gnr:			
@@ -461,7 +487,7 @@ class TSIPHost(TSCBaseHostClass,CaptchaHelper):
 		return urlTab		
 
 	def SearchResult(self,str_ch,page,extra):
-		self.addMarker({'title':'\c0000????Movies & TV:','icon':''})
+		self.addMarker({'title':tscolor('\c0000????')+'Movies & TV:','icon':''})
 		url = self.MAIN_URL+'/movies/'+str(page)+'?keywords='+str_ch+'&filter=media'
 		sts, data = self.getPage(url,self.defaultParams)
 		if sts:
@@ -475,15 +501,15 @@ class TSIPHost(TSCBaseHostClass,CaptchaHelper):
 				if type_==6:
 					mode_='22'
 				else: mode_='31'
-				if type_==2:   titre = elm['title']+' \c0000????(TV SHOWS)'
-				elif type_==5: titre = elm['title']+' \c0000????(Music Charts)'
-				elif type_==3: titre = elm['title']+' \c0000????(Anime)'
-				elif type_==1: titre = elm['title']+' \c0000????(Film)'				
-				elif type_==6: titre = elm['title']+' \c0000????(Collection)'	
+				if type_==2:   titre = elm['title']+' '+tscolor('\c0000????')+'(TV SHOWS)'
+				elif type_==5: titre = elm['title']+' '+tscolor('\c0000????')+'(Music Charts)'
+				elif type_==3: titre = elm['title']+' '+tscolor('\c0000????')+'(Anime)'
+				elif type_==1: titre = elm['title']+' '+tscolor('\c0000????')+'(Film)'				
+				elif type_==6: titre = elm['title']+' '+tscolor('\c0000????')+'(Collection)'	
 				
-				self.addDir({'import':extra,'good_for_fav':True,'EPG':True,'category' : 'host2','trailer':trailer,'url': elm['imdb_id'],'title':titre,'desc':desc,'icon':elm['images']['poster'],'hst':'tshost','mode':mode_})	
+				self.addDir({'import':extra,'good_for_fav':True,'EPG':True,'category' : 'host2','trailer':trailer,'year':elm.get('year',''),'url': elm['imdb_id'],'title':titre,'desc':desc,'icon':elm['images']['poster'],'hst':'tshost','mode':mode_})	
 	
-		self.addMarker({'title':'\c0000????Persons:','icon':''})
+		self.addMarker({'title':tscolor('\c0000????')+'Persons:','icon':''})
 		url = 'https://api.themoviedb.org/3/search/person?page='+str(page)+'&api_key=9753f7b3b6bac2a279f9e7daf419d124&query='+str_ch
 
 		sts, data = self.getPage(url,self.defaultParams)

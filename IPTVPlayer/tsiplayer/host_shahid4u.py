@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,tscolor
 
 import re
 
@@ -30,7 +30,7 @@ class TSIPHost(TSCBaseHostClass):
 	def showmenu0(self,cItem):
 		hst='host2'
 		self.Arablionz_TAB = [
-							{'category':hst,               'title': '\c00????00'+'By Filter', 'mode':'20','count':1,'data':'none','code':self.MAIN_URL+'/getposts?'},
+							{'category':hst,               'title': tscolor('\c00????00')+'By Filter', 'mode':'20','count':1,'data':'none','code':self.MAIN_URL+'/getposts?'},
 							{'category':hst, 'sub_mode':'film', 'title': 'Films',                  'mode':'21'},
 							{'category':hst, 'sub_mode':'serie','title': 'Series',                 'mode':'21'},
 							#{'category':hst, 'sub_mode':'music','title': 'اغاني وكليبات',          'mode':'21'},							
@@ -100,7 +100,7 @@ class TSIPHost(TSCBaseHostClass):
 					data1=cat_data[0]
 					cat_data=re.findall('<a href="(.*?)".*?<span>(.*?)</span></h3>', data1, re.S)
 					if cat_data:
-						self.addMarker({'title':'\c00????00'+'حلقات اخرة','desc':''})
+						self.addMarker({'title':tscolor('\c00????00')+'حلقات اخرة','desc':''})
 					for(url_,titre_) in cat_data:
 						titre_=titre_.replace('\n',' ')	
 						if titre_=='':

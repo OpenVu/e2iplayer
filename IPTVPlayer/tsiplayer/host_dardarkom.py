@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname,tscolor
 from Components.config import config
 ###################################################
 
@@ -14,10 +14,10 @@ def getinfo():
 	info_['name']='Dardarkom.Tv'
 	info_['version']='1.0 01/09/2019'
 	info_['dev']='RGYSoft'
-	info_['cat_id']='201'
+	info_['cat_id']='102'
 	info_['desc']='أفلام و مسلسلات عربية و اجنبية'
 	info_['icon']='https://i.ibb.co/1rp9DNF/logo.png'
-	info_['recherche_all']='0'
+	info_['recherche_all']='1'
 	info_['update']='New Host'
 	return info_
 	
@@ -49,7 +49,7 @@ class TSIPHost(TSCBaseHostClass):
 		gnr=cItem['sub_mode']
 		if gnr==0:
 			self.addDir({'import':cItem['import'],'category' : 'host2','url': self.MAIN_URL+'/aflamonline/','title':'جميع الأفلام','desc':'','icon':cItem['icon'],'hst':'tshost','mode':'30'})	
-			self.addMarker({'title':'\c0000??00'+'أنواع الافلام','desc':'','icon':cItem['icon']})
+			self.addMarker({'title':tscolor('\c0000??00')+'أنواع الافلام','desc':'','icon':cItem['icon']})
 			sts, data = self.getPage(self.MAIN_URL)
 			if sts:
 				films_list = re.findall('class="hm-col">(.*?)</ul', data, re.S)		
@@ -57,7 +57,7 @@ class TSIPHost(TSCBaseHostClass):
 					films_list1 = re.findall('<li>.*?href="(.*?)".*?title.*?">(.*?)<', data1, re.S)
 					for (url,titre) in films_list1:
 						self.addDir({'import':cItem['import'],'category' : 'host2','url': url,'title':titre,'desc':'','icon':cItem['icon'],'hst':'tshost','mode':'30'})	
-			self.addMarker({'title':'\c0000??00'+'تصنيفات الافلام','desc':'','icon':cItem['icon']})
+			self.addMarker({'title':tscolor('\c0000??00')+'تصنيفات الافلام','desc':'','icon':cItem['icon']})
 			sts, data = self.getPage(self.MAIN_URL, {'header':{'User-Agent': 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 3_0 like Mac OS X; en-us) AppleWebKit/528.18 (KHTML, like Gecko) Version/4.0 Mobile/7A341 Safari/528.16', 'Accept': 'text/html'}})
 			if sts:
 				films_list = re.findall('class="collection">(.*?)</ul', data, re.S)	
@@ -69,7 +69,7 @@ class TSIPHost(TSCBaseHostClass):
 							self.addDir({'import':cItem['import'],'category' : 'host2','url': url,'title':titre,'desc':'','icon':cItem['icon'],'hst':'tshost','mode':'30'})	
 		if gnr==1:
 			self.addDir({'import':cItem['import'],'category' : 'host2','url': self.MAIN_URL+'/series-online/latest-series/','title':'اخر المسلسلات','desc':'','icon':cItem['icon'],'hst':'tshost','mode':'30'})	
-			self.addMarker({'title':'\c0000??00'+'حسب التصنيف','desc':'','icon':cItem['icon']})
+			self.addMarker({'title':tscolor('\c0000??00')+'حسب التصنيف','desc':'','icon':cItem['icon']})
 			sts, data = self.getPage(self.MAIN_URL)
 			if sts:
 				films_list = re.findall('class="ft-col">(.*?)</ul', data, re.S)		
@@ -94,7 +94,7 @@ class TSIPHost(TSCBaseHostClass):
 				titre=titre.replace('مشاهدة فيلم','')
 				image=self.MAIN_URL+image
 				self.addDir({'import':cItem['import'],'good_for_fav':True,'EPG':True,'category' : 'host2','url': url,'title':ph.clean_html(titre),'desc':'','icon':image,'hst':'tshost','mode':'31'})	
-			self.addDir({'import':cItem['import'],'title':'\c0000??00'+'Page '+str(page+1),'page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
+			self.addDir({'import':cItem['import'],'title':tscolor('\c0000??00')+'Page '+str(page+1),'page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
 
 	def showelms(self,cItem):
 		urlo=cItem['url']

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,tscolor
 from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.vstream.requestHandler import cRequestHandler
 
 try:
@@ -16,24 +16,32 @@ import urllib,cookielib,time
 def getinfo():
 	info_={}
 	info_['name']='Planet-Streaming.Net'
-	info_['version']='1.2 17/08/2019'
+	info_['version']='1.3 22/03/2020'
 	info_['dev']='RGYSoft'
 	info_['cat_id']='301'
 	info_['desc']='Films en VF & VOSTFR'
 	info_['icon']='https://i.ibb.co/VvvSHFT/logo.png'
 	info_['recherche_all']='1'
-	info_['update']='Fix Next page in genre pages'
+	info_['update']='New Host'
 	return info_
 	
 	
 class TSIPHost(TSCBaseHostClass):
 	def __init__(self):
-		TSCBaseHostClass.__init__(self,{'cookie':'planetstreaming2.cookie'})
+		TSCBaseHostClass.__init__(self,{'cookie':'planetstreaming.cookie'})
 		self.USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.86 Safari/537.36'
-		self.MAIN_URL = 'https://www.planet-streaming.net'
+		self.MAIN_URL = 'https://www.streaming-planet.net'
 		self.HTTP_HEADER = {'User-Agent': self.USER_AGENT, 'DNT':'1','Connection':'close','Cache-Control': 'no-cache','Pragma': 'no-cache', 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Language':'en-US,en;q=0.5', 'Referer':self.getMainUrl(), 'Origin':self.getMainUrl()}
 		self.defaultParams = {'with_metadata':True,'no_redirection':False,'header':self.HTTP_HEADER, 'use_cookie': True, 'load_cookie': True, 'save_cookie': True, 'cookiefile': self.COOKIE_FILE}
 
+
+
+	def getPage_old(self,baseUrl, addParams = {}, post_data = None):
+		if addParams == {}: addParams = dict(self.defaultParams) 
+		addParams['cloudflare_params'] = {'domain':self.up.getDomain(baseUrl), 'cookie_file':self.COOKIE_FILE, 'User-Agent':self.USER_AGENT}
+		sts, data = self.cm.getPageCFProtection(baseUrl, addParams, post_data)
+		return sts, data
+				
 	def getPage(self,baseUrl, addParams = {}, post_data = None):
 		if addParams == {}: addParams = dict(self.defaultParams) 
 		sts, data = self.cm.getPage(baseUrl,addParams,post_data)
@@ -109,11 +117,11 @@ class TSIPHost(TSCBaseHostClass):
 				desc=desc.replace('<b>','\\n')
 				desc=desc.replace('<strong>','\\n')
 				desc=ph.clean_html(desc+'>').strip()		
-				self.addVideo({'import':cItem['import'],'title':titre+' \c0000??00('+ph.clean_html(qual)+')','url':url,'desc':desc,'icon':image,'good_for_fav':True,'EPG':True,'hst':'tshost'})
+				self.addVideo({'import':cItem['import'],'title':titre+' '+tscolor('\c0000??00')+'('+ph.clean_html(qual)+')','url':url,'desc':desc,'icon':image,'good_for_fav':True,'EPG':True,'hst':'tshost'})
 			if i>14:
 				self.addDir({'import':cItem['import'],'category' : 'host2','title':'Page Suivante','url':url0,'page':page+1,'mode':'30'})
 		else:
-			self.addMarker({'title':'\c00????00'+'----> Erreur <----','icon':'','desc':data})
+			self.addMarker({'title':tscolor('\c00????00')+'----> Erreur <----','icon':'','desc':'Cloudflare problem'})
 
 	def get_links(self,cItem): 	
 		sts, data = self.getPage(cItem['url'])
@@ -128,7 +136,9 @@ class TSIPHost(TSCBaseHostClass):
 				url = self.getFullUrl( self.cm.ph.getSearchGroups(item, '''\shref=['"]([^'^"]+?)['"]''')[0] )
 				if url == '': continue
 				title = self.cleanHtmlStr(item)
+				title = self.up.getDomain(url)
 				title= '|'+langTitle.upper()+'| '+ title
+				
 				linksTab.append({'name':title, 'url':url, 'need_resolve':1})
 		return linksTab
 
@@ -169,7 +179,7 @@ class TSIPHost(TSCBaseHostClass):
 				desc=desc.replace('<b>','\\n')
 				desc=desc.replace('<strong>','\\n')
 				desc=ph.clean_html(desc+'>').strip()		
-				self.addVideo({'import':extra,'title':titre,'url':url,'desc':desc,'icon':image,'good_for_fav':True,'EPG':True,'hst':'tshost'})
+				self.addVideo({'import':extra,'category' : 'video','title':titre,'url':url,'desc':desc,'icon':image,'good_for_fav':True,'EPG':True,'hst':'tshost'})
 	   
 
 			

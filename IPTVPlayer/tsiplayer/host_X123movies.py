@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname,tscolor
 from Plugins.Extensions.IPTVPlayer.libs.e2ijson import loads as json_loads
 from Plugins.Extensions.IPTVPlayer.tools.iptvtypes import strwithmeta
 from Plugins.Extensions.IPTVPlayer.libs.urlparserhelper import unpackJSPlayerParams, SAWLIVETV_decryptPlayerParams
@@ -29,7 +29,7 @@ class TSIPHost(TSCBaseHostClass):
 	def __init__(self):
 		TSCBaseHostClass.__init__(self,{'cookie':'123movies.cookie'})
 		self.USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0'
-		self.MAIN_URL = 'https://w2.d123movies.com/'
+		self.MAIN_URL = 'https://w3.d123movies.com/'
 		self.HEADER = {'User-Agent': self.USER_AGENT,'Accept':'*/*','X-Requested-With':'XMLHttpRequest', 'Connection': 'keep-alive', 'Accept-Encoding':'gzip', 'Pragma':'no-cache'}
 		self.defaultParams = {'timeout':9,'header':self.HEADER, 'use_cookie': True, 'load_cookie': True, 'save_cookie': True, 'cookiefile': self.COOKIE_FILE}
 
@@ -44,7 +44,7 @@ class TSIPHost(TSCBaseHostClass):
 					{'category':hst,'title': 'TV SERIES',    'url': self.MAIN_URL+'/tv-series/',   'mode':'30'},
 					{'category':hst,'title': 'Just Updated', 'url': self.MAIN_URL+'/just-updated/','mode':'30'},
 					{'category':hst,'title': 'Most Viewed',  'url': self.MAIN_URL+'/most-viewed/', 'mode':'30'},				
-					{'category':hst,'title': '\c00????00Filter',           'mode':'21'},													
+					{'category':hst,'title': tscolor('\c00????00')+'Filter',           'mode':'21'},													
 					{'category':'search','name':'search','title': _('Search'), 'search_item':True,'hst':'tshost'},
 					]
 		self.listsTab(Cat_TAB, {'import':cItem['import'],'icon':img_,'desc':''})				
@@ -63,14 +63,14 @@ class TSIPHost(TSCBaseHostClass):
 				films_list3 = re.findall('tax_country">(.*?)clearfix"', data, re.S)
 				if films_list1 and films_list2 and films_list3:
 					data=[films_list1[0],films_list2[0],films_list3[0]]
-					self.addMarker({'title':'\c0000??00'+'Sort by:','desc':'','icon':cItem['icon']})		
+					self.addMarker({'title':tscolor('\c0000??00')+'Sort by:','desc':'','icon':cItem['icon']})		
 					elm_list = re.findall('<li.*?href="(.*?)".*?">(.*?)</li>', data[0], re.S)
 					for (url1,titre) in elm_list:
 						desc = ph.clean_html(titre).strip()
 						urlo=url+url1.replace('https://dwatchseries.org','')+'page/1/'
 						self.addDir({'import':cItem['import'],'count':1,'data':data,'category' : 'host2','url': urlo,'title':ph.clean_html(titre).strip(),'desc':desc,'icon':cItem['icon'],'hst':'tshost','mode':'21'})	
 		elif count==1:			
-			self.addMarker({'title':'\c0000??00'+'Genre:','desc':'','icon':cItem['icon']})		
+			self.addMarker({'title':tscolor('\c0000??00')+'Genre:','desc':'','icon':cItem['icon']})		
 			elm_list = re.findall('class="wpas-tax_category.*?value="(.*?)".*?">(.*?)<', data[1], re.S)
 			self.addDir({'import':cItem['import'],'count':2,'data':data,'category' : 'host2','url': url,'title':'All','desc': desc1 + ' | All category','icon':cItem['icon'],'hst':'tshost','mode':'21'})				
 			for (url1,titre) in elm_list:
@@ -80,7 +80,7 @@ class TSIPHost(TSCBaseHostClass):
 				self.addDir({'import':cItem['import'],'count':2,'data':data,'category' : 'host2','url': urlo,'title':titre.strip(),'desc':desc,'icon':cItem['icon'],'hst':'tshost','mode':'21'})	
 
 		elif count==2:			
-			self.addMarker({'title':'\c0000??00'+'Country:','desc':'','icon':cItem['icon']})		
+			self.addMarker({'title':tscolor('\c0000??00')+'Country:','desc':'','icon':cItem['icon']})		
 			elm_list = re.findall('class="wpas-tax_country.*?value="(.*?)".*?">(.*?)<', data[2], re.S)
 			self.addDir({'import':cItem['import'],'category' : 'host2','url': url,'title':'All','desc':desc1 + ' | All country','icon':cItem['icon'],'hst':'tshost','mode':'30'})				
 			for (url1,titre) in elm_list:
@@ -107,11 +107,11 @@ class TSIPHost(TSCBaseHostClass):
 			films_list = re.findall('ml-item">.*?href="(.*?)".*?title="(.*?)".*?original="(.*?)".*?imdb">(.*?)<.*?desc">(.*?)<div.*?Genre:.*?(<.*?)</div>', data, re.S)		
 			for (url,titre,image,imdb,desc,genre) in films_list:
 				desc_ = ''
-				if 'N/A' not in imdb: desc_ = '\c0000??00'+imdb+'\n'
-				desc_ = desc_+'\c0000??00 Genre: \c00????00'+ph.clean_html(genre)+'\n'
-				desc  = desc_+'\c0000??00 Story: \c00????00'+ph.clean_html(desc)+'\n'
+				if 'N/A' not in imdb: desc_ = tscolor('\c0000??00')+imdb+'\n'
+				desc_ = desc_+tscolor('\c0000??00')+' Genre: '+tscolor('\c00????00')+ph.clean_html(genre)+'\n'
+				desc  = desc_+tscolor('\c0000??00')+' Story: '+tscolor('\c00????00')+ph.clean_html(desc)+'\n'
 				self.addDir({'import':cItem['import'],'good_for_fav':True,'EPG':True,'category' : 'host2','url':url,'title':ph.clean_html(titre),'desc':desc,'icon':self.MAIN_URL+image,'hst':'tshost','mode':'31'})	
-			self.addDir({'import':cItem['import'],'title':'\c0000??00Page '+str(page+1),'page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
+			self.addDir({'import':cItem['import'],'title':tscolor('\c0000??00')+'Page '+str(page+1),'page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
 
 	def showelms(self,cItem):
 		urlo=cItem['url']
@@ -134,9 +134,9 @@ class TSIPHost(TSCBaseHostClass):
 			films_list = re.findall('ml-item">.*?href="(.*?)".*?title="(.*?)".*?original="(.*?)".*?imdb">(.*?)<.*?desc">(.*?)<div.*?Genre:.*?(<.*?)</div>', data, re.S)		
 			for (url,titre,image,imdb,desc,genre) in films_list:
 				desc_ = ''
-				if 'N/A' not in imdb: desc_ = '\c0000??00'+imdb+'\n'
-				desc_ = desc_+'\c0000??00 Genre: \c00????00'+ph.clean_html(genre)+'\n'
-				desc  = desc_+'\c0000??00 Story: \c00????00'+ph.clean_html(desc)+'\n'
+				if 'N/A' not in imdb: desc_ = tscolor('\c0000??00')+imdb+'\n'
+				desc_ = desc_+tscolor('\c0000??00')+' Genre: '+tscolor('\c00????00')+ph.clean_html(genre)+'\n'
+				desc  = desc_+tscolor('\c0000??00')+' Story: '+tscolor('\c00????00')+ph.clean_html(desc)+'\n'
 				self.addDir({'import':extra,'good_for_fav':True,'EPG':True,'category' : 'host2','url':url,'title':ph.clean_html(titre),'desc':desc,'icon':self.MAIN_URL+image,'hst':'tshost','mode':'31'})	
 
 

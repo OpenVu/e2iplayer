@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname,tscolor
 from Plugins.Extensions.IPTVPlayer.libs.e2ijson import loads as json_loads
 from Plugins.Extensions.IPTVPlayer.tools.iptvtypes import strwithmeta
 from Plugins.Extensions.IPTVPlayer.libs.urlparserhelper import getDirectM3U8Playlist
@@ -15,13 +15,13 @@ import base64
 def getinfo():
 	info_={}
 	info_['name']='Hdss.To'
-	info_['version']='1.1 08/07/2019'
+	info_['version']='1.2 22/03/2020'
 	info_['dev']='RGYSoft'
 	info_['cat_id']='301'
 	info_['desc']='Films & Series'
 	info_['icon']='https://i.ibb.co/f1Tw4M7/j73buveq.png'
 	info_['recherche_all']='1'
-	info_['update']='fix Films-Tous category'
+	info_['update']='fix Links extract'
 	return info_
 	
 	
@@ -32,7 +32,8 @@ class TSIPHost(TSCBaseHostClass):
 		self.MAIN_URL = 'https://hdss.to'
 		self.HTTP_HEADER = self.cm.getDefaultHeader(browser='chrome')
 		self.defaultParams = {'with_metadata':True,'header':self.HTTP_HEADER, 'use_cookie': True, 'load_cookie': True, 'save_cookie': True, 'cookiefile': self.COOKIE_FILE}
-
+		self.cacheLinks = {}
+		
 	def getPage(self,baseUrl, addParams = {}, post_data = None):
 		while True:
 			if addParams == {}: addParams = dict(self.defaultParams)
@@ -64,7 +65,7 @@ class TSIPHost(TSCBaseHostClass):
 		gnr=cItem['sub_mode']
 		if gnr==0:						
 			Cat_TAB = [
-						{'category':hst,'title': 'Tous',                'mode':'30','url':'https://hdss.to/films/'},
+						{'category':hst,'title': 'Tous',                'mode':'30','url':'https://hdss.to/films-z/'},
 						{'category':hst,'title': 'Les Plus Populaires', 'mode':'30','url':'https://hdss.to/populaires/'},
 						{'category':hst,'title': 'Les Mieux Notés',     'mode':'30','url':'https://hdss.to/mieux-notes/'},
 						{'category':hst,'title': 'Par Genre',           'mode':'20','sub_mode':3},
@@ -96,44 +97,7 @@ class TSIPHost(TSCBaseHostClass):
 					data_list2 = re.findall('<li.*?href="(.*?)">(.*?)<', data_list[-1], re.S)
 					for (url,titre) in data_list2:
 						self.addDir({'import':cItem['import'],'category' : hst,'url': url+add_,'title':titre,'desc':'','icon':cItem['icon'],'mode':'30'})	
-					
-			
-			
-			
-					
-		
-	'''	
-		sts, data = self.getPage('https://hdss.to/bumblebe-r/')
-		data_list = re.findall('class="TPlayerTb.*?trembed=(.*?)("|&quot;)', data, re.S)
-		for (url,x1) in data_list:
-			url=url.replace('&amp;','&')
-			url='https://hdss.to/'+'?trembed='+url.replace('&#038;','&')
-			sts, data2 = self.getPage(url,self.defaultParams)
-			printDBG(data2)
-			data_list2 = re.findall('src.*?["\'](.*?)["\']', data2, re.S)
-			if data_list2:
-				url=data_list2[0]
-				sts, data3 = self.getPage(url,self.defaultParams)
-				printDBG('data222'+data3)
-				data_list3 = re.findall("var id.+?'(.+?)'", data3, re.S)
-				if data_list3:
-					url1='https://hdss.to/?trhidee=1&trfex='+data_list3[0][::-1]
-					paramsUrl = dict(self.defaultParams)
-					paramsUrl['header']['Referer'] = url
-					sts, data3 = self.getPage(url1,paramsUrl)
-					printDBG('dataeta'+str(data3.meta))
-					Url=data3.meta['url']
-					if self.up.checkHostSupport(Url)==1:
-						self.addVideo({'import':cItem['import'],'category' : 'host2','url': Url,'title':Url,'desc':'','icon':cItem['icon'],'hst':'tshost','mode':'30'})	
-					elif 'hdsto' in Url:
-						URL = 'https://' + Url.split('/')[2] + '/hls/'+Url.split('id=')[1]+'/'+Url.split('id=')[1]+'.playlist.m3u8'
-						self.addVideo({'import':cItem['import'],'category' : 'host2','url': URL,'title':'Direct','desc':URL,'icon':cItem['icon'],'hst':'tshost','mode':'30'})	
-
-			
-'''
-
-
-		
+						
 	def showitms(self,cItem):
 		url1=cItem['url']
 		page=cItem.get('page',1)
@@ -156,40 +120,40 @@ class TSIPHost(TSCBaseHostClass):
 						titre=data_list1[0][2]
 						desc=''
 						data_listi = re.findall('class="Year">(.*?)<', data1, re.S)
-						if data_listi: desc='\c00??????Year: \c00????00'+data_listi[0]+' \c00??????| '
+						if data_listi: desc=tscolor('\c00??????')+'Year: '+tscolor('\c00????00')+data_listi[0]+' '+tscolor('\c00??????')+'| '
 						data_listi = re.findall('star">(.*?)<', data1, re.S)
-						if data_listi: desc=desc+'\c00??????Rate: \c00????00'+data_listi[0]+' \c00??????| '				
+						if data_listi: desc=desc+tscolor('\c00??????')+'Rate: '+tscolor('\c00????00')+data_listi[0]+' '+tscolor('\c00??????')+'| '				
 						data_listi = re.findall('Qlty">(.*?)<', data1, re.S)
-						if data_listi: desc=desc+'\c00??????Qualité: \c00????00'+data_listi[0]+' \c00??????| '
+						if data_listi: desc=desc+tscolor('\c00??????')+'Qualité: '+tscolor('\c00????00')+data_listi[0]+' '+tscolor('\c00??????')+'| '
 						data_listi = re.findall('Description">(.*?)</p>', data1, re.S)							
-						if data_listi: desc=desc+'\\n\c00??????Résumé: \c0000????'+ph.clean_html(data_listi[0])							
+						if data_listi: desc=desc+'\\n'+tscolor('\c00??????')+'Résumé: '+tscolor('\c0000????')+ph.clean_html(data_listi[0])							
 						data_listi = re.findall('Genre:(.*?)</p>', data1, re.S)							
-						if data_listi: desc=desc+'\\n\c00??????Genre: \c00????00'+ph.clean_html(data_listi[0])				
+						if data_listi: desc=desc+'\\n'+tscolor('\c00??????')+'Genre: '+tscolor('\c00????00')+ph.clean_html(data_listi[0])				
 						data_listi = re.findall('Director:(.*?)</p>', data1, re.S)							
-						if data_listi: desc=desc+'\\n\c00??????Director: \c00????00'+ph.clean_html(data_listi[0])				
+						if data_listi: desc=desc+'\\n'+tscolor('\c00??????')+'Director: '+tscolor('\c00????00')+ph.clean_html(data_listi[0])				
 						data_listi = re.findall('Cast:(.*?)</p>', data1, re.S)							
-						if data_listi: desc=desc+'\\n\c00??????Cast: \c00????00'+ph.clean_html(data_listi[0])					
+						if data_listi: desc=desc+'\\n'+tscolor('\c00??????')+'Cast: '+tscolor('\c00????00')+ph.clean_html(data_listi[0])					
 						
 						self.addDir({'import':cItem['import'],'category' : 'host2','url': url,'title':self.cleanHtmlStr(titre),'desc':desc,'icon':image,'mode':'31'})	
 				if i>19:
-					self.addDir({'import':cItem['import'],'title':'\c0000????Page Suivante','page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
+					self.addDir({'import':cItem['import'],'title':tscolor('\c0000????')+'Page Suivante','page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
 			else:
 				data_list = re.findall('class="Num">.*?href="(.*?)".*?src="(.*?)"(.*?)<strong>(.*?)<.*?class="Info">(.*?)</tr>', data, re.S)
 				i=0
 				for (url,image,type_,titre,desc1) in data_list:
 					i=i+1
 					if 'Qlty">TV' in type_:
-						type_='  \c0000????(Serie)'
+						type_='  '+tscolor('\c0000????')+'(Serie)'
 					else: type_=''
 					desc=''
 					data_listi = re.findall('Qlty">(.*?)<', desc1, re.S)							
-					if data_listi: desc=desc+'\c00??????Qualité: \c00????00'+ph.clean_html(data_listi[0])+' \c00??????| '					
+					if data_listi: desc=desc+tscolor('\c00??????')+'Qualité: '+tscolor('\c00????00')+ph.clean_html(data_listi[0])+' '+tscolor('\c00??????')+'| '					
 					data_listi = re.findall('<td>(.*?)</td', desc1, re.S)							
 					if data_listi: 
-						desc=desc+'\c00??????Durée: \c00????00'+ph.clean_html(data_listi[0])+' \c00??????| Genre: \c00????00'+ph.clean_html(data_listi[1])
+						desc=desc+tscolor('\c00??????')+'Durée: '+tscolor('\c00????00')+ph.clean_html(data_listi[0])+' '+tscolor('\c00??????')+'| Genre: '+tscolor('\c00????00')+ph.clean_html(data_listi[1])
 					self.addDir({'import':cItem['import'],'category' : 'host2','url': url,'title':self.cleanHtmlStr(titre)+type_,'desc':desc,'icon':image,'mode':'31'})	
 				if i>19:
-					self.addDir({'import':cItem['import'],'title':'\c0000????Page Suivante','page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
+					self.addDir({'import':cItem['import'],'title':tscolor('\c0000????')+'Page Suivante','page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
 
 	def showelms(self,cItem):
 		urlo=cItem['url']
@@ -201,10 +165,10 @@ class TSIPHost(TSCBaseHostClass):
 			if data_list:
 				for (name,data1) in data_list:
 					data1=data1.replace('&quot;','"')
-					self.addMarker({'title':'\c00????00'+ph.clean_html(name),'icon':cItem['icon']})
+					self.addMarker({'title':tscolor('\c00????00')+ph.clean_html(name),'icon':cItem['icon']})
 					data_list1 = re.findall('class="Num">(.*?)<a.*?href="(.*?)".*?src="(.*?)".*?href="(.*?)">(.*?)</a>(.*?)</td>', data1, re.S)
 					for (num,url,image,x1,titre,date) in data_list1:
-						titre='Episode \c00????00'+ph.clean_html(num)+'\c00??????: '+titre+' \c0000????('+ph.clean_html(date)+')'
+						titre='Episode '+tscolor('\c00????00')+ph.clean_html(num)+tscolor('\c00??????')+':  '+titre+tscolor('\c0000????')+'('+ph.clean_html(date)+')'
 						self.addVideo({'import':cItem['import'],'category' : 'host2','title':titre,'url':url,'desc':desc,'icon':image,'hst':'tshost','good_for_fav':True})	
 			else:
 				self.addVideo({'import':cItem['import'],'category' : 'host2','title':cItem['title'],'url':urlo,'desc':desc,'icon':img_,'hst':'tshost','good_for_fav':True})	
@@ -225,57 +189,76 @@ class TSIPHost(TSCBaseHostClass):
 					titre=data_list1[0][2]
 					desc=''
 					data_listi = re.findall('class="Year">(.*?)<', data1, re.S)
-					if data_listi: desc='\c00??????Year: \c00????00'+data_listi[0]+' \c00??????| '
+					if data_listi: desc=tscolor('\c00??????')+'Year: '+tscolor('\c00????00')+data_listi[0]+' '+tscolor('\c00??????')+'| '
 					data_listi = re.findall('star">(.*?)<', data1, re.S)
-					if data_listi: desc=desc+'\c00??????Rate: \c00????00'+data_listi[0]+' \c00??????| '				
+					if data_listi: desc=desc+tscolor('\c00??????')+'Rate: '+tscolor('\c00????00')+data_listi[0]+' '+tscolor('\c00??????')+'| '				
 					data_listi = re.findall('Qlty">(.*?)<', data1, re.S)
 					if data_listi: 
-						desc=desc+'\c00??????Qualité: \c00????00'+data_listi[0]+' \c00??????| '
-						if data_listi[0]=='TV': titre=titre+' \c0000????(Serie)'
+						desc=desc+tscolor('\c00??????')+'Qualité: '+tscolor('\c00????00')+data_listi[0]+' '+('\c00??????')+'| '
+						if data_listi[0]=='TV': titre=titre+' '+tscolor('\c0000????')+'(Serie)'
 					data_listi = re.findall('Description">(.*?)</p>', data1, re.S)							
-					if data_listi: desc=desc+'\\n\c00??????Résumé: \c0000????'+ph.clean_html(data_listi[0])							
+					if data_listi: desc=desc+'\\n'+tscolor('\c00??????')+'Résumé: '+tscolor('\c0000????')+ph.clean_html(data_listi[0])							
 					data_listi = re.findall('Genre:(.*?)</p>', data1, re.S)							
-					if data_listi: desc=desc+'\\n\c00??????Genre: \c00????00'+ph.clean_html(data_listi[0])				
+					if data_listi: desc=desc+'\\n'+tscolor('\c00??????')+'Genre: '+tscolor('\c00????00')+ph.clean_html(data_listi[0])				
 					data_listi = re.findall('Director:(.*?)</p>', data1, re.S)							
-					if data_listi: desc=desc+'\\n\c00??????Director: \c00????00'+ph.clean_html(data_listi[0])				
+					if data_listi: desc=desc+'\\n'+tscolor('\c00??????')+'Director: '+tscolor('\c00????00')+ph.clean_html(data_listi[0])				
 					data_listi = re.findall('Cast:(.*?)</p>', data1, re.S)							
-					if data_listi: desc=desc+'\\n\c00??????Cast: \c00????00'+ph.clean_html(data_listi[0])					
-					
+					if data_listi: desc=desc+'\\n'+tscolor('\c00??????')+'Cast: '+tscolor('\c00????00')+ph.clean_html(data_listi[0])					
 					self.addDir({'name':'sherch','import':extra,'category' : 'host2','url': url,'title':self.cleanHtmlStr(titre),'desc':desc,'icon':image,'mode':'31'})	
 
 
 	def get_links(self,cItem):
-		urlTab = []
 		URL=cItem['url']
-		sts, data = self.getPage(URL)
-		if sts:
-			data_list = re.findall('class="TPlayerTb.*?trembed=(.*?)("|&quot;)', data, re.S)
-			for (url,x1) in data_list:
-				url=url.replace('&amp;','&')
-				url=self.MAIN_URL+'/?trembed='+url.replace('&#038;','&')
-				sts, data2 = self.getPage(url,self.defaultParams)
-				printDBG(data2)
-				data_list2 = re.findall('src.*?["\'](.*?)["\']', data2, re.S)
-				if data_list2:
-					url=data_list2[0]
-					sts, data3 = self.getPage(url,self.defaultParams)
-					printDBG('data222'+data3)
-					data_list3 = re.findall("var id.+?'(.+?)'", data3, re.S)
-					if data_list3:
-						url1=self.MAIN_URL+'/?trhidee=1&trfex='+data_list3[0][::-1]
-						paramsUrl = dict(self.defaultParams)
-						paramsUrl['header']['Referer'] = url
-						sts, data3 = self.getPage(url1,paramsUrl)
-						printDBG('dataeta'+str(data3.meta))
-						Url=data3.meta['url']
-						if self.up.checkHostSupport(Url)==1:
-							urlTab.append({'name':gethostname(Url), 'url':Url, 'need_resolve':1})
-						elif 'hdsto' in Url:
-							URL = 'https://' + Url.split('/')[2] + '/hls/'+Url.split('id=')[1]+'/'+Url.split('id=')[1]+'.playlist.m3u8'
-							URL = strwithmeta(URL, {'Referer':Url})	
-							urlTab.extend(getDirectM3U8Playlist(URL, checkExt=True, checkContent=True, sortWithMaxBitrate=999999999))
-
-			#urlTab = getDirectM3U8Playlist(URL, checkExt=True, checkContent=True, sortWithMaxBitrate=999999999)		
+		urlTab = self.cacheLinks.get(URL, [])
+		printDBG('Cache='+str(urlTab))
+		if urlTab == []:
+			sts, data = self.getPage(URL)
+			if sts:
+				data_list = re.findall('class="TPlayerTb.*?trembed=(.*?)("|&quot;)', data, re.S)
+				for (url,x1) in data_list:
+					printDBG('etap 1')
+					url=url.replace('&amp;','&')
+					url=self.MAIN_URL+'/?trembed='+url.replace('&#038;','&')
+					sts, data2 = self.getPage(url,self.defaultParams)
+					data_list2 = re.findall('src.*?["\'](.*?)["\']', data2, re.S)
+					if data_list2:
+						printDBG('etap 2')
+						url=data_list2[0]
+						sts, data3 = self.getPage(url,self.defaultParams)
+						data_list3 = re.findall("var id.+?'(.+?)'", data3, re.S)
+						if data_list3:
+							printDBG('etap 3')
+							url1=self.MAIN_URL+'/?trhidee=1&trfex='+data_list3[0][::-1]
+							paramsUrl = dict(self.defaultParams)
+							paramsUrl['header']['Referer'] = url
+							sts, data3 = self.getPage(url1,paramsUrl)
+							Url=data3.meta['url']
+							printDBG('etap 5='+Url)
+							if ('public/dist' in Url) and ('id=' in Url):
+								URL = 'https://' + Url.split('/')[2] + '/hls/'+Url.split('id=')[1]+'/'+Url.split('id=')[1]+'.playlist.m3u8'
+								printDBG('etap 6='+URL)
+								URL = strwithmeta(URL, {'Referer':Url})	
+								urlTab.extend(getDirectM3U8Playlist(URL, checkExt=True, checkContent=True, sortWithMaxBitrate=999999999))
+							if '/public/dist/index.html?id=' in Url:
+								URL = Url.replace('/public/dist/index.html?id=','/getLinkStreamMd5/')
+								printDBG('etap 7='+URL)						
+								sts, data4 = self.getPage(URL,paramsUrl)
+								if sts:
+									data_lst = re.findall('file":"(.*?)".*?label":"(.*?)"', data4, re.S)
+									if data_lst: 
+										label = data_lst[0][1]
+										if 'googlevideo' in data_lst[0][0]: label = '|'+label + '| Google'
+										urlTab.append({'name':label, 'url':data_lst[0][0], 'need_resolve':0})
+							elif '/embedplay/' in Url:
+								sts, data4 = self.getPage(Url,self.defaultParams)
+								if sts:
+									data_list4 = re.findall('<iframe.*?src=["\'](.*?)["\']', data4, re.S)
+									if data_list4:
+										Url = data_list4[0]
+										urlTab.append({'name':gethostname(Url), 'url':Url, 'need_resolve':1})
+							else:
+								urlTab.append({'name':gethostname(Url), 'url':Url, 'need_resolve':1})
+				self.cacheLinks[str(cItem['url'])] = urlTab	
 		return urlTab	
 
 

@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname,unifurl
-
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname,unifurl,tscolor
+import urllib
 import re
 
 def getinfo():
 	info_={}
 	info_['name']='Arabseed.Com'
-	info_['version']='1.5 08/09/2019'
+	info_['version']='1.5.1 07/11/2019'
 	info_['dev']='RGYSoft'
 	info_['cat_id']='201'#'201'
 	info_['desc']='أفلام و مسلسلات عربية و اجنبية'
@@ -34,8 +34,8 @@ class TSIPHost(TSCBaseHostClass):
 							{'category':hst, 'sub_mode':1, 'title': 'مسلسلات',     'mode':'20'},
 							#{'category':hst, 'sub_mode':2, 'title':'رمضان 2019',  'mode':'20'},
 							{'category':hst, 'sub_mode':3, 'title': 'اقسام اخري', 'mode':'20'},
-							{'category':hst,               'title': '\c00????00'+'By Filter', 'mode':'21','count':1,'data':'none','code':self.MAIN_URL+'/getposts?'},	
-							{'category':'search','title': _('Search'), 'search_item':True,'page':1,'hst':'tshost'},
+							{'category':hst,               'title': tscolor('\c0000????') + 'حسب التصنيف' , 'mode':'21','count':1,'data':'none','code':self.MAIN_URL+'/getposts?'},	
+							{'category':'search','title':tscolor('\c00????30') + _('Search'), 'search_item':True,'page':1,'hst':'tshost'},
 							]		
 		self.listsTab(self.Arablionz_TAB, {'import':cItem['import'],'icon':cItem['icon']})	
 
@@ -104,12 +104,16 @@ class TSIPHost(TSCBaseHostClass):
 			for (url,image,inf,titre,desc) in data1:
 				inf_data=re.findall('class="ti.*?">(.*?)<', inf, re.S)		
 				if inf_data:
-					desc1='Rate: \c0000??00'+inf_data[0]+'\c00?????? \\n'
-					try: desc1=desc1+'View: \c0000??00'+inf_data[1]+'\c00??????\\n'
-					except: pass
-					desc=desc1+ph.clean_html(desc)
+					desc1=tscolor('\c00????00')+'Rate: '+tscolor('\c00??????')+inf_data[0]+' \\n'
+					#try: desc1=desc1+'View: '+tscolor('\c0000??00')+inf_data[1]+tscolor('\c00??????')+'\\n'
+					#except: pass
+					desc=desc1+tscolor('\c00????00')+'Desc: '+tscolor('\c00??????')+ph.clean_html(desc)
 				else:
-					desc=ph.clean_html(desc)				
+					desc=ph.clean_html(desc)
+				desc0,titre = self.uniform_titre(titre)
+				if desc.strip()!='':
+					desc = tscolor('\c00????00')+tscolor('\c00??????')+desc
+				desc=desc0+desc								
 				self.addDir({'import':cItem['import'],'good_for_fav':True,'EPG':True,'category' : 'host2','url': url,'title':titre,'desc':desc,'icon':image,'mode':'31','hst':'tshost'})			
 				i=i+1
 			if i>47:
@@ -134,7 +138,37 @@ class TSIPHost(TSCBaseHostClass):
 			data1=re.findall('class="media-block.*?href="(.*?)".*?data-src="(.*?)".*?class="details">(.*?)</div>.*?class="info">.*?<h3>(.*?)</h3>(.*?)</div>', data, re.S)		
 			i=0
 			for (url,image,inf,titre,desc) in data1:
-				self.addDir({'import':extra,'good_for_fav':True,'EPG':True,'category' : 'host2','url': url,'title':ph.clean_html(titre),'desc':ph.clean_html(desc),'icon':image,'mode':'31','hst':'tshost'})			
+				desc=ph.clean_html(desc)
+				titre=ph.clean_html(titre)
+				desc0,titre = self.uniform_titre(titre)
+				if desc.strip()!='':
+					desc = tscolor('\c00????00')+'Desc: '+tscolor('\c00??????')+desc
+				desc=desc0+desc	
+				self.addDir({'import':extra,'good_for_fav':True,'EPG':True,'category' : 'host2','url': url,'title':titre,'desc':desc,'icon':image,'mode':'31','hst':'tshost'})			
+
+
+	def MediaBoxResult(self,str_ch,year_,extra):
+		urltab=[]
+		str_ch_o = str_ch
+		str_ch = urllib.quote(str_ch_o+' '+year_)	
+		url_=self.MAIN_URL+'/search?s='+str_ch+'&page='+str(1)
+		sts, data = self.getPage(url_)
+		if sts:		
+			data1=re.findall('class="media-block.*?href="(.*?)".*?data-src="(.*?)".*?class="details">(.*?)</div>.*?class="info">.*?<h3>(.*?)</h3>(.*?)</div>', data, re.S)		
+			i=0
+			for (url,image,inf,titre,desc) in data1:
+				desc=ph.clean_html(desc)
+				titre=ph.clean_html(titre)
+				desc0,titre = self.uniform_titre(titre,year_op=1)
+				if desc.strip()!='':
+					desc = tscolor('\c00????00')+'Desc: '+tscolor('\c00??????')+desc
+				desc=desc0+desc	
+				titre0='|'+tscolor('\c0060??60')+'ArabSeeD'+tscolor('\c00??????')+'| '+titre				
+				
+				urltab.append({'titre':titre,'import':extra,'good_for_fav':True,'EPG':True,'category' : 'host2','url': url,'title':titre0,'desc':desc,'icon':image,'mode':'31','hst':'tshost'})			
+		return urltab
+
+
 
 		
 	def get_links(self,cItem): 	

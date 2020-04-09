@@ -2,7 +2,7 @@
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG,byteify
 from Plugins.Extensions.IPTVPlayer.libs import ph
 
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname,tscolor
 from Plugins.Extensions.IPTVPlayer.libs.e2ijson import loads as json_loads
 from Plugins.Extensions.IPTVPlayer.tools.iptvtypes import strwithmeta
 from Plugins.Extensions.IPTVPlayer.libs.urlparserhelper import getDirectM3U8Playlist
@@ -142,29 +142,29 @@ class TSIPHost(TSCBaseHostClass):
 				i=i+1
 				inf=''
 				datax=re.findall('runtime">(.*?)<', x1, re.S)
-				if  datax: inf=inf+'\c00????00Runtime:\c00?????? '+datax[0]+'\\n'
+				if  datax: inf=inf+tscolor('\c00????00')+'Runtime:'+tscolor('\c00??????')+' '+datax[0]+'\\n'
 				datax=re.findall('year">(.*?)<', x1, re.S)
 				if  datax:
 					if datax[0].strip() != '':
-						inf=inf+'\c00????00Year:\c00?????? '+datax[0]+'\\n'			
+						inf=inf+tscolor('\c00????00')+'Year:'+tscolor('\c00??????')+' '+datax[0]+'\\n'			
 				datax=re.findall('rating">(.*?)</p', x1, re.S)
 				if  datax: 
 					if 'ended' in datax[0]:
-						inf=inf+'\c00????00Statut:\c00?????? Ended\\n'
-						inf=inf+'\c00????00Rating:\c00?????? '+datax[0].replace('ended','')+'\\n'
+						inf=inf+tscolor('\c00????00')+'Statut:'+tscolor('\c00??????')+' Ended\\n'
+						inf=inf+tscolor('\c00????00')+'Rating:'+tscolor('\c00??????')+' '+datax[0].replace('ended','')+'\\n'
 					elif 'returning series' in datax[0]:
-						inf=inf+'\c00????00Statut:\c00?????? Returning Series\\n'
-						inf=inf+'\c00????00Rating:\c00?????? '+datax[0].replace('returning series','')+'\\n'				
+						inf=inf+tscolor('\c00????00')+'Statut:'+tscolor('\c00??????')+' Returning Series\\n'
+						inf=inf+tscolor('\c00????00')+'Rating:'+tscolor('\c00??????')+' '+datax[0].replace('returning series','')+'\\n'				
 					else:
-						inf=inf+'\c00????00Rating:\c00?????? '+datax[0]+'\\n'					
+						inf=inf+tscolor('\c00????00')+'Rating:'+tscolor('\c00??????')+' '+datax[0]+'\\n'					
 							
-				desc=inf+'\c00????00Description:\c00?????? '+desc
+				desc=inf+tscolor('\c00????00')+'Description:'+tscolor('\c00??????')+' '+desc
 				
 				image=self.MAIN_URL+'/'+image
 				url=self.MAIN_URL+'/'+url
 				self.addDir({'import':cItem['import'],'category' : 'host2','url': url,'title':titre.strip(),'desc':ph.clean_html(desc),'icon':image,'hst':'tshost','good_for_fav':True,'mode':'31'})	
 			if i>11:
-				self.addDir({'import':cItem['import'],'title':'\c0000????Page Suivante','page':page+1,'category' : 'host2','url':urlo,'icon':cItem['icon'],'mode':'30'} )									
+				self.addDir({'import':cItem['import'],'title':tscolor('\c0000????')+'Page Suivante','page':page+1,'category' : 'host2','url':urlo,'icon':cItem['icon'],'mode':'30'} )									
 
 
 	def showelms(self,cItem):
@@ -173,7 +173,7 @@ class TSIPHost(TSCBaseHostClass):
 		if sts:
 			data_list = re.findall('"season-headline">(.*?)<(.*?)</ul>', data, re.S)
 			for (seas_titre,data1) in data_list:
-				self.addMarker({'title':'\c0000????'+seas_titre,'desc':'','icon':cItem['icon']})	
+				self.addMarker({'title':tscolor('\c0000????')+seas_titre,'desc':'','icon':cItem['icon']})	
 				data_list1 = re.findall('<li>(.*?)</a>.*?href="(.*?)".*?src="(.*?)".*?>(.*?)</li>', data1, re.S)
 				for (titre,url,image,desc) in data_list1:
 					url=self.MAIN_URL+'/'+url
@@ -202,7 +202,7 @@ class TSIPHost(TSCBaseHostClass):
 					titre=image.replace('watch-movie-','').replace('-','')
 				elif 'watch-tvshow-' in url:
 					titre=image.replace('watch-tvshow-','').replace('-','')
-				self.addVideo({'import':extra,'category' : 'host2','url': url,'title':titre,'desc':'','icon':image,'hst':'tshost','good_for_fav':True})	
+				self.addVideo({'import':extra,'category' : 'video','url': url,'title':titre,'desc':'','icon':image,'hst':'tshost','good_for_fav':True})	
 		
 
 	def get_links(self,cItem):

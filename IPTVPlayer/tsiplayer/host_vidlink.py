@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname,tscolor
 from Plugins.Extensions.IPTVPlayer.libs.e2ijson import loads as json_loads
 from Plugins.Extensions.IPTVPlayer.tools.iptvtypes import strwithmeta
 from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.packer import cPacker
@@ -47,7 +47,7 @@ class TSIPHost(TSCBaseHostClass):
 		img_=cItem['icon']								
 		Cat_TAB = [
 					{'category':hst,'title': 'MOVIES',       'url': self.MAIN_URL, 'mode':'30'},				
-					{'category':hst,'title': '\c0000????By Genre',  'mode':'20'},																	
+					{'category':hst,'title': tscolor('\c0000????')+'By Genre',  'mode':'20'},																	
 					{'category':'search','name':'search','title': _('Search'), 'search_item':True,'hst':'tshost'},
 					]
 		self.listsTab(Cat_TAB, {'import':cItem['import'],'icon':img_,'desc':''})				
@@ -78,7 +78,7 @@ class TSIPHost(TSCBaseHostClass):
 			for (url,image,titre,desc1,desc2) in films_list:
 				desc = ph.clean_html(desc1)+'\n'+ph.clean_html(desc2)
 				if image.startswith('//'): image = 'http:'+image
-				self.addVideo({'import':extra,'good_for_fav':True,'category' : 'host2','url':self.MAIN_URL+url,'title':titre,'desc':desc,'icon':image,'hst':'tshost'})	
+				self.addVideo({'import':extra,'good_for_fav':True,'category' : 'video','url':self.MAIN_URL+url,'title':titre,'desc':desc,'icon':image,'hst':'tshost'})	
 
 
 	def get_links(self,cItem):
@@ -89,6 +89,7 @@ class TSIPHost(TSCBaseHostClass):
 		post_data = {'postID':id_}
 		sts, data = self.getPage(URL,post_data=post_data)
 		if sts:
+			printDBG('data='+data)
 			data = cPacker().unpack(data.strip())
 			printDBG('dataaaaa'+data)
 			ol_data = re.findall('var.*?oploadID="(.*?)"', data, re.S)

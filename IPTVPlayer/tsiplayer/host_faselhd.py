@@ -2,9 +2,9 @@
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
 from Plugins.Extensions.IPTVPlayer.tools.iptvtypes import strwithmeta
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,tscolor
 from Components.config import config
-import base64
+import base64,urllib
 import re
 
 
@@ -104,7 +104,7 @@ class TSIPHost(TSCBaseHostClass):
 				name_eng=name_eng.replace('أنمي ','')	
 				name_eng=name_eng.replace('&#8211;','-')				
 				self.addDir({'import':cItem['import'],'good_for_fav':True,'EPG':True, 'hst':'tshost', 'category':'host2', 'url':url1, 'title':str(name_eng), 'desc':desc, 'icon':image, 'mode':'32'} )	
-			self.addDir({'import':cItem['import'],'category':'host2', 'url':url0, 'title':'\c0000??00Page Suivante', 'page':page+1, 'desc':'Page Suivante', 'icon':img, 'mode':'30'})					
+			self.addDir({'import':cItem['import'],'category':'host2', 'url':url0, 'title':tscolor('\c0000??00')+'Page Suivante', 'page':page+1, 'desc':'Page Suivante', 'icon':img, 'mode':'30'})					
 
 	def showitms2(self,cItem):
 		url0=cItem['url']			 
@@ -121,7 +121,8 @@ class TSIPHost(TSCBaseHostClass):
 			url0='https://www.faselhd.co'+url0
 		if '/anime/' in url0:
 			url0=url0+'?display=normal'
-		titre0=cItem['title']				
+		titre0=cItem['title']
+		titre0=titre0.replace('|'+tscolor('\c0060??60')+'FaselHD'+tscolor('\c00??????')+'| ','')				
 		sts, data = self.cm.getPage(url0)
 		if sts:
 			if 'http-equiv="refresh"' in data:
@@ -161,7 +162,36 @@ class TSIPHost(TSCBaseHostClass):
 				desc=desc+self.cleanHtmlStr(desc2)+'\n'	
 				name_eng=name_eng.replace('&#8211;','-')				
 				self.addDir({'import':extra,'good_for_fav':True,'EPG':True, 'hst':'tshost', 'category':'host2', 'url':url1, 'title':str(name_eng), 'desc':desc, 'icon':image, 'mode':'32'} )	
-		
+
+	def MediaBoxResult(self,str_ch,year_,extra):
+		urltab=[]
+		str_ch_o = str_ch
+		str_ch = urllib.quote(str_ch_o+' '+year_)
+		url_='https://www.faselhd.co/page/1/?s='+str_ch
+		sts, data = self.cm.getPage(url_)
+		if sts:
+			lst_data=re.findall('class="movie-wrap">.*?href="(.*?)".*?src="(.*?)".*?alt="(.*?)".*?<span>(.*?)</span>(.*?)<h1>', data, re.S)			
+			for (url1,image,name_eng,desc1,desc2) in lst_data:
+				desc=''
+				if self.cleanHtmlStr(desc1)!='':
+					desc='Rate:'+self.cleanHtmlStr(desc1)+'\n'
+				desc=''
+				
+				name_eng=str(name_eng).replace('&#8211;','-')
+				
+				x1,titre0=self.uniform_titre(name_eng,year_op=1)
+				desc=x1+desc				
+				
+				if str_ch_o.lower().replace(' ','') == titre0.replace('-',' ').replace(':',' ').lower().replace(' ',''):
+					trouver = True
+				else:
+					trouver = False
+				name_eng='|'+tscolor('\c0060??60')+'FaselHD'+tscolor('\c00??????')+'| '+titre0				
+				if trouver:
+					urltab.insert(0,{'titre':titre0,'import':extra,'good_for_fav':True,'EPG':True, 'hst':'tshost', 'category':'host2', 'url':url1, 'title':name_eng, 'desc':desc, 'icon':image, 'mode':'32'} )					
+				else:
+					urltab.append({'titre':titre0,'import':extra,'good_for_fav':True,'EPG':True, 'hst':'tshost', 'category':'host2', 'url':url1, 'title':name_eng, 'desc':desc, 'icon':image, 'mode':'32'} )	
+		return urltab	
 		
 	def get_links(self,cItem): 	
 		urlTab = []	
@@ -180,15 +210,16 @@ class TSIPHost(TSCBaseHostClass):
 						Liste_els_3 = re.findall('download_wrapper">.*?href="(.*?)"', data.lower(), re.S)			
 						if Liste_els_3:	
 							sts, data = self.cm.getPage(Liste_els_3[0])
-							Liste_els_4 = re.findall('<div class="other_servers">(.*?)</div>', data, re.S)			
-							if Liste_els_4:
-								Liste_els_5 = re.findall('href="(.*?)".*?">(.*?)<', Liste_els_4[0], re.S)
-								for (url_,titre_)in Liste_els_5 :				
-									urlTab.append({'name':'|Download Server| '+titre_, 'url':url_, 'need_resolve':1})
+							if sts:
+								Liste_els_4 = re.findall('<div class="other_servers">(.*?)</div>', data, re.S)			
+								if Liste_els_4:
+									Liste_els_5 = re.findall('href="(.*?)".*?">(.*?)<', Liste_els_4[0], re.S)
+									for (url_,titre_)in Liste_els_5 :				
+										urlTab.append({'name':'|Download Server| '+titre_, 'url':url_, 'need_resolve':1})
 						
-							Liste_els_6 = re.findall('dl-link">.*?href="(.*?)"', data, re.S)
-							if Liste_els_6 :				
-								urlTab.append({'name':'|Download Server| T7meel', 'url':Liste_els_6[0], 'need_resolve':0,'type':'local'})
+								Liste_els_6 = re.findall('dl-link">.*?href="(.*?)"', data, re.S)
+								if Liste_els_6 :				
+									urlTab.append({'name':'|Download Server| T7meel', 'url':Liste_els_6[0], 'need_resolve':0,'type':'local'})
 							
 										
 			Liste_els = re.findall('onclick="player_iframe.*?\'(.*?)\'">(.*?)</a>', data0, re.S)

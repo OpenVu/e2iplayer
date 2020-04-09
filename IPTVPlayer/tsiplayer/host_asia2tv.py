@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass
-
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,tscolor
+from Plugins.Extensions.IPTVPlayer.tools.iptvtypes import strwithmeta
 try:
 	from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.vstream.requestHandler import cRequestHandler
 	from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.vstream.config import GestionCookie
@@ -16,21 +16,21 @@ import re,urllib,cookielib,time
 def getinfo():
 	info_={}
 	info_['name']='Asia2tv'
-	info_['version']='1.2 02/09/2019'
+	info_['version']='1.4 20/02/2020'
 	info_['dev']='RGYSoft'
 	info_['cat_id']='201'
 	info_['desc']='أفلام و مسلسلات آسياوية'
 	info_['icon']='https://i.ibb.co/MpXLVK8/x2p8y3u4.png'
 	info_['recherche_all']='1'
-	info_['update']='Bugs Fix' 
+	info_['update']='Fix cover' 
 	return info_
 	
 	
 class TSIPHost(TSCBaseHostClass):
 	def __init__(self):
 		TSCBaseHostClass.__init__(self,{'cookie':'asia2tv.cookie'})
-		self.USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.86 Safari/537.36'
-		self.MAIN_URL = 'https://astv.co'
+		self.USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:50.0) Gecko/20100101 Firefox/50.0'
+		self.MAIN_URL = 'https://asiatv.cc'
 		self.HEADER = {'User-Agent': self.USER_AGENT, 'Connection': 'keep-alive', 'Accept-Encoding':'gzip', 'Content-Type':'application/x-www-form-urlencoded','Referer':self.getMainUrl(), 'Origin':self.getMainUrl()}
 		self.defaultParams = {'header':self.HEADER, 'use_cookie': True, 'load_cookie': True, 'save_cookie': True, 'cookiefile': self.COOKIE_FILE}
 		#self.getPage = self.cm.getPage
@@ -38,41 +38,8 @@ class TSIPHost(TSCBaseHostClass):
 
 	def getPage(self,baseUrl, addParams = {}, post_data = None):
 		if addParams == {}: addParams = dict(self.defaultParams) 
-		sts, data = self.cm.getPage(baseUrl,addParams,post_data)
-		if not data: data=''
-		if '!![]+!![]' in data:
-			try:
-				printDBG('Start CLoudflare  Vstream methode')
-				oRequestHandler = cRequestHandler(baseUrl)
-				if post_data:
-					post_data_vstream = ''
-					for key in post_data:
-						if post_data_vstream=='':
-							post_data_vstream=key+'='+post_data[key]
-						else:
-							post_data_vstream=post_data_vstream+'&'+key+'='+post_data[key]					
-					oRequestHandler.setRequestType(cRequestHandler.REQUEST_TYPE_POST)
-					oRequestHandler.addParametersLine(post_data_vstream)					
-				data = oRequestHandler.request()
-				sts = True
-				printDBG('cook_vstream_file='+self.up.getDomain(baseUrl).replace('.','_'))
-				cook = GestionCookie().Readcookie(self.up.getDomain(baseUrl).replace('.','_'))
-				printDBG('cook_vstream='+cook)
-				if ';' in cook: cook_tab = cook.split(';')
-				else: cook_tab = cook
-				cj = self.cm.getCookie(self.COOKIE_FILE)
-				for item in cook_tab:
-					if '=' in item:	
-						printDBG('item='+item)		
-						cookieKey, cookieValue = item.split('=')
-						cookieItem = cookielib.Cookie(version=0, name=cookieKey, value=cookieValue, port=None, port_specified=False, domain='.'+self.cm.getBaseUrl(baseUrl, True), domain_specified=True, domain_initial_dot=True, path='/', path_specified=True, secure=False, expires=time.time()+3600*48, discard=True, comment=None, comment_url=None, rest={'HttpOnly': None}, rfc2109=False)
-						cj.set_cookie(cookieItem)
-				cj.save(self.COOKIE_FILE, ignore_discard = True)
-			except Exception, e:
-				printDBG('ERREUR:'+str(e))
-				printDBG('Start CLoudflare  E2iplayer methode')
-				addParams['cloudflare_params'] = {'domain':self.up.getDomain(baseUrl), 'cookie_file':self.COOKIE_FILE, 'User-Agent':self.USER_AGENT}
-				sts, data = self.cm.getPageCFProtection(baseUrl, addParams, post_data)	
+		addParams['cloudflare_params'] = {'domain':self.up.getDomain(baseUrl), 'cookie_file':self.COOKIE_FILE, 'User-Agent':self.USER_AGENT}
+		sts, data = self.cm.getPageCFProtection(baseUrl, addParams, post_data)
 		return sts, data
 
 
@@ -83,10 +50,10 @@ class TSIPHost(TSCBaseHostClass):
 					{'category':hst,'title': 'افلام آسيوية',    'mode':'30' ,'icon':img ,'url':self.MAIN_URL+'/category/asia-movies/'},						
 					{'category':hst,'title': 'الدراما',        'mode':'30' ,'icon':img ,'url':self.MAIN_URL+'/category/list-drama/'},						
 					{'category':hst,'title': 'الحلقات الجديدة','mode':'30' ,'icon':img ,'url':self.MAIN_URL+'/n-episodes/'},
-					{'category':hst,'title': 'By Category',    'mode':'20' ,'icon':img ,'sub_mode':0},
-					{'category':hst,'title': 'By Status',      'mode':'20' ,'icon':img ,'sub_mode':1},
-					{'category':hst,'title': 'By Genre',       'mode':'20' ,'icon':img ,'sub_mode':2},
-					{'category':'search'  ,'title': _('Search'),'search_item':True,'page':1,'hst':'tshost','icon':img},
+					{'category':hst,'title': tscolor('\c0000????') + 'حسب النوع',    'mode':'20' ,'icon':img ,'sub_mode':0},
+					{'category':hst,'title': tscolor('\c0000????') + 'حسب الحالة',      'mode':'20' ,'icon':img ,'sub_mode':1},
+					{'category':hst,'title': tscolor('\c0000????') + 'حسب التصنيف' ,       'mode':'20' ,'icon':img ,'sub_mode':2},
+					{'category':'search'  ,'title':tscolor('\c00????30') + _('Search'),'search_item':True,'page':1,'hst':'tshost','icon':img},
 					]
 		self.listsTab(asia_TAB, {'import':cItem['import'],'name':hst})
 		
@@ -104,7 +71,7 @@ class TSIPHost(TSCBaseHostClass):
 			if Liste_films_data:
 				Liste_films_data0 = re.findall('<li.*?href="(.*?)">(.*?)<', Liste_films_data[ind_], re.S)
 				for (url,titre) in Liste_films_data0:
-					self.addDir({'import':cItem['import'],'name':'categories', 'category' :'host2', 'url':url, 'title':titre, 'desc':'', 'icon':cItem['icon'], 'mode':'30'})						
+					self.addDir({'import':cItem['import'],'name':'categories', 'category' :'host2', 'url':url, 'title':self.cleanHtmlStr( titre), 'desc':'', 'icon':cItem['icon'], 'mode':'30'})						
 		
 		
 	def showitms(self,cItem):		
@@ -119,6 +86,7 @@ class TSIPHost(TSCBaseHostClass):
 		if sts:
 			i=0			
 			Liste_films_data = re.findall('class="postmoveie">.*?post-date">(.*?)<.*?href="(.*?)".*?thumb-bg">(.*?)</div>.*?<h4.*?">(.*?)<', data, re.S)
+			cookieHeader = self.cm.getCookieHeader(self.COOKIE_FILE)
 			for (desc,url1,image,name_eng) in Liste_films_data:
 				i=i+1
 				img_data = re.findall('data-lazy-src="(.*?)"', image, re.S)
@@ -128,7 +96,13 @@ class TSIPHost(TSCBaseHostClass):
 				else:
 					image=''
 				if image.startswith('//'): image='http:'+image
-				self.addDir({'import':cItem['import'],'good_for_fav':True, 'EPG':True, 'category':'host2', 'url':url1, 'title':name_eng.strip(), 'desc':desc, 'icon':image, 'mode':'31','hst':'tshost'} )
+				image=strwithmeta(image,{'Cookie':cookieHeader, 'User-Agent':self.USER_AGENT})
+				desc0,name_eng = self.uniform_titre(name_eng.strip())
+				if desc.strip()!='':
+					desc = tscolor('\c00????00')+'Info: '+tscolor('\c00??????')+desc
+				desc=desc0+desc
+				
+				self.addDir({'import':cItem['import'],'good_for_fav':True, 'EPG':True, 'category':'host2', 'url':url1, 'title':name_eng, 'desc':desc, 'icon':image, 'mode':'31','hst':'tshost'} )
 			if i>24:
 				self.addDir({'import':cItem['import'],'category' : 'host2','url': url,'title':'Page Suivante','page':page+1,'desc':'Page Suivante','icon':cItem['icon'],'mode':'30'} )
 		
@@ -152,9 +126,15 @@ class TSIPHost(TSCBaseHostClass):
 		url_=self.MAIN_URL+'/page/'+str(page)+'/?s='+str_ch
 		sts, data = self.getPage(url_)
 		if sts:
+			cookieHeader = self.cm.getCookieHeader(self.COOKIE_FILE)
 			Liste_films_data = re.findall('class="postmoveie">.*?post-date">(.*?)<.*?href="(.*?)".*?src="(.*?)".*?<h4.*?">(.*?)<', data, re.S)
 			for (desc,url1,image,name_eng) in Liste_films_data:
-				self.addDir({'import':extra,'good_for_fav':True, 'EPG':True, 'name':'categories', 'category':'host2', 'url':url1, 'title':name_eng.strip(), 'desc':desc, 'icon':image, 'mode':'31','hst':'tshost'} )
+				image=strwithmeta(image,{'Cookie':cookieHeader, 'User-Agent':self.USER_AGENT})
+				desc0,name_eng = self.uniform_titre(name_eng.strip())
+				if desc.strip()!='':
+					desc = tscolor('\c00????00')+'Info: '+tscolor('\c00??????')+desc
+				desc=desc0+desc
+				self.addDir({'import':extra,'good_for_fav':True, 'EPG':True, 'name':'categories', 'category':'host2', 'url':url1, 'title':name_eng, 'desc':desc, 'icon':image, 'mode':'31','hst':'tshost'} )
 
 			
 	def getArticle(self, cItem):
@@ -196,9 +176,13 @@ class TSIPHost(TSCBaseHostClass):
 				Url = Url.replace('%3F','?')
 				Url = Url.replace('%3D','=')
 
-				if Url.startswith('//'):
-					Url='http:'+Url
-				if ('userpro' not in Url) and('بتغير' not in host_):
+				if Url.startswith('//'): Url='http:'+Url
+				if ('&code=' in Url) and (not Url.startswith('http')):
+					x1,x2 = Url.split('&code=',1)
+					if '&' in x2:
+						id_ = x2.split('&',1)[0]
+						Url = 'https://tune.pk/js/open/load.js?vid='+id_
+				if ('userpro' not in Url) and ('بتغير' not in host_) and ('astv_ads' not in Url):
 					urlTab.append({'name':host_, 'url':Url, 'need_resolve':1})						
 		return urlTab
 		 

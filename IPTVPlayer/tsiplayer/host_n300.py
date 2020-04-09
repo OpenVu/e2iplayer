@@ -2,7 +2,7 @@
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
 from Plugins.Extensions.IPTVPlayer.tools.iptvtypes import strwithmeta
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname,tscolor
 from Components.config import config
 
 import re
@@ -14,7 +14,7 @@ def getinfo():
 	info_['name']='N300.Me'
 	info_['version']='1.1 06/07/2019'
 	info_['dev']='RGYSoft'
-	info_['cat_id']='201'
+	info_['cat_id']='104'
 	info_['desc']='افلام و مسلسلات عربية واجنبية'
 	info_['icon']='http://www.n300.me/IMGCenter/IMGSystem/LOGO/LOGO_N300_me_200px.png'
 	info_['recherche_all']='0'
@@ -74,7 +74,7 @@ class TSIPHost(TSCBaseHostClass):
 					for (url1,image,name,desc1,desc2) in lst_data2:
 						image=image.replace('../../../','http://www.n300.me/')
 						url1=url1.replace('../','http://www.n300.me/Mobile/Category/')
-						name = 'I '+name +' I \c00????00('+ desc1+')'
+						name = 'I '+name +' I '+tscolor('\c00????00')+'('+ desc1+')'
 						self.addVideo({'import':cItem['import'],'good_for_fav':True, 'hst':'tshost', 'category':'host2', 'url':url1, 'title':name, 'desc':desc2, 'icon':image} )	
 		elif gnr2==1:
 			sts, data = self.cm.getPage(url,self.defaultParams)
@@ -85,7 +85,7 @@ class TSIPHost(TSCBaseHostClass):
 					for (url1,image,name,desc1,desc2) in lst_data2:
 						image=image.replace('../../../','http://www.n300.me/')
 						url1=url1.replace('../','http://www.n300.me/Mobile/Category/')
-						name = 'I '+name +' I \c00????00('+ desc2+')'
+						name = 'I '+name +' I '+tscolor('\c00????00')+'('+ desc2+')'
 						self.addDir({'import':cItem['import'],'good_for_fav':True, 'category':'host2', 'url':url1, 'title':name, 'desc':desc1, 'icon':image, 'mode':'30','sub_mode':2} )	
 		elif gnr2==2:	 
 			sts, data = self.cm.getPage(url,self.defaultParams)

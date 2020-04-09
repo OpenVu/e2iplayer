@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname,tscolor
 
 import re
 
@@ -57,11 +57,11 @@ class TSIPHost(TSCBaseHostClass):
 					for elm in inf_list:
 						if ph.clean_html(elm) !='':
 							if 'fa-star' in elm:
-								desc=desc+'Rating: \c00????00'+ph.clean_html(elm)+'\c00??????\\n'
+								desc=desc+'Rating: '+tscolor('\c00????00')+ph.clean_html(elm)+tscolor('\c00??????')+'\\n'
 							elif 'fa-eye' in elm:
-								desc=desc+'View: \c00????00'+ph.clean_html(elm)+'\c00??????\\n'
+								desc=desc+'View: '+tscolor('\c00????00')+ph.clean_html(elm)+tscolor('\c00??????')+'\\n'
 							else:
-								desc=desc+'\c00????00'+ph.clean_html(elm)+'\c00??????\\n'			
+								desc=desc+tscolor('\c00????00')+ph.clean_html(elm)+tscolor('\c00??????')+'\\n'			
 					self.addDir({'import':cItem['import'],'good_for_fav':True,'category' : 'host2','url': url,'title':ph.clean_html(titre),'desc':desc,'icon':image,'hst':'tshost','mode':'30','page':-1,'EPG':True})	
 				if (i>17) and (page >0):
 					self.addDir({'import':cItem['import'],'title':'Next Page','page':page+1,'category' : 'host2','url':url1,'icon':cItem['icon'],'mode':'30'} )									
@@ -79,11 +79,11 @@ class TSIPHost(TSCBaseHostClass):
 				inf_list = re.findall('<span.*?>(.*?)</span>', desc_, re.S)		
 				for elm in inf_list:
 					if 'fa-star' in elm:
-						desc=desc+'Rating: \c00????00'+ph.clean_html(elm)+'\c00??????\\n'
+						desc=desc+'Rating: '+tscolor('\c00????00')+ph.clean_html(elm)+tscolor('\c00??????')+'\\n'
 					elif 'fa-eye' in elm:
-						desc=desc+'View: \c00????00'+ph.clean_html(elm)+'\c00??????\\n'
+						desc=desc+'View: '+tscolor('\c00????00')+ph.clean_html(elm)+tscolor('\c00??????')+'\\n'
 					else:
-						desc=desc+'\c00????00'+ph.clean_html(elm)+'\c00??????\\n'			
+						desc=desc+tscolor('\c00????00')+ph.clean_html(elm)+tscolor('\c00??????')+'\\n'			
 				self.addDir({'import':extra,'good_for_fav':True,'category' : 'host2','url': url,'title':titre,'desc':desc,'icon':image,'hst':'tshost','EPG':True})	
 
 		

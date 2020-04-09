@@ -18,6 +18,10 @@ from Plugins.Extensions.IPTVPlayer.libs.e2ijson                    import loads 
 from Plugins.Extensions.IPTVPlayer.libs                            import ph
 from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.packer           import cPacker
 from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.vstream.aadecode import AADecoder
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.vstream.aadecode import decodeAA
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.vstream.jjdecode import JJDecoder
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.vstream.parser   import cParser
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.vstream.jsunfuck import JSUnfuck
 
 ###################################################
 # FOREIGN import
@@ -30,6 +34,111 @@ import urllib
 from urlparse import urlparse, parse_qs
 from Components.config import config
 ###################################################
+
+def DecodeAllThePage(html):
+	Maxloop = 10
+	while (Maxloop > 0):
+		Maxloop = Maxloop - 1
+		r = re.search(r'unescape\("([^"]+)"\)', html, re.DOTALL | re.UNICODE)
+		if not r:
+			break
+		tmp = cUtil().unescape(r.group(1))
+		html = html[:r.start()] + tmp + html[r.end():]
+	while (Maxloop > 0):
+		Maxloop = Maxloop - 1
+		r = re.search(r'(;eval\(function\(w,i,s,e\){.+?\)\);)\s*<', html, re.DOTALL | re.UNICODE)
+		if not r:
+			break
+		tmp = data = unwise.unwise_process(r.group(1))
+		html = html[:r.start()] + tmp + html[r.end():]
+	return html
+
+
+def Cdecode(sHtmlContent,encodedC):
+	oParser = cParser()
+	sPattern =  '<([0-9a-zA-Z]+)><script>([^<]+)<\/script>'
+	aResult = oParser.parse(sHtmlContent, sPattern)
+
+	z = []
+	y = []
+	if (aResult[0] == True):
+		for aEntry in aResult[1]:
+			z.append(JJDecoder(aEntry[1]).decode())
+		#VSlog(z)
+		printDBG('z='+str(z))
+		for x in z:
+			r1 = re.search("atob\(\'([^']+)\'\)", x, re.DOTALL | re.UNICODE)
+			if r1:
+				y.append(base64.b64decode(r1.group(1)))
+		printDBG('y='+str(y))		
+		for w in y:
+			r2 = re.search(encodedC + "='([^']+)'", w)
+			if r2:
+				return r2.group(1)
+			else:
+				if '|' in w:
+					return w.split('|')[1]			
+def decode(urlcoded,a,b,c):
+	TableauTest = {}
+	key = ''
+
+	l = a
+	n = "0123456789"
+	h = b
+	j = 0
+
+	while j < len(l) :
+		k = 0
+		while k < len(n):
+			TableauTest[l[j] + n[k]] = h[int(j + k)]
+
+			k+=1
+
+		j+=1
+
+	hash = c
+	i = 0
+	while i < len(hash):
+		key = key + TableauTest[hash[i] + hash[i + 1]]
+		i+= 2
+
+
+	chain = base64.b64decode(urlcoded)
+
+	secretKey = {}
+	y = 0
+	temp = ''
+	url = ""
+
+	x = 0
+	while x < 256:
+		secretKey[x] = x
+		x += 1
+
+	x = 0
+	while x < 256:
+		y = (y + secretKey[x] + ord(key[x % len(key)])) % 256
+		temp = secretKey[x]
+		secretKey[x] = secretKey[y]
+		secretKey[y] = temp
+		x += 1
+
+	x = 0
+	y = 0
+	i = 0
+	while i < len(chain):
+		x += 1 % 256
+		y = (y + secretKey[x]) % 256
+		temp = secretKey[x]
+		secretKey[x] = secretKey[y]
+		secretKey[y] = temp
+
+		url = url + (chr(ord(chain[i]) ^ secretKey[(secretKey[x] + secretKey[y]) % 256]))
+
+		i += 1
+		
+	return url
+
 
 class urlparser:
 	def __init__(self):
@@ -94,63 +203,111 @@ class urlparser:
 
 		
 	def setHostsMap(self):
-		self.hostMap = {'vidshare.tv'     : self.pp.parserXFILESHARE,
-						'vidbm.com'       : self.pp.parserXFILESHARE,
-						'vidbom.com'      : self.pp.parserXFILESHARE,
-						'vidfast.co'      : self.pp.parserXFILESHARE,
-						'hdvid.tv'        : self.pp.parserXFILESHARE,
-						'gounlimited.to'  : self.pp.parserSTD02,
-						'mp4upload.com'   : self.pp.parserSTD02,
-						'verystream.com'  : self.pp.parserVERYSTREAM,
-						'woof.tube'       : self.pp.parserVERYSTREAM,						
-						'jawcloud.co'     : self.pp.parserJAWCLOUDCO,
-						'streamango.com'  : self.pp.parserSTREAMANGOCOM,
-						'ok.ru'           : self.pp.parserOKRU,
-						'openload.co'     : self.pp.parserOPENLOADCO, 
-						'openload.pw'     : self.pp.parserOPENLOADCO, 
-						'oload.tv'        : self.pp.parserOPENLOADCO, 
-						'oload.stream'    : self.pp.parserOPENLOADCO, 
-						'oload.site'      : self.pp.parserOPENLOADCO, 
-						'oload.download'  : self.pp.parserOPENLOADCO, 
-						'oload.life'      : self.pp.parserOPENLOADCO,
-						'oload.biz'       : self.pp.parserOPENLOADCO,
-						'uptobox.com'     : self.pp.parserUPTOSTREAMCOM, 
-						'uptostream.com'  : self.pp.parserUPTOSTREAMCOM,
-						'vidoza.net'      : self.pp.parserVIDOZANET,
-						'thevid.live'     : self.pp.parserTHEVIDLIVE, 
-						'thevid.net'      : self.pp.parserTHEVIDLIVE,
-						'flashx.tv'       : self.pp.parserFLASHXTV, 
-						'flashx.pw'       : self.pp.parserFLASHXTV, 
-						'flashx.co'       : self.pp.parserFLASHXTV,
+		self.hostMap = {'thevideobee.to'  : self.pp.parserUNI01,
+						'uqload.com'      : self.pp.parserUNI01,
+						'vidia.tv'        : self.pp.parserUNI01,
+						'vidfast.co'      : self.pp.parserUNI01,
+						'vidoza.net'      : self.pp.parserUNI01,
+						'upstream.to'     : self.pp.parserUNI01,
+						'samaup.co'       : self.pp.parserUNI01,
+						'clipwatching.com': self.pp.parserUNI01,	
+						'vidhd.net'       : self.pp.parserUNI01,#self.pp.parserCLIPWATCHINGCOM,
+						'youdbox.com'     : self.pp.parserUNI01,	
+						'vidlox.tv'       : self.pp.parserUNI01, 
+						'vidlox.me'       : self.pp.parserUNI01,   
+ 						'gounlimited.to'  : self.pp.parserUNI01,
+ 						'filerio.in'      : self.pp.parserUNI01,
+						'cloudvideo.tv'   : self.pp.parserUNI01,#self.pp.parserCLOUDVIDEOTV,
+						'vup.to'          : self.pp.parserUNI01,#self.pp.parserVIDOZANET,	
+						'video.sibnet.ru' : self.pp.parserUNI01,#self.pp.parserSIBNET,
+						'watchvideo.us'   : self.pp.parserUNI01,
+						'letsupload.co'   : self.pp.parserUNI01, 
+						'vidsat.net'      : self.pp.parserUNI01,
+						'hdvid.tv'        : self.pp.parserUNI01,	
+						'mp4upload.com'   : self.pp.parserUNI01,
+						'supervideo.tv'   : self.pp.parserUNI01,
+						'vudeo.net'	      : self.pp.parserUNI01,	
+						'streamwire.net'  : self.pp.parserUNI01,
+						'vidshare.tv'     : self.pp.parserUNI01,
+						'videobin.co'     : self.pp.parserUNI01,
+						'youflix.me'      : self.pp.parserUNI01,
+						'mystream.to'     : self.pp.parserVSTREAM,
+						'vidbm.com'       : self.pp.parserUNI01,#self.pp.parserVSTREAM,
+						'vidbom.com'      : self.pp.parserUNI01,
+						'uptostream.com'  : self.pp.parserUPTOSTREAMCOM,#self.pp.parserUPTOSTREAMCOM, 
+						'deepmic.com'     : self.pp.parserDEEPMIC,#self.pp.parserVIDOZANET,							
+						'mixdrop.to'      : self.pp.parserMIXDROP,	
+						'mixdrop.co'      : self.pp.parserMIXDROP,								
+						'jawcloud.co'     : self.pp.parserJAWCLOUDCO,						
+						'vidtodo.com'     : self.pp.parserVIDTODOCOM,						
 						'tune.pk'         : self.pp.parseTUNEPK,
 						'dailymotion.com' : self.pp.parserDAILYMOTION,
 						'youtube.com'     : self.pp.parserYOUTUBE, 
 						'youtu.be'        : self.pp.parserYOUTUBE,
-						'vidlox.tv'       : self.pp.parserSTD01, 
-						'vidlox.me'       : self.pp.parserSTD01,     
-						'uqload.com'      : self.pp.parserSTD01,
-						'thevideobee.to'  : self.pp.parserSTD01,
-						#'mystream.to'     : self.pp.parserMYSTREAMTO,
-						#'vev.io'          : self.pp.parserTHEVIDEOME, 						
-						#'vev.red'         : self.pp.parserTHEVIDEOME,
-						#'thevideo.me'     : self.pp.parserTHEVIDEOME,
-						'clipwatching.com': self.pp.parserCLIPWATCHINGCOM,
-						'vidhd.net'       : self.pp.parserCLIPWATCHINGCOM,
+						'ok.ru'           : self.pp.parserOKRU,						
+						'flashx.tv'       : self.pp.parserFLASHXTV, 
+						'flashx.pw'       : self.pp.parserFLASHXTV, 
+						'flashx.co'       : self.pp.parserFLASHXTV,
+						'uptobox.com'     : self.pp.parserUPTOSTREAMCOM,	
+						'google.com'      : self.pp.parserGOOGLE, 
+						'fembed.com'      : self.pp.parserXSTREAMCDNCOM, 
+						'fembed.net'	  : self.pp.parserFEURL, 						
+						'feurl.com'	      : self.pp.parserFEURL, 
+						'playvid.pw'	  : self.pp.parserFEURL, 
+						'fsimg.info'	  : self.pp.parserFEURL,
+						'uppom.live'      :	self.pp.downUPPOM, 					
+						#					
+						#'hqq.tv'          : self.pp.parserHQQ,
+						'verystream.com'  : self.pp.parserVERYSTREAM,
+						'woof.tube'       : self.pp.parserVERYSTREAM,	
+						'thevid.live'     : self.pp.parserTHEVIDLIVE, 
+						'thevid.net'      : self.pp.parserTHEVIDLIVE, 
 						'onlystream.tv'   : self.pp.parserSTD03,
-						'vup.to'          : self.pp.parserVIDOZANET,
 						'vcstream.to'     : self.pp.parserVCSTREAMTO,
 						'vidcloud.co'     : self.pp.parserVCSTREAMTO,
-						'fembed.com'      : self.pp.parserXSTREAMCDNCOM, 
 						'rapidvideo.com'  : self.pp.parserRAPIDVIDEO,
 						'rapidvideo.is'   : self.pp.parserRAPIDVIDEO,
 						'rapidvid.to'     : self.pp.parserRAPIDVIDEO,
 						'streamcherry.com': self.pp.parserSTREAMANGOCOM,
-						'cloudvideo.tv'   : self.pp.parserCLOUDVIDEOTV,
-						'google.com'      : self.pp.parserGOOGLE, 
-						#'deepmic.com'      : self.pp.parserSTD04, 
-						
+						'govid.me'        : self.pp.parserGOVIDME, 		
+						'vidspeed.net'    : self.pp.parserSTD05,					
+						#'streamango.com'  : self.pp.parserSTREAMANGOCOM,
+						#'openload.co'     : self.pp.parserOPENLOADCO, 
+						#'openload.pw'     : self.pp.parserOPENLOADCO, 
+						#'oload.tv'        : self.pp.parserOPENLOADCO, 
+						#'oload.stream'    : self.pp.parserOPENLOADCO, 
+						#'oload.site'      : self.pp.parserOPENLOADCO, 
+						#'oload.download'  : self.pp.parserOPENLOADCO, 
+						#'oload.life'      : self.pp.parserOPENLOADCO,
+						#'oload.biz'       : self.pp.parserOPENLOADCO,
+						#'vev.io'          : self.pp.parserTHEVIDEOME, 						
+						#'vev.red'         : self.pp.parserTHEVIDEOME,
+						#'thevideo.me'     : self.pp.parserTHEVIDEOME,
+						#'deepmic.com'      : self.pp.parserSTD04,
+						#'vidstream.in'    : self.pp.parserVIDSTREAM,
+						#'vidstream.to'    : self.pp.parserVIDSTREAM,
+						#'faststream.in'   : self.pp.parserVIDSTREAM,   						 
+						'waaw.tv'         : self.pp.parserHQQ,
 												}
 		return
+
+	def checkHostNotSupportbyname(self, name):
+		nothostMap_404 = ['upvid','streamango.com','videoz.me','yourupload.com','openload.co','openload.pw','oload.tv','oload.stream','oload.site','oload.download','oload.life','oload.biz']
+		nothostMap_not_found = ['file-up.org',]
+		nothostMap_not_work = ['playhydrax.com','jetload.net','hqq.tv','waaw.tv','videomega.co','vidshare.tv','vev.red','vev.io','hqq.watch','hqq.tv','netu','videoz.me','file-up.org','deepmic.com']
+		nothostMap = nothostMap_404 + nothostMap_not_found + nothostMap_not_work
+		if '|' in name: name=name.split('|')[-1].strip() 
+		name=name.lower().replace('embed.','').replace('www.','').replace(' ','')
+		found = False
+		for key in nothostMap:
+			if name in key:
+				found=True
+				break
+			elif name in key.replace('.',''):	
+				found=True
+				break				
+		return found
+
 
 	def getHostName(self, url, nameOnly = False):
 		hostName = strwithmeta(url).meta.get('host_name', '')
@@ -209,23 +366,7 @@ class urlparser:
 		
 		return found
 
-	def checkHostNotSupportbyname(self, name):
-		nothostMap_404 = ['videoz.me','yourupload.com']
-		nothostMap_not_found = ['file-up.org',]
-		nothostMap_not_work = ['mystream.to','vev.red','vev.io','hqq.watch','hqq.tv','netu','videoz.me','file-up.org','deepmic.com']
-		nothostMap = nothostMap_404 + nothostMap_not_found + nothostMap_not_work
-		if '|' in name: name=name.split('|')[-1].strip() 
-		name=name.lower().replace('embed.','').replace('www.','').replace(' ','')
-		found = False
-		for key in nothostMap:
-			if name in key:
-				found=True
-				break
-			elif name in key.replace('.',''):	
-				found=True
-				break				
-		
-		return found
+
 		
 	def isHostsNotSupported(self, host):
 		return host in ['rapidgator.net', 'oboom.com']
@@ -308,14 +449,44 @@ class pageParser(CaptchaHelper):
 		sts, data = self.cm.getPageCFProtection(baseUrl, addParams, post_data)
 		return sts, data
 
+	def getHostName(self, url, nameOnly = False):
+		hostName = strwithmeta(url).meta.get('host_name', '')
+		if not hostName:
+			match = re.search('https?://(?:www.)?(.+?)/', url)
+			if match:
+				hostName = match.group(1)
+				if (nameOnly):
+					n = hostName.split('.')
+					try: hostName = n[-2]
+					except Exception: printExc()
+			hostName = hostName.lower()
+		return hostName
 
+	def parserVSTREAM(self, baseUrl):
+		printDBG("parserVSTREAM baseUrl[%r]" % baseUrl)
+		videoTab = []
+		hst_name = self.getHostName(baseUrl, True)
+		printDBG("Host Name="+hst_name)
+		exec "from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.vstream.hosters." + hst_name + " import cHoster"
+		oHoster = cHoster()
+		oHoster.setUrl(baseUrl)
+		aLink = oHoster.getMediaLink()
+		printDBG('aLink='+str(aLink))
+		if (aLink[0] == True):
+			URL = aLink[1]
+			if '|User-Agent=' in URL:
+				URL,UA=aLink[1].split('|User-Agent=',1)
+			URL = strwithmeta(URL, {'User-Agent':UA})
+			printDBG('URL='+URL)
+			videoTab.append({'url':URL , 'name': hst_name})		
+		return videoTab
 
 	def parserXFILESHARE(self, baseUrl):
 		printDBG("parserVIDSHARETV baseUrl[%s]" % baseUrl)
 		
 		baseUrl = strwithmeta(baseUrl)
 		HTTP_HEADER= { 'User-Agent':'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:21.0) Gecko/20100101 Firefox/21.0',
-					   'Referer':baseUrl.meta.get('Referer', ''),
+					   'Referer':baseUrl.meta.get('Referer', baseUrl),
 					 }
 		COOKIE_FILE = GetCookieDir("xfileshare.cookie")
 		rm (COOKIE_FILE)
@@ -381,7 +552,8 @@ class pageParser(CaptchaHelper):
 
 	def parserJAWCLOUDCO(self, baseUrl):
 		printDBG("parserJAWCLOUDCO baseUrl[%r]" % baseUrl)
-		
+		if 'embed' not in baseUrl:
+			baseUrl = baseUrl.replace('jawcloud.co/','jawcloud.co/embed-')
 		baseUrl = strwithmeta(baseUrl)
 		HTTP_HEADER= self.cm.getDefaultHeader(browser='chrome')
 		HTTP_HEADER['Referer'] = baseUrl.meta.get('Referer', baseUrl)
@@ -704,6 +876,9 @@ class pageParser(CaptchaHelper):
 				subTracks.append({'title':label, 'url':url, 'lang':label, 'format':type})
 			
 			#'<font color="red">', '</font>'
+			lst_data=re.findall("atob\('(.*?)'", data, re.S)	
+			for elm in lst_data: data=data.replace(elm,base64.b64decode(elm))
+
 			items = self.cm.ph.getAllItemsBeetwenMarkers(data, '<source ', '>', False, False)
 			if 0 == len(items):
 				sts, items = self.cm.ph.getDataBeetwenReMarkers(data, re.compile('''var\s+sources\s*=\s*\['''), re.compile('''\]'''), False)
@@ -833,9 +1008,7 @@ class pageParser(CaptchaHelper):
 
 	def parserFLASHXTV(self, baseUrl):
 		printDBG("parserFLASHXTV baseUrl[%s]" % baseUrl)
-		
 		HTTP_HEADER = self.cm.getDefaultHeader()
-		
 		COOKIE_FILE = GetCookieDir('flashxtv.cookie')
 		params = {'header':HTTP_HEADER, 'cookiefile':COOKIE_FILE, 'use_cookie': True, 'save_cookie':True}
 		
@@ -1125,11 +1298,13 @@ class pageParser(CaptchaHelper):
 				vidTab[idx]['url'] = urlparser.decorateUrl(vidTab[idx]['url'], {'external_sub_tracks':sub_tracks})
 			
 		return vidTab[::-1]
-		
+
 	def parseTUNEPK(self, baseUrl):
-		printDBG("parseTUNEPK url[%s]\n" % baseUrl)
-		# example video: http://tune.pk/video/4203444/top-10-infamous-mass-shootings-in-the-u
-		HTTP_HEADER = {'User-Agent': "Mozilla/5.0"}
+		import hashlib
+		vidTab=[]
+		printDBG("parseTUNEPK0 url[%s]\n" % baseUrl)
+		ua = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36'
+		HTTP_HEADER = {'User-Agent': ua}
 		COOKIE_FILE = GetCookieDir('tunepk.cookie')
 		rm(COOKIE_FILE)
 		params = {'header':HTTP_HEADER, 'cookiefile':COOKIE_FILE, 'use_cookie': True, 'save_cookie':True, 'load_cookie':True}
@@ -1137,36 +1312,65 @@ class pageParser(CaptchaHelper):
 			vid = self.cm.ph.getSearchGroups(baseUrl+'&', item+'([0-9]+)[^0-9]')[0]
 			if '' != vid: break
 		if '' == vid: return []
-		url = 'https://tune.pk/video/%s' % vid
-		referer = url
-		sts, data = self.cm.getPage(url, params)
-		if not sts: return []
-		printDBG(data)
-		videoTab = []
-		hlsTab=[]
-		mp4Tab=[]
-		urls=[]
-		lst_data = re.findall('new\s+TunePlayer\(({.+?})\)\s*;\s*\n', data, re.S)
-		if lst_data:
-			items = json.loads(lst_data[0])['details']['player']['sources']
-			for item in items:
-				url = item['file']
-				label = item.get('label', 'MP4')
-				if url.startswith('//'): url = 'http:' + url
-				if not self.cm.isValidUrl(url): continue
-				if url not in urls:
-					urls.append(url)
-					url = strwithmeta(url, {'Referer':referer})
-					if 'm3u8' in url:
-						hlsTab.extend(getDirectM3U8Playlist(url, checkExt=False, checkContent=True, sortWithMaxBitrate=999999999))
-					else:
-						if str(label) in ('720','480'):
-							label = str(label)+'p'
-						mp4Tab.append({'name':'[MP4] '+str(label), 'url':url})
-						
-		videoTab.extend(mp4Tab)
-		videoTab.extend(hlsTab)		
-		return videoTab
+		media_id = vid
+		#referer = url
+		apiurl = 'https://api.tune.pk/v3/videos/{}'.format(media_id)
+		referer = 'https://tune.pk/video/%s' % media_id
+		printDBG("apiurl="+apiurl)
+		currentTime = time.time()
+		x_req_time = time.strftime('%a, %d %b %Y %H:%M:%S GMT',time.gmtime(currentTime))
+		tunestring = 'videos/{} . {} . KH42JVbO'.format(media_id, int(currentTime))
+		token = hashlib.sha1(tunestring).hexdigest()
+		headers = {'Content-Type': 'application/json; charset=utf-8',
+				   'User-Agent': ua,
+				   'X-KEY': '777750fea4d3bd585bf47dc1873619fc',
+				   #'X-REQ-APP': 'web' #not needed, returning bullshit hash anyways
+				   'X-REQ-TIME': x_req_time,
+				   'X-REQ-TOKEN': token}
+		params['header'] = headers
+		sts, response = self.cm.getPage(apiurl, params)
+		printDBG("response="+str(response))
+		jdata = json.loads(response)
+		if jdata['message'] == 'OK':
+			vids = jdata['data']['videos']['files']
+			sources = []
+			urls=[]
+			for key in vids.keys():
+				if vids[key]['file']  not in urls:
+					sources.append((vids[key]['label'], vids[key]['file']))
+					urls.append(vids[key]['file'])
+			
+			sources.reverse() 
+			
+			serverTime = long(jdata['timestamp']) + (int(time.time()) - int(currentTime))
+			hashLifeDuration = long(jdata['data']['duration']) * 5
+			if hashLifeDuration < 3600:
+				hashLifeDuration = 3600
+			expiryTime = serverTime + hashLifeDuration
+			for elm in sources:
+				video_url = elm[1]
+				titre = elm[0]
+				try:
+					startOfPathUrl = video_url.index('/files/videos/')
+					pathUrl = video_url[startOfPathUrl:None]
+				except ValueError:
+					try:
+						startOfPathUrl = video_url.index('/files/streams/')
+						pathUrl = video_url[startOfPathUrl:None]
+					except ValueError:
+							raise ResolverError('This video cannot be played.')
+
+				htoken = hashlib.md5(str(expiryTime) + pathUrl + ' ' + 'c@ntr@lw3biutun3cb').digest()
+				htoken = base64.urlsafe_b64encode(htoken).replace('=', '').replace('\n', '')
+				headers = {'Referer': referer, 'User-Agent': ua}
+
+				urll=video_url + '?h=' + htoken + '&ttl=' + str(expiryTime)
+				urll = strwithmeta(urll,headers)
+				if 'm3u8' in urll:
+					vidTab.extend(getDirectM3U8Playlist(urll, checkExt=False, checkContent=True, sortWithMaxBitrate=999999999))
+				else:
+					vidTab.append({'name':titre, 'url':urll})
+		return vidTab
 
 	def getYTParser(self):
 		if self.ytParser == None:
@@ -1192,7 +1396,7 @@ class pageParser(CaptchaHelper):
 				formats = config.plugins.iptvplayer.ytformat.value
 				height  = config.plugins.iptvplayer.ytDefaultformat.value
 				dash    = self.getYTParser().isDashAllowed()
-				vp9     = self.getYTParser().isVP9Allowed()
+				#vp9     = self.getYTParser().isVP9Allowed()
 			except Exception:
 				printDBG("parserYOUTUBE default ytformat or ytDefaultformat not available here")
 				formats = "mp4"
@@ -1200,7 +1404,7 @@ class pageParser(CaptchaHelper):
 				dash = False
 				vp9 = False
 
-			tmpTab, dashTab = self.getYTParser().getDirectLinks(url, formats, dash, dashSepareteList = True, allowVP9 = vp9)
+			tmpTab, dashTab = self.getYTParser().getDirectLinks(url, formats, dash, dashSepareteList = True)
 
 			#tmpTab = CSelOneLink(tmpTab, __getLinkQuality, int(height)).getSortedLinks()
 			#dashTab = CSelOneLink(dashTab, __getLinkQuality, int(height)).getSortedLinks()
@@ -1255,31 +1459,59 @@ class pageParser(CaptchaHelper):
 		baseUrl = strwithmeta(baseUrl)
 		cUrl = baseUrl
 		#HTTP_HEADER= self.cm.getDefaultHeader(browser='chrome')
-		HTTP_HEADER= {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0','Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8','Accept-Language': 'fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3','Accept-Encoding': 'gzip, deflate, br','Connection': 'keep-alive','Cookie': '_ym_uid=1572098066129528523; _ym_d=1572098066; _ym_isad=2; _ym_wasSynced=%7B%22time%22%3A1572098792141%2C%22params%22%3A%7B%22eu%22%3A0%7D%2C%22bkParams%22%3A%7B%7D%7D; _ym_visorc_49114159=b','Upgrade-Insecure-Requests': '1','Pragma': 'no-cache','Cache-Control': 'no-cache'}
+		HTTP_HEADER= {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.','Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'}
 
-		
-		
-		
-		
-		#HTTP_HEADER['Referer'] = baseUrl.meta.get('Referer', baseUrl)
 		videoTab=[]
 		urlParams = {'header':HTTP_HEADER}
-		sts, data = self.cm.getPage(baseUrl, urlParams)
+		sts, sHtmlContent = self.cm.getPage(baseUrl, urlParams)
 		if not sts: return False
-		data = ph.findall(data, ('<script', '>'), '</script>', flags=0)
+		data = ph.findall(sHtmlContent, ('<script', '>'), '</script>', flags=0)
 		for item in data:
 			if 'ﾟωﾟﾉ=' in item:
 				aa_decoded = AADecoder(item).decode()
 				printDBG('aaaaddddaaaattttaaaa'+aa_decoded)
-				Liste_data = re.findall("type'.*?'(.*?)'.*?src'.*?'(.*?)'", aa_decoded, re.S)
+				r = re.search("atob\(\'([^']+)\'\)", aa_decoded, re.DOTALL | re.UNICODE)
+				if r:
+					urlcoded = r.group(1)
+				
+				
+				'''Liste_data = re.findall("type'.*?'(.*?)'.*?src'.*?'(.*?)'", aa_decoded, re.S)
 				for (type_,url) in Liste_data:
 					url = strwithmeta(self.cm.getFullUrl(url, self.cm.meta['url']), {'Referer':self.cm.meta['url']})
 					if 'mp4' in type_:
 						videoTab.append({'name':type_, 'url':url, 'need_resolve':1})
 					elif 'mpeg' in type_:
 						videoTab.extend(getDirectM3U8Playlist(url))
-				break
-		return videoTab
+				break'''
+				
+		oParser = cParser()		
+		reducesHtmlContent = oParser.abParse(sHtmlContent, '<z9></z9><script>','{if(document')
+		sPattern =  '(\w+)'
+		aResult = oParser.parse(reducesHtmlContent, sPattern)
+		if aResult[0]:
+			mlist = sorted(aResult[1], key=len)
+			mlist = mlist[-2:]
+			a = mlist[0]
+			b = mlist[1]
+
+            
+		sPattern =  "=\['getAttribute','*([^']+)'*\]"
+		aResult = oParser.parse(sHtmlContent, sPattern)
+		if aResult[0]:
+			encodedC = aResult[1][0].replace('window.','')
+			printDBG('encodec= ' + str(encodedC))
+			#c = Cdecode(sHtmlContent,encodedC)
+			#if c:
+			#	api_call = decode(urlcoded,a,b,c)
+			c = Cdecode(sHtmlContent,encodedC)	
+			printDBG('c= ' + str(c))	
+			if c:
+				api_call = decode(urlcoded,a,b,c)	
+				printDBG('api_call= ' + str(api_call))
+				URL = strwithmeta(api_call,{'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.'})
+				
+				
+		return URL
 
 	def parserTHEVIDEOME(self, baseUrl):
 		printDBG("parserTHEVIDEOME baseUrl[%s]" % baseUrl)
@@ -1353,7 +1585,40 @@ class pageParser(CaptchaHelper):
 		videoTab.extend(hlsTab)		
 		videoTab.extend(mp4Tab)
 		return videoTab
+		
+	def parserSTD05(self, baseUrl):
+		printDBG("parserSTD01 baseUrl[%r]" % baseUrl)
+		elms = baseUrl.split('/')
+		if 'embed-' not in baseUrl: url = '%s//%s/embed-%s.html' % (elms[0],elms[2],elms[-1].replace('.html', ''))
+		else: url = baseUrl
+		hlsTab = []
+		mp4Tab = []
+		
+		HTTP_HEADER= { 'User-Agent':"Mozilla/5.0"}
+		if 'Referer' in strwithmeta(baseUrl).meta:
+			HTTP_HEADER['Referer'] = strwithmeta(baseUrl).meta['Referer']
+		sts, data = self.cm.getPage(url, {'header':HTTP_HEADER})
+		if not sts: return False
 
+		data = data.replace('file:','"file":').replace('label:','"label":')
+		lst_data = re.findall('sources.*?(\[.*?\])', data, re.S)
+		if lst_data:
+			items = json.loads(lst_data[0])
+			for item in items:
+				url = strwithmeta(item['file'], {'Referer':baseUrl})
+				
+				type_ = url.split('?', 1)[0].split('.')[-1].lower()
+				label = item.get('label',type_)
+				if 'm3u8' in type_:
+					hlsTab.extend(getDirectM3U8Playlist(url, checkExt=False, checkContent=True, sortWithMaxBitrate=999999999))
+				elif 'mp4' in type_:
+					mp4Tab.append({'name':'[MP4] '+label, 'url':url})
+			
+		videoTab = []
+		videoTab.extend(hlsTab)		
+		videoTab.extend(mp4Tab)
+		return videoTab
+		
 	def parserSTD02(self, baseUrl):
 		printDBG("parserSTD02 baseUrl[%r]" % baseUrl)
 		elms = baseUrl.split('/')
@@ -1467,6 +1732,17 @@ class pageParser(CaptchaHelper):
 
 
 	def parserVCSTREAMTO(self, baseUrl):
+		tt = [39412784, 39412829, 39412826, 39412838, 39412821, 39412833, 39412825, 39412756, 39412839, 39412838, 39412823, 39412785, 39412758, 39412828, 39412840, 39412840, 39412836, 39412839, 39412782, 39412771, 39412771, 39412846, 39412821, 39412836, 39412770, 39412822, 39412841, 39412846, 39412846, 39412771, 39412801, 39412795, 39412758, 39412756, 39412839, 39412840, 39412845, 39412832, 39412825, 39412785, 39412758, 39412824, 39412829, 39412839, 39412836, 39412832, 39412821, 39412845, 39412782, 39412834, 39412835, 39412834, 39412825, 39412758, 39412756, 39412843, 39412829, 39412824, 39412840, 39412828, 39412785, 39412758, 39412772, 39412758, 39412756, 39412828, 39412825, 39412829, 39412827, 39412828, 39412840, 39412785, 39412758, 39412772, 39412758, 39412756, 39412839, 39412821, 39412834, 39412824, 39412822, 39412835, 39412844, 39412785, 39412758, 39412821, 39412832, 39412832, 39412835, 39412843, 39412769, 39412839, 39412821, 39412833, 39412825, 39412769, 39412835, 39412838, 39412829, 39412827, 39412829, 39412834, 39412758, 39412786, 39412784, 39412771, 39412829, 39412826, 39412838, 39412821, 39412833, 39412825, 39412786, 39412734, 39412784, 39412829, 39412826, 39412838, 39412821, 39412833, 39412825, 39412756, 39412839, 39412838, 39412823, 39412785, 39412758, 39412828, 39412840, 39412840, 39412836, 39412839, 39412782, 39412771, 39412771, 39412846, 39412821, 39412836, 39412770, 39412822, 39412841, 39412846, 39412846, 39412771, 39412824, 39412825, 39412825, 39412758, 39412756, 39412839, 39412840, 39412845, 39412832, 39412825, 39412785, 39412758, 39412824, 39412829, 39412839, 39412836, 39412832, 39412821, 39412845, 39412782, 39412834, 39412835, 39412834, 39412825, 39412758, 39412756, 39412843, 39412829, 39412824, 39412840, 39412828, 39412785, 39412758, 39412772, 39412758, 39412756, 39412828, 39412825, 39412829, 39412827, 39412828, 39412840, 39412785, 39412758, 39412772, 39412758, 39412756, 39412839, 39412821, 39412834, 39412824, 39412822, 39412835, 39412844, 39412785, 39412758, 39412821, 39412832, 39412832, 39412835, 39412843, 39412769, 39412839, 39412821, 39412833, 39412825, 39412769, 39412835, 39412838, 39412829, 39412827, 39412829, 39412834, 39412758, 39412786, 39412784, 39412771, 39412829, 39412826, 39412838, 39412821, 39412833, 39412825, 39412786, 39412734, 39412784, 39412829, 39412826, 39412838, 39412821, 39412833, 39412825, 39412756, 39412839, 39412838, 39412823, 39412785, 39412758, 39412828, 39412840, 39412840, 39412836, 39412839, 39412782, 39412771, 39412771, 39412846, 39412821, 39412836, 39412770, 39412822, 39412841, 39412846, 39412846, 39412771, 39412792, 39412834, 39412799, 39412758, 39412756, 39412839, 39412840, 39412845, 39412832, 39412825, 39412785, 39412758, 39412824, 39412829, 39412839, 39412836, 39412832, 39412821, 39412845, 39412782, 39412834, 39412835, 39412834, 39412825, 39412758, 39412756, 39412843, 39412829, 39412824, 39412840, 39412828, 39412785, 39412758, 39412772, 39412758, 39412756, 39412828, 39412825, 39412829, 39412827, 39412828, 39412840, 39412785, 39412758, 39412772, 39412758, 39412756, 39412839, 39412821, 39412834, 39412824, 39412822, 39412835, 39412844, 39412785, 39412758, 39412821, 39412832, 39412832, 39412835, 39412843, 39412769, 39412839, 39412821, 39412833, 39412825, 39412769, 39412835, 39412838, 39412829, 39412827, 39412829, 39412834, 39412758, 39412786, 39412784, 39412771, 39412829, 39412826, 39412838, 39412821, 39412833, 39412825, 39412786, 39412734]
+		tt0 = 39412724
+		ch=''
+		for i in tt:
+			r = i-tt0
+			ch = ch+chr(r)
+		printDBG('CHR='+ch)
+		
+		
+		
+		
 		printDBG("parserVCSTREAMTO baseUrl[%r]" % baseUrl)
 		baseUrl = strwithmeta(baseUrl)
 		cUrl = baseUrl
@@ -1586,6 +1862,9 @@ class pageParser(CaptchaHelper):
 		if not sts:
 			return False
 		cUrl = self.cm.meta['url']
+		printDBG('curl='+cUrl)
+		if cUrl.endswith('/'): cUrl=cUrl[:-1]
+		printDBG('curl='+cUrl)
 		urlParams['header'].update({'Referer': cUrl, 'Accept': '*/*', 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest'})
 		url = self.cm.getFullUrl('/api/source/%s' % cUrl.rsplit('/', 1)[(-1)], cUrl)
 		sts, data = self.cm.getPage(url, urlParams, {'r': '', 'd': self.cm.getBaseUrl(cUrl, True)})
@@ -1783,7 +2062,7 @@ class pageParser(CaptchaHelper):
 				elif 'x-mpeg' in type:
 					retTab.extend(getDirectM3U8Playlist(url, checkContent=True, sortWithMaxBitrate=999999999))
 		return retTab
-
+		
 	def parserGOOGLE(self, baseUrl):
 		printDBG("parserGOOGLE baseUrl[%s]" % baseUrl)
 		
@@ -1835,3 +2114,391 @@ class pageParser(CaptchaHelper):
 				videoTab.append({'name':'drive.google.com: %s' % fmtDict.get(item[0], '').split('x', 1)[-1] + 'p', 'quality':quality, 'url':strwithmeta(unicode_escape(item[1]), {'Cookie':cookieHeader, 'Referer':'https://youtube.googleapis.com/', 'User-Agent':HTTP_HEADER['User-Agent']})})
 		videoTab.sort(key=lambda item: item['quality'], reverse=True)
 		return videoTab
+
+
+	def _getSources(self, data):
+		printDBG('>>>>>>>>>> _getSources')
+		urlTab = []
+		tmp = self.cm.ph.getDataBeetwenMarkers(data, 'sources', ']')[1]
+		if tmp != '':
+			tmp = tmp.replace('\\', '')
+			tmp = tmp.split('}')
+			urlAttrName = 'file'
+			sp = ':'
+		else:
+			tmp = self.cm.ph.getAllItemsBeetwenMarkers(data, '<source', '>', withMarkers=True)
+			urlAttrName = 'src'
+			sp = '='
+		printDBG(tmp)
+		for item in tmp:
+			url  = self.cm.ph.getSearchGroups(item, r'''['"]?{0}['"]?\s*{1}\s*['"](https?://[^"^']+)['"]'''.format(urlAttrName, sp))[0]
+			if not self.cm.isValidUrl(url): continue
+			name = self.cm.ph.getSearchGroups(item, r'''['"]?label['"]?\s*''' + sp + r'''\s*['"]?([^"^'^\,^\{]+)['"\,\{]''')[0]
+			
+			printDBG('---------------------------')
+			printDBG('url:  ' + url)
+			printDBG('name: ' + name)
+			printDBG('+++++++++++++++++++++++++++')
+			printDBG(item)
+			
+			if 'flv' in item:
+				if name == '': name = '[FLV]'
+				urlTab.insert(0, {'name':name, 'url':url})
+			elif 'mp4' in item:
+				if name == '': name = '[MP4]'
+				urlTab.append({'name':name, 'url':url})
+			
+		return urlTab
+
+
+		
+	def _findLinks(self, data, serverName='', linkMarker=r'''['"]?file['"]?[ ]*:[ ]*['"](http[^"^']+)['"][,}]''', m1='sources', m2=']', contain='', meta={}):
+		linksTab = []
+		
+		def _isSmil(data):
+			return data.split('?')[0].endswith('.smil')
+		
+		def _getSmilUrl(url):
+			if _isSmil(url):
+				SWF_URL=''
+				# get stream link
+				sts, data = self.cm.getPage(url)
+				if sts:
+					base = self.cm.ph.getSearchGroups(data, 'base="([^"]+?)"')[0]
+					src = self.cm.ph.getSearchGroups(data, 'src="([^"]+?)"')[0]
+					#if ':' in src:
+					#    src = src.split(':')[1]   
+					if base.startswith('rtmp'):
+						return base + '/' + src + ' swfUrl=%s pageUrl=%s' % (SWF_URL, url)
+			return ''
+		
+		subTracks = []
+		subData = self.cm.ph.getDataBeetwenReMarkers(data, re.compile('''['"]?tracks['"]?\s*?:'''), re.compile(']'), False)[1].split('}')
+		for item in subData:
+			kind = self.cm.ph.getSearchGroups(item, r'''['"]?kind['"]?\s*?:\s*?['"]([^"^']+?)['"]''')[0].lower()
+			if kind != 'captions': continue
+			src = self.cm.ph.getSearchGroups(item, r'''['"]?file['"]?\s*?:\s*?['"](https?://[^"^']+?)['"]''')[0]
+			if src == '': continue
+			label = self.cm.ph.getSearchGroups(item, r'''label['"]?\s*?:\s*?['"]([^"^']+?)['"]''')[0]
+			format = src.split('?', 1)[0].split('.')[-1].lower()
+			if format not in ['srt', 'vtt']: continue
+			if 'empty' in src.lower(): continue
+			subTracks.append({'title':label, 'url':src, 'lang':'unk', 'format':'srt'})
+		
+		srcData = self.cm.ph.getDataBeetwenMarkers(data, m1, m2, False)[1].split('},')
+		for item in srcData:
+			item += '},'
+			if contain != '' and contain not in item: continue
+			link = self.cm.ph.getSearchGroups(item, linkMarker)[0].replace('\/', '/')
+			if '%3A%2F%2F' in link and '://' not in link:
+				link = urllib.unquote(link)
+			link = strwithmeta(link, meta)
+			label = self.cm.ph.getSearchGroups(item, r'''['"]?label['"]?[ ]*:[ ]*['"]([^"^']+)['"]''')[0]
+			if _isSmil(link):
+				link = _getSmilUrl(link)
+			if '://' in link:
+				proto = 'mp4'
+				if link.startswith('rtmp'):
+					proto = 'rtmp'
+				if link.split('?')[0].endswith('m3u8'):
+					tmp = getDirectM3U8Playlist(link)
+					linksTab.extend(tmp)
+				else:
+					linksTab.append({'name': '%s %s' % (proto + ' ' +serverName, label), 'url':link})
+				printDBG('_findLinks A')
+		
+		if 0 == len(linksTab):
+			printDBG('_findLinks B')
+			link = self.cm.ph.getSearchGroups(data, linkMarker)[0].replace('\/', '/')
+			link = strwithmeta(link, meta)
+			if _isSmil(link):
+				link = _getSmilUrl(link)
+			if '://' in link:
+				proto = 'mp4'
+				if link.startswith('rtmp'):
+					proto = 'rtmp'
+				linksTab.append({'name':proto + ' ' +serverName, 'url':link})
+		
+		if len(subTracks):
+			for idx in range(len(linksTab)):
+				linksTab[idx]['url'] = urlparser.decorateUrl(linksTab[idx]['url'], {'external_sub_tracks':subTracks})
+		
+		return linksTab
+
+	def parserGOVIDME(self, baseUrl):
+		printDBG("parserGOVIDME baseUrl[%s]" % baseUrl)
+		retTab = []
+		sts, data = self.cm.getPage(baseUrl)
+		if not sts: return False		
+		lst_data = re.findall('sources.*?[\'"](.*?)[\'"]',data, re.S)
+		if lst_data:
+			link = lst_data[0]
+			if 'm3u8' in link:
+				retTab.extend(getDirectM3U8Playlist(link, checkExt=False, checkContent=True))
+			else:
+				retTab.append({'name':'MP4', 'url':link})
+		return retTab
+		
+	def parserHQQ(self, baseUrl):
+		#From Vstream
+		baseUrl = baseUrl.replace('//waaw.tv/','//hqq.tv/').replace('/watch_video.php?vid','/player/embed_player.php?vid')
+		printDBG("parserHQQ baseUrl[%s]" % baseUrl)
+		retTab = []
+		sts, data = self.cm.getPage(baseUrl)
+		if sts:
+			vid = re.search('videokeyorig *= *[\'"](.+?)[\'"]', data, re.DOTALL).group(1)
+			url = "time=1&ver=0&secure=0&adb=0%2F&v={}&token=&gt=&embed_from=0&wasmcheck=1".format(vid)
+			url = 'https://hqq.tv/player/get_md5.php?' + url
+			UA  = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:53.0) Gecko/20100101 Firefox/66.0'
+			headers = {'User-Agent': UA, 'Accept': '*/*', 'Accept-Language': 'fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3', 'x-requested-with': 'XMLHttpRequest', 'Referer': baseUrl}
+			defaultParams = {'header': headers}
+			sts, data = self.cm.getPage(url,defaultParams)
+			if sts:
+				printDBG('data='+str(data))
+		return retTab		
+		
+	def parserMIXDROP(self, baseUrl):
+		printDBG("parserMIXDROP baseUrl[%r]" % baseUrl)
+		vidTab = []
+		HTTP_HEADER= { 'User-Agent':"Mozilla/5.0"}
+		if 'Referer' in strwithmeta(baseUrl).meta:
+			HTTP_HEADER['Referer'] = strwithmeta(baseUrl).meta['Referer']
+		urlParams = {'header': HTTP_HEADER}
+		sts, data = self.cm.getPage(baseUrl, urlParams)
+		if not sts: return False
+		lst_data = re.findall("(eval\(function.*?)</script>", data, re.S)
+		if lst_data:		
+			data0 = cPacker().unpack(lst_data[0].strip())
+			lst_data = re.findall('MDCore.wurl.*?"(.*?)"', data0, re.S)
+			if lst_data:
+				url_ = lst_data[0]
+				if url_.startswith('//'): url_ = 'http:'+url_
+				vidTab.append({'name':'[MP4]', 'url':url_})
+				return vidTab
+		if 'Video will be converted and ready to play' in data: SetIPTVPlayerLastHostError('Video will be converted and ready to play soon')
+		return []	
+	def parserSAMAUP(self, baseUrl):
+		printDBG("parserSAMAUP baseUrl[%r]" % baseUrl)
+		vidTab = []
+		HTTP_HEADER= { 'User-Agent':"Mozilla/5.0"}
+		if 'Referer' in strwithmeta(baseUrl).meta:
+			HTTP_HEADER['Referer'] = strwithmeta(baseUrl).meta['Referer']
+		urlParams = {'header': HTTP_HEADER}
+		sts, data = self.cm.getPage(baseUrl, urlParams)
+		if not sts: return False
+		
+		lst_data = re.findall("(eval\(function.*?)</script>", data, re.S)
+		if lst_data:		
+			data = cPacker().unpack(lst_data[0].strip())
+			lst_data = re.findall('file.*?"(.*?)"', data, re.S)
+			if lst_data:
+				url_ = lst_data[0]
+				if url_.startswith('//'): url_ = 'http:'+url_
+				vidTab.append({'name':'[MP4]', 'url':url_})
+
+		return vidTab
+		
+	def parserYOUDBOX(self, baseUrl):
+		printDBG("parserYOUDBOX baseUrl[%r]" % baseUrl)
+		vidTab = []
+		HTTP_HEADER= { 'User-Agent':"Mozilla/5.0"}
+		if 'Referer' in strwithmeta(baseUrl).meta:
+			HTTP_HEADER['Referer'] = strwithmeta(baseUrl).meta['Referer']
+		urlParams = {'header': HTTP_HEADER}
+		sts, data = self.cm.getPage(baseUrl, urlParams)
+		if not sts: return False
+		lst_data = re.findall('source.*?"(.*?)"', data, re.S)
+		if lst_data:		
+			url_ = lst_data[0]
+			if url_.startswith('//'): url_ = 'http:'+url_
+			vidTab.append({'name':'[MP4]', 'url':url_})
+
+		return vidTab
+
+	def parserSTD06(self, baseUrl):
+		printDBG("parserSTD06 baseUrl[%r]" % baseUrl)
+		url = baseUrl
+		hlsTab = []
+		mp4Tab = []
+		
+		HTTP_HEADER= { 'User-Agent':"Mozilla/5.0"}
+		if 'Referer' in strwithmeta(baseUrl).meta:
+			HTTP_HEADER['Referer'] = strwithmeta(baseUrl).meta['Referer']
+		COOKIE_FILE = GetCookieDir('urlstd03.cookie')
+		self.cm.clearCookie(COOKIE_FILE, ['__cfduid', 'cf_clearance'])
+		urlParams = {'header': HTTP_HEADER, 'use_cookie': True, 'save_cookie': True, 'load_cookie': True, 'cookiefile': COOKIE_FILE}
+		sts, data = self.getPageCF(baseUrl, urlParams)
+		if not sts: return False
+		
+		lst_data = re.findall("javascript'>(eval.*?)</script>", data, re.S)
+		if lst_data:		
+			data = cPacker().unpack(lst_data[0].strip())
+			data = data.replace('file:','"file":').replace('label:','"label":')
+			lst_data = re.findall('sources.*?(\[.*?\])', data, re.S)
+			if lst_data:
+				items = json.loads(lst_data[0])
+				for item in items:
+					url = strwithmeta(item['file'], {'Referer':baseUrl})
+					type_ = url.split('?', 1)[0].split('.')[-1].lower()
+					label = item.get('label',type_)
+					if 'm3u8' in url:
+						hlsTab.extend(getDirectM3U8Playlist(url, checkExt=False, checkContent=True, sortWithMaxBitrate=999999999))
+					elif 'mp4' in url:
+						mp4Tab.append({'name':'[MP4] '+label, 'url':url})
+						
+	def parserUNI01(self, baseUrl):
+		printDBG("parserUNI01 baseUrl[%r]" % baseUrl)
+		videoTab = []
+		url = baseUrl
+		HTTP_HEADER= {'User-Agent':"Mozilla/5.0"}
+		if 'Referer' in strwithmeta(baseUrl).meta:
+			HTTP_HEADER['Referer'] = strwithmeta(baseUrl).meta['Referer']
+		COOKIE_FILE = GetCookieDir('UNI01.cookie')	
+		self.cm.clearCookie(COOKIE_FILE, ['__cfduid', 'cf_clearance'])
+		urlParams = {'header': HTTP_HEADER, 'use_cookie': True, 'save_cookie': True, 'load_cookie': True, 'cookiefile': COOKIE_FILE}
+		sts, data = self.getPageCF(url, urlParams)
+		#sts, data = self.cm.getPage(url)
+		#printDBG('data='+'#'+str(data)+'#')
+		if not sts: return False
+		if 'ﾟωﾟ' in data:
+			lst_pk = re.findall("(ﾟωﾟ.*?)<", data, re.S)
+			if lst_pk:
+				try:
+					pack_ = lst_pk[0].strip()
+					printDBG('packed = '+pack_)
+					tmp = decodeAA(pack_)
+					printDBG('unpacked = '+tmp)
+					data = data.replace(pack_,tmp)	
+				except Exception:
+					printExc()
+		if 'sibnet' in baseUrl: data = data.replace('player.src','sources')
+		lst_data = re.findall('sources.{,9}?(\[.*?\])', data, re.S)
+		if not lst_data:
+			lst_data0 = re.findall('(eval\(function\(p.*?)</script>', data, re.S)
+			if lst_data0:
+				printDBG('eval trouver='+lst_data0[0].strip()+'#')
+				data0 = cPacker().unpack(lst_data0[0].strip())
+				lst_data = re.findall('sources.*?(\[.*?\])', data0, re.S)
+				if not lst_data:
+					lst_data = re.findall('holaplayer.*?src:"(.*?)"', data0, re.S)
+					if not lst_data:
+						lst_data = re.findall('file.*?"(.*?)"', data, re.S)
+						if not lst_data:
+							lst_data = re.findall('<video.*?src="(.*?)"', data, re.S)
+			else:
+				lst_data = re.findall('<source.*?src="(.*?)"', data, re.S)
+				if not lst_data:
+					lst_data = re.findall('.setup\({.*?file:.*?"(.*?)"', data, re.S)
+		if lst_data:
+			videoTab = self.parserUNI01_GET(lst_data,baseUrl,HTTP_HEADER)
+		else:
+			if 'Video is processing now.' in data: SetIPTVPlayerLastHostError('Video is processing now.')
+			elif 'Video not available!' in data: SetIPTVPlayerLastHostError('Video not available!')	
+		return videoTab	
+
+	def parserUNI01_GET(self, lst_data,baseUrl,HTTP_HEADER):
+		hlsTab  = []
+		mp4Tab  = []
+		dashTab = []
+		src = str(lst_data[0])
+		src = src.replace('label:','"label":').replace('file:','"file":').replace('src:','"file":').replace('type:','"type":').replace('res:','"res":').replace('\\/','/')
+		printDBG('src='+'#'+src+'#')
+		src =src.replace(',]',']')
+		if ('[' not in src) and ('{' not in src): src='["'+src+'"]'
+		printDBG('src='+'#'+src+'#')
+		items = json.loads(src)
+		printDBG('items='+str(items))
+		cookieHeader = self.cm.getCookieHeader(GetCookieDir('UNI01.cookie'))
+		for item in items:
+			printDBG('item='+str(item))
+
+			if isinstance(item, unicode): item = str(item)
+			if isinstance(item, str): 
+				if not item.startswith('http'): item = urlparser.getDomain(baseUrl,False)+item
+				url = strwithmeta(item,  {'Cookie':cookieHeader,'Referer':baseUrl, 'User-Agent':HTTP_HEADER['User-Agent']})
+				label = ''
+				type_ = ''				
+			else:
+				url = item.get('file','')
+
+				if not url.startswith('http'): url = urlparser.getDomain(baseUrl,False)+url
+				url = strwithmeta(url, {'Cookie':cookieHeader,'Referer':baseUrl, 'User-Agent':HTTP_HEADER['User-Agent']})
+				label = item.get('label','')
+				type_ = item.get('type','').lower()				
+			if 'm3u8' in url:
+				hlsTab.extend(getDirectM3U8Playlist(url, checkExt=False, checkContent=True, sortWithMaxBitrate=999999999))
+			elif ('mp4' in url) or ('mp4' in type_):
+				if label=='':
+					label = 'MP4'
+				else:
+					label = 'MP4 [%s]' % label
+				mp4Tab.append({'name':label, 'url':url})
+			#elif 'mdp' in url:
+			#	dashTab.extend(getMPDLinksWithMeta(url, False))								
+		videoTab = []
+		videoTab.extend(hlsTab)		
+		videoTab.extend(mp4Tab)
+		videoTab.extend(dashTab)
+		return videoTab	
+		
+
+	def parserVIDTODOCOM(self, baseUrl):
+		printDBG("parserVIDTODOCOM baseUrl[%r]" % baseUrl)
+		url = baseUrl
+		if 'emb.html?' in baseUrl:
+			id_tab = re.findall('\?(.*?)=', baseUrl, re.S)
+			if id_tab:
+				url='https://vidtodo.com/embed-'+id_tab[0]+'.html?auto=1'
+		return self.parserUNI01(url)
+
+	def parserFEURL(self, baseUrl):
+		printDBG("parserFEURL baseUrl[%r]" % baseUrl)
+		url = baseUrl.replace('/v/','/api/source/').replace('playvid.pw','feurl.com').replace('fsimg.info','feurl.com').replace('www.','')
+		HTTP_HEADER= {'User-Agent':"Mozilla/5.0"}
+		urlParams = {'header': HTTP_HEADER}
+		post_data = {'r':'','d':'feurl.com'}
+		sts, data = self.cm.getPage(url, urlParams,post_data)
+		printDBG('data='+'#'+str(data)+'#')
+		if not sts: return False
+		lst_data = re.findall('"data":(\[.*?])', data, re.S)
+		if lst_data:
+			videoTab = self.parserUNI01_GET(lst_data,baseUrl,HTTP_HEADER)		
+			return videoTab
+		else:
+			return []
+
+	def parserDEEPMIC(self, baseUrl):
+		printDBG("parserDEEPMIC baseUrl[%r]" % baseUrl)
+		videoTab = []
+		videoTab.append({'name':'MP4', 'url':baseUrl.replace('embed.php','videos.php')})
+		return videoTab
+
+	def downUPPOM(self, baseUrl):
+		printDBG("downUPPOM baseUrl[%r]" % baseUrl)
+		videoTab = []
+		url = baseUrl
+		HTTP_HEADER= {'User-Agent':"Mozilla/5.0"}
+		COOKIE_FILE = GetCookieDir('uppom.cookie')	
+		self.cm.clearCookie(COOKIE_FILE, ['__cfduid', 'cf_clearance'])
+		urlParams = {'header': HTTP_HEADER, 'use_cookie': True, 'save_cookie': True, 'load_cookie': True, 'cookiefile': COOKIE_FILE}
+		sts, data = self.getPageCF(url, urlParams)
+		if sts:		
+			lst_data = re.findall('<form(.*?)</form', data, re.S|re.IGNORECASE)
+			while lst_data:
+				post_data = {}
+				lst_data1 = re.findall('<input.*?name="(.*?)".*?value="(.*?)"', lst_data[0], re.S|re.IGNORECASE)
+				for elm in lst_data1:
+					post_data[elm[0]]=elm[1]
+					urlParams['header']['Referer']=url
+					sts, data = self.getPageCF(url,urlParams,post_data=post_data)	
+					lst_data = re.findall('<form(.*?)</form', data, re.S|re.IGNORECASE)
+			printDBG('data1='+'#'+str(data)+'#')		
+			lst_data = re.findall('id="direct_link".*?href="(.*?)"', data, re.S|re.IGNORECASE)		
+			if lst_data:
+				videoTab.append({'name':'DirectLink', 'url':lst_data[0]})	
+		return videoTab	
+	
+	
+	
+		
+	

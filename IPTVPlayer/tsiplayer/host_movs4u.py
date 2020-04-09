@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,tscolor
 from Plugins.Extensions.IPTVPlayer.libs.urlparserhelper import unpackJSPlayerParams, SAWLIVETV_decryptPlayerParams
 from Plugins.Extensions.IPTVPlayer.tools.iptvtypes import strwithmeta
 from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.packer import cPacker
+from Plugins.Extensions.IPTVPlayer.libs.e2ijson import loads as json_loads
 try:
 	from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.vstream.config import GestionCookie
 	from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.vstream.requestHandler import cRequestHandler
 except:
 	pass
-
+from Plugins.Extensions.IPTVPlayer.libs.crypto.cipher.aes_cbc import AES_CBC
+from binascii import unhexlify
+from hashlib import md5
 import base64
 import re
 import cookielib
@@ -19,30 +22,45 @@ import urllib
 
 def getinfo():
 	info_={}
-	info_['name']='Movs4u.To'
-	info_['version']='1.7 28/10/2019'
+	info_['name']='Movs4u.Tv'
+	info_['version']='1.9.1 23/02/2020'
 	info_['dev']='RGYSoft'
 	info_['cat_id']='201'
 	info_['desc']='أفلام و مسلسلات اجنبية'
-	info_['icon']='https://www.movs4u.tv/wp-content/uploads/2019/01/Logo-header.png'
+	info_['icon']='https://www.mvs4u.tv/wp-content/uploads/2019/01/Logo-header.png'
 	info_['recherche_all']='1'
-	info_['update']='change to www.movs4u.org'	
+	info_['update']='Fixe trailer'	
 	return info_
 	
+def cryptoJS_AES_decrypt(encrypted, password, salt):
+    def derive_key_and_iv(password, salt, key_length, iv_length):
+        d = d_i = ''
+        while len(d) < key_length + iv_length:
+            d_i = md5(d_i + password + salt).digest()
+            d += d_i
+        return d[:key_length], d[key_length:key_length+iv_length]
+    bs = 16
+    key, iv = derive_key_and_iv(password, salt, 32, 16)
+    cipher = AES_CBC(key=key, keySize=32)
+    return cipher.decrypt(encrypted, iv)
 	
 class TSIPHost(TSCBaseHostClass):
 	def __init__(self):
 		
 		TSCBaseHostClass.__init__(self,{'cookie':'movs4u.cookie'})
 		self.USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0'
-		self.MAIN_URL = 'https://www.movs4u.org'
+		self.MAIN_URL = 'https://www.mvs4u.to'
 		self.HEADER = {'User-Agent': self.USER_AGENT, 'Connection': 'keep-alive', 'Accept-Encoding':'gzip', 'Content-Type':'application/x-www-form-urlencoded','Referer':self.getMainUrl(), 'Origin':self.getMainUrl()}
 		self.defaultParams = {'timeout':9,'header':self.HEADER, 'use_cookie': True, 'load_cookie': True, 'save_cookie': True, 'cookiefile': self.COOKIE_FILE}
 		#self.getPage = self.cm.getPage
 		
+	def getPage(self, baseUrl, addParams = {}, post_data = None):
+		if addParams == {}: addParams = dict(self.defaultParams)
+		addParams['cloudflare_params'] = {'cookie_file':self.COOKIE_FILE, 'User-Agent':self.USER_AGENT}
+		return self.cm.getPageCFProtection(baseUrl, addParams, post_data)
 
 
-	def getPage(self,baseUrl, addParams = {}, post_data = None):
+	def getPage1(self,baseUrl, addParams = {}, post_data = None):
 		if addParams == {}: addParams = dict(self.defaultParams) 
 		sts, data = self.cm.getPage(baseUrl,addParams,post_data)
 		if not data: data=''
@@ -147,16 +165,16 @@ class TSIPHost(TSCBaseHostClass):
 									meta_= mt 
 								else:
 									meta_= meta_ + ' | ' + mt
-							desc = meta_ +'\n\c0000????Genre: \c00??????'+ self.cleanHtmlStr(desc2)+'\n'+ desc
+							desc = meta_ +'\n'+tscolor('\c0000????')+'Genre: '+tscolor('\c00??????')+ self.cleanHtmlStr(desc2)+'\n'+ desc
 							name_eng=self.cleanHtmlStr(name_eng)
-							params = {'import':cItem['import'],'good_for_fav':True,'category' : 'video','url': url,'title':name_eng +'\c0000???? ('+qual+')','desc':desc,'icon':image,'hst':'tshost'} 
+							params = {'import':cItem['import'],'good_for_fav':True,'category' : 'video','url': url,'title':name_eng +tscolor('\c0000????')+' ('+qual+')','desc':desc,'icon':image,'hst':'tshost'} 
 							self.addVideo(params)	
 					else:
 						Liste_films_data = re.findall('<article id=.*?src="(.*?)".*?alt="(.*?)".*?quality">(.*?)<.*?href="(.*?)"', films_data, re.S)	
 						for (image,name_eng,qual,url) in Liste_films_data:
 							image=strwithmeta(image,{'Cookie':cookieHeader, 'User-Agent':self.USER_AGENT})
 							name_eng=self.cleanHtmlStr(name_eng)
-							params = {'import':cItem['import'],'good_for_fav':True,'category' : 'video','url': url,'title':name_eng +'\c0000???? ('+qual+')','desc':'','icon':image,'hst':'tshost'} 
+							params = {'import':cItem['import'],'good_for_fav':True,'category' : 'video','url': url,'title':name_eng +tscolor('\c0000????')+' ('+qual+')','desc':'','icon':image,'hst':'tshost'} 
 							self.addVideo(params)						
 				elif gnr=='Film_qual':
 					Liste_films_data = re.findall('class="item".*?href="(.*?)".*?src="(.*?)".*?alt="(.*?)".*?type">(.*?)<', films_data, re.S)	
@@ -164,11 +182,16 @@ class TSIPHost(TSCBaseHostClass):
 					for (url,image,name_eng,nat) in Liste_films_data:
 						image=strwithmeta(image,{'Cookie':cookieHeader, 'User-Agent':self.USER_AGENT})
 						name_eng=self.cleanHtmlStr(name_eng)
-						params = {'import':cItem['import'],'good_for_fav':True,'category' : 'video','url': url,'title':name_eng +'\c0000???? ('+nat+')','desc':'','icon':image,'hst':'tshost'} 
+						params = {'import':cItem['import'],'good_for_fav':True,'category' : 'video','url': url,'title':name_eng +tscolor('\c0000????')+' ('+nat+')','desc':'','icon':image,'hst':'tshost'} 
 						self.addVideo(params)					
 				elif gnr=='serie':
-					Liste_films_data = re.findall('article id.*?src="(.*?)".*?alt="(.*?)".*?href="(.*?)".*?"texto">(.*?)<', films_data, re.S)	
-					for (image,name_eng,url,desc) in Liste_films_data:
+					Liste_films_data = re.findall('article id.*?src="(.*?)".*?alt="(.*?)".*?href="(.*?)".*?metadata">(.*?)"texto">(.*?)</div>(.*?)</article>', films_data, re.S)	
+					for (image,name_eng,url,inf1,desc,inf2) in Liste_films_data:
+						desc = tscolor('\c0000????')+'Desc: '+tscolor('\c00??????')+self.cleanHtmlStr(desc)
+						inf1 = self.cleanHtmlStr(inf1.replace('</span>',' | ')+'>').strip()
+						inf2 = self.cleanHtmlStr(inf2.replace('</a>',' | ')).strip()
+						if inf2!='':desc=tscolor('\c0000????')+'Genre: '+tscolor('\c00??????')+inf2+'\n'+desc
+						if inf1!='':desc=tscolor('\c0000????')+'Info: '+tscolor('\c00??????')+inf1+'\n'+desc
 						image=strwithmeta(image,{'Cookie':cookieHeader, 'User-Agent':self.USER_AGENT})
 						name_eng=self.cleanHtmlStr(name_eng)
 						params = {'import':cItem['import'],'good_for_fav':True,'category' : 'host2','Url': url,'title':name_eng,'desc':desc,'icon':image,'sub_mode':'serie_ep','page':1,'mode':'30'} 
@@ -185,7 +208,7 @@ class TSIPHost(TSCBaseHostClass):
 					for (url,image,name_eng,qual) in Liste_films_data:
 						image=strwithmeta(image,{'Cookie':cookieHeader, 'User-Agent':self.USER_AGENT})
 						name_eng=self.cleanHtmlStr(name_eng)
-						params = {'import':cItem['import'],'good_for_fav':True,'category' : 'video','url': url,'title':name_eng +'\c0000???? ('+qual+')','desc':'','icon':image,'hst':'tshost'} 
+						params = {'import':cItem['import'],'good_for_fav':True,'category' : 'video','url': url,'title':name_eng +tscolor('\c0000????')+' ('+qual+')','desc':'','icon':image,'hst':'tshost'} 
 						self.addVideo(params)
 				elif gnr=='serie_ep':
 					Liste_films_data1 = re.findall('<h2>Video trailer.*?src="(.*?)"', data, re.S)
@@ -197,16 +220,16 @@ class TSIPHost(TSCBaseHostClass):
 						films_data=Liste_films_data[0]
 						Liste_films_data = re.findall("<span class='title'>(.*?)<(.*?)<\/ul>", films_data, re.S)
 						for (season,data_s) in Liste_films_data:
-							params = {'name':'categories','category' : 'video','title':'\c00????00'+season.replace('الموسم',''),'desc':'','icon':img_} 
+							params = {'name':'categories','category' : 'video','title':tscolor('\c00????00')+season.replace('الموسم',''),'desc':'','icon':img_} 
 							self.addMarker(params)
 							films_data = re.findall("<li.*?src='(.*?)'.*?numerando'>(.*?)<.*?href='(.*?)'>(.*?)<", data_s, re.S)
 							for (image,name_eng,url,name2) in films_data:
 								image=strwithmeta(image,{'Cookie':cookieHeader, 'User-Agent':self.USER_AGENT})
 								name_eng=self.cleanHtmlStr(name_eng)
-								params = {'import':cItem['import'],'good_for_fav':True,'category' : 'video','url': url,'title':name_eng +'\c0000????  # '+name2,'desc':'','icon':image,'hst':'tshost'} 
+								params = {'import':cItem['import'],'good_for_fav':True,'category' : 'video','url': url,'title':name_eng +tscolor('\c0000????')+'  # '+name2,'desc':'','icon':image,'hst':'tshost'} 
 								self.addVideo(params)
 				if gnr!='serie_ep':
-					params = {'import':cItem['import'],'category':'host2','title': '\c0000??00Next Page','Url':cItem['Url'],'sub_mode':gnr,'page':page+1,'icon':img_,'mode':'30'}
+					params = {'import':cItem['import'],'category':'host2','title': tscolor('\c0000??00')+'Next Page','Url':cItem['Url'],'sub_mode':gnr,'page':page+1,'icon':img_,'mode':'30'}
 					self.addDir(params)							
 
 	
@@ -216,6 +239,7 @@ class TSIPHost(TSCBaseHostClass):
 		if sts:
 			Liste_films_data = re.findall('"result-item">.*?href="(.*?)".*?src="(.*?)".*?alt="(.*?)".*?">(.*?)<', data, re.S)
 			for (url,image,name_eng,type_) in Liste_films_data:
+				type_ = self.cleanHtmlStr(type_).strip()
 				if type_=='Movie':
 					params = {'import':extra,'good_for_fav':True,'category' : 'video','url': url,'title':name_eng,'desc':'','icon':image,'hst':'tshost'} 
 					self.addVideo(params)
@@ -223,6 +247,34 @@ class TSIPHost(TSCBaseHostClass):
 					params = {'import':extra,'good_for_fav':True,'category' : 'host2','Url': url,'title':name_eng,'desc':'','icon':image,'sub_mode':'serie_ep','page':1,'mode':'30'} 
 					self.addDir(params)	
 		
+
+
+	def MediaBoxResult(self,str_ch,year_,extra):
+		urltab=[]
+		str_ch_o = str_ch
+		str_ch = urllib.quote(str_ch_o)
+		url_=self.MAIN_URL+'/page/1/?s='+str_ch
+		sts, data = self.getPage(url_)
+		if sts:
+			Liste_films_data = re.findall('"result-item">.*?href="(.*?)".*?src="(.*?)".*?alt="(.*?)".*?">(.*?)<', data, re.S)
+			for (url,image,name_eng,type_) in Liste_films_data:
+				name_eng=ph.clean_html(name_eng.strip())
+				desc0,titre0 = self.uniform_titre(name_eng,1)
+				if str_ch_o.lower().replace(' ','') == titre0.replace('-',' ').replace(':',' ').lower().replace(' ',''):
+					trouver = True
+				else:
+					trouver = False
+				name_eng='|'+tscolor('\c0060??60')+'Movs4U'+tscolor('\c00??????')+'| '+titre0
+				if type_=='Movie':
+					params = {'titre':titre0,'import':extra,'good_for_fav':True,'category' : 'video','url': url,'title':name_eng,'desc':'','icon':image,'hst':'tshost'} 
+					if trouver: urltab.insert(0,params)
+					else: urltab.append(params)
+				else:
+					params = {'titre':titre0,'import':extra,'good_for_fav':True,'category' : 'host2','Url': url,'title':name_eng,'desc':'','icon':image,'sub_mode':'serie_ep','page':1,'mode':'30'} 
+					if trouver: urltab.insert(0,params)
+					else: urltab.append(params)	
+		return urltab
+
 		
 	def get_links(self,cItem): 	
 		urlTab = []	
@@ -238,27 +290,56 @@ class TSIPHost(TSCBaseHostClass):
 				local=''
 				if 'movs' in srv.lower(): local='local'
 				srv=srv.lower().replace('openload.com','openload.co')
-				urlTab.append({'name':'|'+titre1+'| '+srv, 'url':'hst#tshost#'+data_url, 'need_resolve':1,'type':local})		
+				tag = ''
+				if '/player_c.php'  in data_url:
+					tag  = ' [Aflamyz M3U8 (Mail.Ru)]'
+					local='local'
+				if '/main_player1.php'  in data_url:
+					tag  = ' [Arabramadan MAIN]'
+					local='local'	
+				if '/main_player.php'  in data_url:
+					tag  = ' [M3U8 MAIN (GOOGLE)]'
+					local='local'					
+				if '/player_y.php'  in data_url:
+					tag  = ' [Aflamyz M3U8 (YANDEX)]'
+					local='local'
+				if '/player_ok.php' in data_url:
+					tag  = ' [Aflamyz MP4 (OK.RU)]'
+					local='local'
+				if '/player_m.php' in data_url:
+					tag  = ' [Aflamyz MP4 (MEGA)]'
+					local='local'
+				if '/player_j.php'  in data_url:
+					tag  = ' [Arabramadan MP4 (GOOGLE)]'
+					local='local'
+				if '/player_e1.php'  in data_url:
+					tag  = ' [Gdrive] >> Only gstplayer OR buffering Mode <<'
+					local='local'
+				urlTab.append({'name':'|'+titre1+'| '+srv+tag, 'url':'hst#tshost#'+data_url+'|'+cItem['url'], 'need_resolve':1,'type':local})		
 		return urlTab
 		
 		
-	def extractLink(self,videoUrl):
+	def extractLink(self,videoUrl,refer):
 		url_out='None'
-		if 'gdriveplayer' in videoUrl:
-			_data3 = re.findall('link=(.*?)&',videoUrl, re.S)
-			if _data3: 
-				url_out = _data3[0]
-		elif 'juicy.php?url=' in videoUrl:
+		printDBG('a1')
+		if 'juicy.php?url=' in videoUrl:
+			printDBG('a3')
 			_data3 = re.findall('url=(.*)',videoUrl, re.S)
 			if _data3: 
 				url_out = _data3[0]
+				
 		else:
-			sts, data = self.getPage(videoUrl)
+			printDBG('a4')
+			Params = dict(self.defaultParams)
+			Params['header']['Referer']=refer
+			sts, data = self.getPage(videoUrl,Params)
 			if sts:
+				printDBG('a5')
 				_data2 = re.findall('<iframe.*?src="(.*?)"',data, re.S)		 		
 				if _data2:			
 					url_out = _data2[0]
 				else:
+					printDBG('a6')
 					_data4 = re.findall('javascript">eval(.*?)</script>',data, re.S)
 					if _data4:
 						script_eval='eval'+_data4[0].strip()
@@ -269,17 +350,21 @@ class TSIPHost(TSCBaseHostClass):
 						if _data5:
 							url_out = _data5[0]
 					else:
-						_data2 = re.findall('<meta.*?url=(.*?)"',data, re.S)		 		
-						if _data2:			
-							url_out = _data2[0]					
+						printDBG('a7='+data)
+						_data4 = re.findall('"file".*?"(.*?)"',data, re.S)
+						if _data4:
+							printDBG('a9')
+							url_out = _data4[0]						
 						else:
-							_data4 = re.findall('"file".*?"(.*?)"',data, re.S)
-							if _data4:
-								url_out = _data4[0]
+							_data2 = re.findall('<meta.*?url=(.*?)"',data, re.S)		 		
+							if _data2:			
+								url_out = _data2[0]					
 		return url_out	
+
 	def getVideos(self,videoUrl):
 		urlTab = []	
-		url_ref=videoUrl
+		refer=''
+		if '|' in videoUrl: url_ref,refer=videoUrl.split('|')
 		printDBG("1")
 		if videoUrl.startswith('http'):
 			i=0
@@ -287,7 +372,7 @@ class TSIPHost(TSCBaseHostClass):
 				i=i+1
 				printDBG(str(i)+">>>>Start<<<< "+videoUrl)
 				oldURL=videoUrl
-				videoUrl = self.extractLink(videoUrl)
+				videoUrl = self.extractLink(videoUrl,refer)
 				printDBG(str(i)+">>>>End<<<< "+videoUrl)
 				if videoUrl == 'None': 
 					printDBG('1') 			
@@ -299,7 +384,6 @@ class TSIPHost(TSCBaseHostClass):
 					URL1=strwithmeta(videoUrl, {'Referer':url_ref})
 					urlTab.append((URL1,'3'))
 					break
-					
 				elif 'arabramadan' in videoUrl:
 					params = dict(self.defaultParams)
 					params['header']['Referer'] = oldURL
@@ -311,16 +395,105 @@ class TSIPHost(TSCBaseHostClass):
 							printDBG('packed'+packed)
 							Unpacked = cPacker().unpack(packed)
 							printDBG('packed'+Unpacked)
-							
-
 							meta_ = {'Referer':'https://arabramadan.com/embed/L00w0FyU0if4mHD/'}
-
-							
 							_data3 = re.findall('src".*?"(.*?)".*?label":"(.*?)"',Unpacked, re.S)	
 							for (uurl,ttitre) in _data3:
 								uurl = strwithmeta(ttitre+'|'+uurl,meta_)
 								urlTab.append((uurl,'4'))
-					break									
+					break	
+				elif 'gdriveplayer' in videoUrl:
+					params = dict(self.defaultParams)
+					params['header']['Referer'] = oldURL
+					sts, data = self.getPage(videoUrl,params)
+					if sts:
+						result = re.findall('(eval\(function\(p.*?)</script>',data, re.S)	
+						if result:
+							data = result[0].strip()
+							printDBG('eval trouver='+result[0].strip()+'#')
+							data0 = cPacker().unpack(result[0].strip())
+							printDBG('data0='+data0+'#')
+							result = re.findall('data=.*?(\{.*?}).*?null.*?[\'"](.*?)[\'"]',data0, re.S)
+							if result:
+								code_ = json_loads(result[0][0])
+								printDBG('Code='+str(code_))
+								data1 = result[0][1].strip().replace('\\','')									
+								printDBG('data1='+data1)
+								lst = re.compile("[A-Za-z]{1,}").split(data1)
+								printDBG('lst='+str(lst))
+								script = ''
+								for elm in lst:
+									script = script+chr(int(elm))
+								printDBG('script='+script)
+								result = re.findall('pass.*?[\'"](.*?)[\'"]',script, re.S)
+								if result:
+									pass_ = result[0]								
+									printDBG('pass_='+pass_)
+									ciphertext = base64.b64decode(code_['ct'])
+									iv = unhexlify(code_['iv'])
+									salt = unhexlify(code_['s'])
+									b = pass_
+									decrypted = cryptoJS_AES_decrypt(ciphertext, b, salt)
+									printDBG('decrypted='+decrypted)
+									data2 = decrypted[1:-1]
+									#data2 = decrypted.replace('"','').strip()
+									printDBG('data2='+data2)									
+									data2 = cPacker().unpack(data2)
+									printDBG('data2='+data2)								
+									url_list = re.findall('sources:(\[.*?\])',data2, re.S)	
+									#for data3 in url_list:
+									data3= url_list[0]
+									data3 = data3.replace('\\','').replace('"+countcheck+"','')
+									printDBG('data3='+data3+'#')
+									src_lst = json_loads(data3)
+									printDBG('src_lst='+str(src_lst)+'#')
+									for elm in src_lst:
+										_url   = elm['file']
+										_label = elm.get('label','Google')
+										if 'm3u8' in _url:
+											urlTab.append((_url,'3'))	
+										else:
+											urlTab.append(('Google ('+_label+')|'+_url,'4'))															
+							
+								
+								
+
+					break
+				 
+				elif 'aflamyz' in videoUrl:
+					params = dict(self.defaultParams)
+					params['header']['Referer'] = oldURL
+					sts, data = self.getPage(videoUrl,params)
+					if sts:
+						result = re.findall('data-en="(.*?)".*?data-p="(.*?)"',data, re.S)	
+						if result:
+							code_ = json_loads(urllib.unquote(result[0][0]))
+							pass_ = result[0][1]
+							printDBG('Code='+str(code_))
+							printDBG('Pass='+pass_)
+							ciphertext = base64.b64decode(code_['ct'])
+							iv = unhexlify(code_['iv'])
+							salt = unhexlify(code_['s'])
+							b = pass_
+							decrypted = cryptoJS_AES_decrypt(ciphertext, b, salt)
+							printDBG('decrypted='+decrypted)
+							URL = decrypted.replace('\/','/').replace('"','')
+							printDBG('URL='+URL)
+							params['header']['Referer'] = videoUrl
+							sts, data = self.getPage(URL,params)							
+							if sts:
+								url_list = re.findall('"sources":(\[.*?\])',data, re.S)	
+								if url_list:
+									src_lst = json_loads(url_list[0])
+									printDBG('src_lst='+str(src_lst)+'#')
+									for elm in src_lst:
+										_url   = elm['file']
+										_label = elm.get('label','Aflamyz')
+										if 'm3u8' in _url:
+											urlTab.append((_url,'3'))	
+										else:
+											urlTab.append(('Aflamyz ('+_label+')|'+_url,'4'))										
+					break
+
 				elif (self.up.checkHostSupport(videoUrl) == 1):	
 					printDBG('3')
 					urlTab.append((videoUrl,'1'))
@@ -337,6 +510,8 @@ class TSIPHost(TSCBaseHostClass):
 				if _data0:	
 					urlTab.append((_data0[0],'1'))	
 		return urlTab
+
+
 
 	
 	def start(self,cItem):      

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname,tscolor
 from Plugins.Extensions.IPTVPlayer.libs.e2ijson import loads as json_loads
 from Plugins.Extensions.IPTVPlayer.tools.iptvtypes import strwithmeta
 from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.packer import cPacker
@@ -17,7 +17,7 @@ def getinfo():
 	info_['name']='Vidcloud.Icu'
 	info_['version']='1.0 10/09/2019'
 	info_['dev']='RGYSoft'
-	info_['cat_id']='401'
+	info_['cat_id']='104'#'401'
 	info_['desc']='Movies & TV shows'
 	info_['icon']='https://vidcloud.icu/img/logo_vid.png?1'
 	info_['recherche_all']='1'
@@ -59,7 +59,7 @@ class TSIPHost(TSCBaseHostClass):
 				desc = ph.clean_html(desc1)
 				url=self.MAIN_URL+url
 				self.addVideo({'import':cItem['import'],'good_for_fav':True,'EPG':True,'category' : 'host2','url':url,'title':ph.clean_html(titre),'desc':desc,'icon':image,'hst':'tshost'})	
-			self.addDir({'import':cItem['import'],'title':'\c0000??00'+'Page '+str(page+1),'page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
+			self.addDir({'import':cItem['import'],'title':tscolor('\c0000??00')+'Page '+str(page+1),'page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
 
 	def SearchResult(self,str_ch,page,extra):
 		url_=self.MAIN_URL+'/search.html?keyword='+str_ch+'&page='+str(page)
@@ -156,8 +156,8 @@ class TSIPHost(TSCBaseHostClass):
 		if sts:
 			lst_dat=re.findall('<div class="quads.*?<p><strong>(.*?)<a', data, re.S)
 			if lst_dat:
-				desc=lst_dat[0].replace('<strong>','\\n\c00????00')
-				desc=desc.replace('</strong>','\c00??????')
+				desc=lst_dat[0].replace('<strong>','\\n'+tscolor('\c00????00'))
+				desc=desc.replace('</strong>',tscolor('\c00??????'))
 				desc=ph.clean_html(desc)
 			else:
 				desc= cItem['desc']				

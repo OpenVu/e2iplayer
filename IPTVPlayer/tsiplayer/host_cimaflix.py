@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,cryptoJS_AES_decrypt
+from Components.config import config
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,cryptoJS_AES_decrypt,tscolor
 from Plugins.Extensions.IPTVPlayer.libs.crypto.cipher.aes_cbc import AES_CBC
 from Plugins.Extensions.IPTVPlayer.libs.e2ijson import loads as json_loads
 from Plugins.Extensions.IPTVPlayer.libs.urlparserhelper import unpackJSPlayerParams, VIDUPME_decryptPlayerParams
@@ -65,7 +66,7 @@ class TSIPHost(TSCBaseHostClass):
 				self.addDir({'import':cItem['import'],'good_for_fav':True,'EPG':True,'category' : 'host2','url':url,'title':ph.clean_html(titre),'icon':image,'mode':'31','hst':'tshost'} )			
 				i=i+1
 			if i>47:
-				self.addDir({'import':cItem['import'],'title':'\c0000??00Page Suivante','page':page+1,'category' : 'host2','url':url1,'icon':cItem['icon'],'mode':'30'} )									
+				self.addDir({'import':cItem['import'],'title':tscolor('\c0000??00')+'Page Suivante','page':page+1,'category' : 'host2','url':url1,'icon':cItem['icon'],'mode':'30'} )									
 		
 
 	def showelms(self,cItem):
@@ -143,7 +144,20 @@ class TSIPHost(TSCBaseHostClass):
 			data_els = re.findall('(class="serverslist active"|class="serverslist").*?data-server="(.*?)">(.*?)<', data, re.S)
 			for (x1,data_,host_) in data_els:
 				host_ = host_.replace(' ','')
-				urlTab.append({'name':host_, 'url':'hst#tshost#'+data_, 'need_resolve':1})		
+				if not config.plugins.iptvplayer.ts_dsn.value:
+					urlTab.append({'name':host_, 'url':'hst#tshost#'+data_, 'need_resolve':1})		
+				else:
+					urlTab0=self.getVideos(data_)
+					for elm in urlTab0:
+						printDBG('elm='+str(elm))
+						url_ = elm[0]
+						type_ = elm[1]
+						if type_ == '0':
+							urlTab.append({'name':self.up.getDomain(url_), 'url':url_, 'need_resolve':0})
+						elif type_ == '4':	
+							urlTab.append({'name':url_.split('|')[0], 'url':url_.split('|')[1], 'need_resolve':0})
+						elif type_ == '1':		
+							urlTab.append({'name':self.up.getDomain(url_), 'url':url_, 'need_resolve':1})
 		return urlTab
 		
 		 
