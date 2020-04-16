@@ -29,8 +29,12 @@ import stat
 import codecs
 import datetime
 
-SERVER_DOMAINS = {'vline':'http://iptvplayer.vline.pl/', 'gitlab':'http://9thprince.gitlab.io/', 'private':'http://www.e2iplayer.gitlab.io/'}
-SERVER_UPDATE_PATH = {'vline':'download/update2/', 'gitlab':'update2/', 'private':'update2/'}
+#SERVER_DOMAINS = {'vline':'http://iptvplayer.vline.pl/', 'gitlab':'https://gitlab.com/maxbambi/e2iplayer/', 'private':'http://www.e2iplayer.gitlab.io/'}
+#SERVER_UPDATE_PATH = {'vline':'download/update2/', 'gitlab':'raw/master/IPTVPlayer/iptvupdate/', 'private':'update2/'}
+SERVER_DOMAINS = {'vline':'http://9thprince.gitlab.io/', 'gitlab':'http://9thprince.gitlab.io/', 'private':'http://9thprince.gitlab.io/'}
+SERVER_UPDATE_PATH = {'vline':'update2/', 'gitlab':'update2/', 'private':'update2/'}
+
+
 
 def GetServerKey(serverNum=None):
     if serverNum == None:
@@ -53,7 +57,7 @@ def GetUpdateServerUri(file='', serverNum=None):
 
 def GetResourcesServerUri(file='', serverNum=None):
     serverKey = GetServerKey(serverNum)
-    uri = SERVER_DOMAINS[serverKey] + 'resources/' + file
+    uri = 'http://iptvplayer.vline.pl/resources/' + file
     printDBG("GetResourcesServerUri -> %s" % uri)
     return uri
 
@@ -635,28 +639,60 @@ def GetHostsFromList(useCache=True):
     return lhosts
         
 def GetHostsFromFolder(useCache=True):
-    global g_cacheHostsFromFolder
-    if useCache and g_cacheHostsFromFolder != None:
-        return g_cacheHostsFromFolder
-    
-    lhosts = []
-    try:
-        fileList = os.listdir( __getHostsPath() )
-        for wholeFileName in fileList:
-            # separate file name and file extension
-            fileName, fileExt = os.path.splitext(wholeFileName)
-            nameLen = len( fileName )
-            if fileExt in ['.pyo', '.pyc', '.py'] and nameLen >  4 and __isHostNameValid(fileName):
-                if fileName[4:] not in lhosts:
-                    lhosts.append( fileName[4:] )
-                    printDBG('getHostsList add host with fileName: "%s"' % fileName[4:])
-        printDBG('getHostsList end')
-        lhosts.sort()
-    except Exception:
-        printDBG('GetHostsList EXCEPTION')
-    
-    g_cacheHostsFromFolder = list(lhosts)
-    return lhosts
+	global g_cacheHostsFromFolder
+	if useCache and g_cacheHostsFromFolder != None:
+		return g_cacheHostsFromFolder
+
+	lhosts = []
+	try:
+		fileList = os.listdir( __getHostsPath() )
+		for wholeFileName in fileList:
+			# separate file name and file extension
+			fileName, fileExt = os.path.splitext(wholeFileName)
+			nameLen = len( fileName )
+			if fileExt in ['.pyo', '.pyc', '.py'] and nameLen >  4 and __isHostNameValid(fileName):
+				if fileName[4:] not in lhosts:
+					lhosts.append( fileName[4:] )
+					printDBG('getHostsList add host with fileName: "%s"' % fileName[4:])
+		printDBG('getHostsList end')
+		lhosts.sort()
+	except Exception:	
+		printDBG('GetHostsList EXCEPTION')
+
+	#Add Tsiplayer Hosts 
+	folder='/usr/lib/enigma2/python/Plugins/Extensions/IPTVPlayer/tsiplayer' 
+	if os.path.exists(folder):
+		lst=os.listdir(folder)
+		lst.sort()
+		for (file_) in lst:
+			if (file_.endswith('.py'))and(file_.startswith('host_')):
+				hst_titre=file_.replace('host_' ,'TS_').replace('.py','')    
+				if hst_titre not in lhosts:
+					lhosts.append( hst_titre )
+		#Add Tsmedia Hosts 
+		folder='/usr/lib/enigma2/python/Plugins/Extensions/TSmedia/addons'
+		lst=[]
+		if os.path.exists(folder):
+			lst=os.listdir(folder)
+			for (dir_) in lst:
+				if ('.py' not in dir_)and('youtube' not in dir_)and('programs' not in dir_)and('favorites' not in dir_):
+					folder2=folder+'/'+dir_
+					lst2=[]
+					lst2=os.listdir(folder2)
+					for (dir_2) in lst2:
+						if ('.py' not in dir_2):
+							hst_titre='TSM_'+dir_+'__'+dir_2
+							if hst_titre not in lhosts:
+								lhosts.append( hst_titre )					    
+
+
+		printDBG('getHostsList end')
+		lhosts.sort()
+
+		printDBG('GetHostsList EXCEPTION')
+			
+	g_cacheHostsFromFolder = list(lhosts)
+	return lhosts
 
 def GetHostsList(fromList=True, fromHostFolder=True, useCache=True):
     printDBG('getHostsList begin')
