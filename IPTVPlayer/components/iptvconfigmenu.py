@@ -80,13 +80,12 @@ config.plugins.iptvplayer.IPTVWebIterface = ConfigYesNo(default = False)
 config.plugins.iptvplayer.plugin_autostart = ConfigYesNo(default = False)
 config.plugins.iptvplayer.plugin_autostart_method = ConfigSelection(default = "wizard", choices = [("wizard", "wizard"),("infobar", "infobar")])
 
-config.plugins.iptvplayer.preferredupdateserver = ConfigSelection(default = "", choices = [("", _("Default")),("1", "http://iptvplayer.vline.pl/"), ("2", _("http://9thprince.gitlab.io/")), ("3", _("private"))])
-config.plugins.iptvplayer.osk_type = ConfigSelection(default = "", choices = [("", _("Auto")),("system", _("System")), ("own", _("Own model"))])
+config.plugins.iptvplayer.preferredupdateserver = ConfigSelection(default = "", choices = [("", _("Default")),("1", "http://iptvplayer.vline.pl/"),("2", "http://9thprince.gitlab.io/")])
+config.plugins.iptvplayer.osk_type = ConfigSelection(default = "", choices = [("", _("Auto")),("system", _("System")),("tsiplayer", _("TSIplayer")), ("own", _("Own model"))])
 config.plugins.iptvplayer.osk_layout = ConfigText(default = "", fixed_size = False)
 config.plugins.iptvplayer.osk_allow_suggestions = ConfigYesNo(default = True)
 config.plugins.iptvplayer.osk_default_suggestions = ConfigSelection(default = "", choices = [("", _("Auto")),("none", _("None")), ("google", "google.com"), ("filmweb", "filmweb.pl"), ("imdb", "imdb.com"), ("filmstarts", "filmstarts.de")]) 
-config.plugins.iptvplayer.osk_background_color = ConfigSelection(default = "", choices = [('', _('Default')), ('transparent', _('Transparent')), ('#000000', _('Black')), ('#80000000', _('Darkgray')), ('#cc000000', _('Lightgray'))])
-
+config.plugins.iptvplayer.osk_background_color = ConfigSelection(default = "transparent", choices = [('', _('Default')), ('transparent', _('Transparent')), ('#000000', _('Black')), ('#80000000', _('Darkgray')), ('#cc000000', _('Lightgray'))])
 def GetMoviePlayerName(player):
     map = {"auto":_("auto"), "mini": _("internal"), "standard":_("standard"), 'exteplayer': _("external eplayer3"), 'extgstplayer': _("external gstplayer")}
     return map.get(player, _('unknown'))
@@ -145,7 +144,7 @@ config.plugins.iptvplayer.SciezkaCache = ConfigDirectory(default = "/hdd/IPTVCac
 config.plugins.iptvplayer.NaszaTMP = ConfigDirectory(default = "/tmp/") #, fixed_size = False)
 config.plugins.iptvplayer.ZablokujWMV = ConfigYesNo(default = True)
 
-config.plugins.iptvplayer.gitlab_repo = ConfigSelection(default = "9th^prince", choices = [("mosz_nowy", "mosz_nowy"),("9thprince", "9thprince"),("maxbambi", "maxbambi")])
+config.plugins.iptvplayer.gitlab_repo = ConfigSelection(default = "9thprince", choices = [("1", "9thprince")])
 
 config.plugins.iptvplayer.vkcom_login    = ConfigText(default="", fixed_size = False)
 config.plugins.iptvplayer.vkcom_password = ConfigText(default="", fixed_size = False)
@@ -326,14 +325,14 @@ class ConfigMenu(ConfigBaseWidget):
 
         list.append( getConfigListEntry(_("Auto check for plugin update"), config.plugins.iptvplayer.autoCheckForUpdate) )
         list.append( getConfigListEntry(_("The preferred update server"), config.plugins.iptvplayer.preferredupdateserver) )
-        if config.plugins.iptvplayer.preferredupdateserver.value == '2':
+        if config.plugins.iptvplayer.preferredupdateserver.value >= '1':
             list.append(getConfigListEntry(_("Add update from GitLab repository"), config.plugins.iptvplayer.gitlab_repo))
         if config.plugins.iptvplayer.preferredupdateserver.value == '3':
             list.append(getConfigListEntry(_("%s login") % 'E2iPlayer', config.plugins.iptvplayer.iptvplayer_login))
             list.append(getConfigListEntry(_("%s password") % 'E2iPlayer', config.plugins.iptvplayer.iptvplayer_password))
         list.append( getConfigListEntry(_("Update"), config.plugins.iptvplayer.fakeUpdate) )
         list.append( getConfigListEntry(_("Virtual Keyboard type"), config.plugins.iptvplayer.osk_type) )
-        if config.plugins.iptvplayer.osk_type.value == 'own':
+        if (config.plugins.iptvplayer.osk_type.value == 'own') or (config.plugins.iptvplayer.osk_type.value == 'tsiplayer'):
             list.append( getConfigListEntry(_("    Background color"), config.plugins.iptvplayer.osk_background_color) )
             list.append( getConfigListEntry(_("    Show suggestions"), config.plugins.iptvplayer.osk_allow_suggestions) )
             list.append( getConfigListEntry(_("    Default suggestions provider"), config.plugins.iptvplayer.osk_default_suggestions) )
