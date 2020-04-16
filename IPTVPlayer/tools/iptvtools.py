@@ -31,8 +31,8 @@ import datetime
 
 #SERVER_DOMAINS = {'vline':'http://iptvplayer.vline.pl/', 'gitlab':'https://gitlab.com/maxbambi/e2iplayer/', 'private':'http://www.e2iplayer.gitlab.io/'}
 #SERVER_UPDATE_PATH = {'vline':'download/update2/', 'gitlab':'raw/master/IPTVPlayer/iptvupdate/', 'private':'update2/'}
-SERVER_DOMAINS = {'vline':'http://iptvplayer.vline.pl/', 'gitlab':'http://9thprince.gitlab.io/', 'private':'http://www.e2iplayer.gitlab.io/'}
-SERVER_UPDATE_PATH = {'vline':'download/update2/', 'gitlab':'update2/', 'private':'update2/'}
+SERVER_DOMAINS = {'vline':'http://9thprince.gitlab.io/', 'gitlab':'http://9thprince.gitlab.io/', 'private':'http://9thprince.gitlab.io/'}
+SERVER_UPDATE_PATH = {'vline':'update2/', 'gitlab':'update2/', 'private':'update2/'}
 
 
 
