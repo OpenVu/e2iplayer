@@ -408,7 +408,7 @@ class UpdateMainAppImpl(IUpdateObjectInterface):
     def stepGetGitlab(self):
         printDBG('UpdateMainAppImpl.stepGetGitlab')
         if config.plugins.iptvplayer.gitlab_repo.value == '1':
-            nick = 'mosz_nowy'
+            nick = '9thprince'
         else:
             nick = '9thprince'
         self.clearTmpData()
@@ -712,7 +712,7 @@ class UpdateMainAppImpl(IUpdateObjectInterface):
         serversList = []
         printDBG('UpdateMainAppImpl.__serversListGitlabFinished url[%s], filePath[%s] ' % (url, filePath))
         if config.plugins.iptvplayer.gitlab_repo.value == '1':
-            nick = 'mosz_nowy'
+            nick = '9thprince'
         else:
             nick = '9thprince'
         if DMHelper.STS.DOWNLOADED != status:
