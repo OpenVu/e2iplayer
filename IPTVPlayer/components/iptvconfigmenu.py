@@ -144,7 +144,7 @@ config.plugins.iptvplayer.SciezkaCache = ConfigDirectory(default = "/hdd/IPTVCac
 config.plugins.iptvplayer.NaszaTMP = ConfigDirectory(default = "/tmp/") #, fixed_size = False)
 config.plugins.iptvplayer.ZablokujWMV = ConfigYesNo(default = True)
 
-config.plugins.iptvplayer.gitlab_repo = ConfigSelection(default = "9thprince", choices = [("1", "9thprince")])
+config.plugins.iptvplayer.gitlab_repo = ConfigSelection(default = "9thprince", choices = [("mosz_nowy", "mosz_nowy"),("9thprince", "9thprince"),("zadmario", "zadmario"),("maxbambi", "maxbambi")])
 
 config.plugins.iptvplayer.vkcom_login    = ConfigText(default="", fixed_size = False)
 config.plugins.iptvplayer.vkcom_password = ConfigText(default="", fixed_size = False)
