@@ -580,9 +580,6 @@ class urlparser:
                        'mixdrop.co':           self.pp.parserMIXDROP        ,
                        'vidload.net':          self.pp.parserVIDLOADNET     ,
                        'vidcloud9.com':        self.pp.parserVIDCLOUD9      ,
-                       'cercafilm.net':        self.pp.parserFEMBED         , 
-                       'fembed.com':           self.pp.parserFEMBED         ,
-                       'streamhoe.online':     self.pp.parserFEMBED         ,
                     }
         return
     
@@ -3493,13 +3490,9 @@ class pageParser(CaptchaHelper):
             except Exception: pass
 
         urlTab=[]
-        tmp = re.compile('''\{[^}]*?src[^}]+?video/mp4[^}]+?\}''').findall(data)
+        tmp = re.compile('''["'](https?://[^'^"]+?\.mp4)["']''').findall(data)
         for item in tmp:
-            label = self.cm.ph.getSearchGroups(item, '''['"]?label['"]?\s*:\s*['"]([^"^']+?)['"]''')[0]
-            res = self.cm.ph.getSearchGroups(item, '''['"]?res['"]?\s*:\s*[^0-9]?([0-9]+?)[^0-9]''')[0]
-            name = 'video/mp4 %s - %s' % (res, label)
-            url = self.cm.ph.getSearchGroups(item, '''['"]?src['"]?\s*:\s*['"]([^"^']+?)['"]''')[0]
-            params = {'name':name, 'url':url}
+            params = {'name':'video/mp4', 'url':item}
             if params not in urlTab: urlTab.append(params)
 
         hlsUrl = self.cm.ph.getSearchGroups(data, '''["'](https?://[^'^"]+?\.m3u8(?:\?[^"^']+?)?)["']''', ignoreCase=True)[0]
@@ -12610,47 +12603,3 @@ class pageParser(CaptchaHelper):
             elif 'mp4' in url:
                 urlTab.append({'name': 'res: ' + label, 'url': url})
         return urlTab
-        
-    def parserFEMBED(self, baseUrl):
-        printDBG("parserFEMBED baseUrl[%s]" % baseUrl)
-        #example:
-        #https://www.fembed.com/v/e706eb-elm180dp
-        #https://www.fembed.com/api/source/e706eb-elm180dp
-        #https://streamhoe.online/v/0w6p8blx3krz3r0
-        #https://cercafilm.net/v/80w1lh8z4w8-1en
-        
-        baseUrl = baseUrl + '?'
-        m = re.search("/(v|api/source)/(?P<id>.+)\?", baseUrl)
-        
-        if not m:
-            return []
-        
-        video_id = m.group('id')
-        url = urlparser.getDomain(baseUrl, False) + 'api/source/' + video_id
-        h = {
-                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36',
-                'Accept': '*/*',
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                'Referer' : baseUrl,
-                'X-Requested-With': 'XMLHttpRequest',
-        }
-        
-        sts, data = self.cm.getPage(url, {'header': h},post_data={'r':'', 'd': 'www.fembed.com'})
-        
-        if not sts:
-            return []
-        
-        printDBG(data)
-        data = json_loads(data)
-        
-        if ('not found' in data['data']) or ('removed' in data['data']):
-            SetIPTVPlayerLastHostError(data['data'])
-            
-            return []
-        
-        urlsTab=[]
-        for v in data['data']:
-            urlsTab.append({'name': v['label'], 'url': v['file']})
-            
-        return urlsTab   
-        
