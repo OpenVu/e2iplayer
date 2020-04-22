@@ -1,18 +1,5 @@
 # -*- coding: utf-8 -*-
 
-#
-#
-# @Codermik release, based on @Samsamsam's E2iPlayer public.
-# Released with kind permission of Samsamsam.
-# All code developed by Samsamsam is the property of Samsamsam and the E2iPlayer project,  
-# all other work is © E2iStream Team, aka Codermik.  TSiPlayer is © Rgysoft, his group can be
-# found here:  https://www.facebook.com/E2TSIPlayer/
-#
-# https://www.facebook.com/e2iStream/
-#
-#
-
-
 ###################################################
 # LOCAL import
 ###################################################
@@ -125,7 +112,7 @@ class IPTVSetupImpl:
         self.cmdwrapPaths = [resolveFilename(SCOPE_PLUGINS, 'Extensions/IPTVPlayer/bin/cmdwrap'), "/usr/bin/cmdwrap"]
         
         # duk
-        self.dukVersion = 5
+        self.dukVersion = 6 # "2.1.99 [experimental]" # real version
         self.dukPaths = [resolveFilename(SCOPE_PLUGINS, 'Extensions/IPTVPlayer/bin/duk'), "/usr/bin/duk"]
         
         self.binaryInstalledSuccessfully = False
@@ -304,7 +291,7 @@ class IPTVSetupImpl:
     def getOpensslVersionFinished(self, stsTab, dataTab):
         printDBG("IPTVSetupImpl.getOpensslVersionFinished")
         if len(stsTab) > 0 and True == stsTab[-1]:
-            for ver in ['0.9.8', '1.0.0', '1.0.2', '.1.1']:
+            for ver in ['0.9.8', '1.0.0', '1.0.2']:
                 if ver in dataTab[-1]:
                     self.openSSLVersion = '.' + ver
                     break
@@ -320,7 +307,7 @@ class IPTVSetupImpl:
     def setOpenSSLVersion(self, ret=None):
         printDBG('Check opennSSL version')
         self.setInfo(_("Detection of the OpenSSL version."), _("OpenSSL lib is needed by wget and rtmpdump utilities."))
-        for ver in ['.0.9.8', '.1.0.0', '.1.0.2', '.1.1']:
+        for ver in ['.0.9.8', '.1.0.0', '.1.0.2']:
             libsslExist = False
             libcryptoExist = False
             libSSLPath = ''
@@ -345,7 +332,7 @@ class IPTVSetupImpl:
             self.libSSLPath = libSSLPath
             if '.1.0.2' == ver:
                 self.getOpenssl2Finished()
-            elif '.0.9.8' == ver or '.1.1' == ver:
+            elif '.0.9.8' == ver:
                 # old ssl version 0.9.8
                 self.getGstreamerVer()
             else:
@@ -388,7 +375,7 @@ class IPTVSetupImpl:
         
         # check if link for libssl.so.1.0.0 and libcrypto.so.1.0.0 are needed
         openSSlVerMap = {}
-        for ver in ['.1.0.0', '.1.0.2', '.1.1']:
+        for ver in ['.1.0.0', '.1.0.2']:
             for path in ['/usr/lib/', '/lib/', '/usr/local/lib/', '/local/lib/']:
                 for library in ['libssl.so', 'libcrypto.so']:
                     library += ver
@@ -745,7 +732,7 @@ class IPTVSetupImpl:
         if remoteBinaryName:
             self.stepHelper = CBinaryStepHelper(remoteBinaryName, self.platform, self.openSSLVersion, None)
             msg1 = _("C subtitle parser")
-            msg2 = _("\nFor more info please email Codermik (codermik@tuta.io)")
+            msg2 = _("\nFor more info please ask the author samsamsam@o2.pl")
             msg3 = _('It improves subtitles parsing.\n')
             self.stepHelper.updateMessage('detection', msg1, 0)
             self.stepHelper.updateMessage('detection', msg2, 1)
@@ -808,7 +795,7 @@ class IPTVSetupImpl:
         if remoteBinaryName:
             self.stepHelper = CBinaryStepHelper(remoteBinaryName, self.platform, self.openSSLVersion, None)
             msg1 = _("python-cjson")
-            msg2 = _("\nFor more info please email Codermik (codermik@tuta.io)")
+            msg2 = _("\nFor more info please ask %s ") % 'samsamsam@o2.pl'
             msg3 = _('It improves json data parsing.\n')
             self.stepHelper.updateMessage('detection', msg1, 0)
             self.stepHelper.updateMessage('detection', msg2, 1)
@@ -873,7 +860,7 @@ class IPTVSetupImpl:
         
         self.stepHelper = CBinaryStepHelper("hlsdl", self.platform, self.openSSLVersion, config.plugins.iptvplayer.hlsdlpath)
         msg1 = _("hlsdl downloader")
-        msg2 = _("\nFor more info please email Codermik (codermik@tuta.io)")
+        msg2 = _("\nFor more info please ask samsamsam@o2.pl")
         msg3 = _('It improves HLS/M3U8 stream download.\n')
         self.stepHelper.updateMessage('detection', msg1, 0)
         self.stepHelper.updateMessage('detection', msg2, 1)
@@ -933,7 +920,7 @@ class IPTVSetupImpl:
         
         self.stepHelper = CBinaryStepHelper("cmdwrap", self.platform, self.openSSLVersion, config.plugins.iptvplayer.cmdwrappath)
         msg1 = _("cmdwrap tool")
-        msg2 = _("\nFor more info please email Codermik (codermik@tuta.io)")
+        msg2 = _("\nFor more info please ask samsamsam@o2.pl")
         msg3 = _('It improves commands execution with very long arguments.\n')
         self.stepHelper.updateMessage('detection', msg1, 0)
         self.stepHelper.updateMessage('detection', msg2, 1)
@@ -961,17 +948,15 @@ class IPTVSetupImpl:
         self.binaryInstalledSuccessfully = False
             
         def _detectValidator(code, data):
-            printDBG("..:: E2iPlayer ::..  self.dukVersion = %s" % self.dukVersion)
             if 'restrict-memory' in data:
                 try:
                     ver = int(re.search('VER_FOR_IPTV\:\s([0-9]+?)\n', data).group(1))
-                    printDBG("..:: E2iPlayer ::..  Ver = %s" % ver)
                     if ver >= self.dukVersion:
                         return True, False
                 except Exception:
                     printExc()
             return False,True
-                
+        
         def _deprecatedHandler(paths, stsTab, dataTab):
             sts, retPath = False, ""
             for idx in range(len(dataTab)):
@@ -983,9 +968,9 @@ class IPTVSetupImpl:
             softfpu = ''
             versions = {'sh4':2190, 'mipsel':2200}
             
-#            if platform in ['sh4', 'mipsel'] and (self.binaryInstalledSuccessfully or self.glibcVersion < versions[platform] ):
-#                old = '_old'
-           
+            if platform in ['sh4', 'mipsel'] and (self.binaryInstalledSuccessfully or self.glibcVersion < versions[platform] ):
+                old = '_old'
+            
             if platform == 'mipsel' and not IsFPUAvailable():
                 softfpu = '_softfpu'
             
@@ -1072,16 +1057,16 @@ class IPTVSetupImpl:
         if len(self.ffmpegVersion) >= 5:
             shortFFmpegVersion = self.ffmpegVersion[:-2]
             
-        if self.platform in ['sh4'] and shortFFmpegVersion in ['1.0', '1.1', '1.2', '2.0', '2.2', '2.5', '2.6', '2.7', '2.8', '3.0', '3.1', '3.2', '3.3', '3.4', '4.0', '4.1']:
+        if self.platform in ['sh4'] and shortFFmpegVersion in ['1.0', '1.1', '1.2', '2.0', '2.2', '2.5', '2.6', '2.7', '2.8', '3.0', '3.1', '3.2', '3.3', '3.4']: 
             self.ffmpegVersion = shortFFmpegVersion
             self.exteplayer3Step()
-        elif self.platform in ['mipsel'] and shortFFmpegVersion in ['2.8', '3.0', '3.1', '3.2', '3.3', '3.4', '4.0', '4.1']:
+        elif self.platform in ['mipsel'] and shortFFmpegVersion in ['2.8', '3.0', '3.1', '3.2', '3.3', '3.4']:
             self.ffmpegVersion = shortFFmpegVersion
             self.exteplayer3Step()
-        elif self.platform in ['armv7'] and shortFFmpegVersion in ['2.8', '3.0', '3.1', '3.2', '3.3', '3.4', '4.0', '4.1']:
+        elif self.platform in ['armv7'] and shortFFmpegVersion in ['2.8', '3.0', '3.1', '3.2', '3.3', '3.4']:
             self.ffmpegVersion = shortFFmpegVersion
             self.exteplayer3Step()
-        elif self.platform in ['armv5t'] and shortFFmpegVersion in ['2.8', '3.0', '3.1', '3.2', '3.3', '3.4', '4.0', '4.1']:
+        elif self.platform in ['armv5t'] and shortFFmpegVersion in ['2.8', '3.0', '3.1', '3.2', '3.3', '3.4']:
             self.ffmpegVersion = shortFFmpegVersion
             self.exteplayer3Step()
         elif "" != self.gstreamerVersion: self.gstplayerStep()
@@ -1246,7 +1231,7 @@ class IPTVSetupImpl:
             return cmd
         self.stepHelper = CBinaryStepHelper("libgstifdsrc.so", self.platform, self.openSSLVersion, None)
         msg1 = _("GST-IFDSRC for GSTREAMER 1.X")
-        msg2 = _("\nFor more info please email Codermik (codermik@tuta.io)")
+        msg2 = _("\nFor more info please ask the author samsamsam@o2.pl")
         msg3 = _('It improves buffering mode with the gstplayer.\n')
         self.stepHelper.updateMessage('detection', msg1, 0)
         self.stepHelper.updateMessage('detection', msg2, 1)
@@ -1369,4 +1354,3 @@ class IPTVSetupImpl:
         printDBG("IPTVSetupImpl.binaryInstallRetry")
         if ret: self.binaryInstall()
         else: self.stepHelper.getFinishHandler()(False)
-
