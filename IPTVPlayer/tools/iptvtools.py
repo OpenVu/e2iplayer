@@ -29,8 +29,9 @@ import stat
 import codecs
 import datetime
 
-SERVER_DOMAINS = {'gitlab':'http://zadmario.gitlab.io/', 'gitlab':'http://9thprince.gitlab.io/', 'gitlab':'http://zadmario.gitlab.io/'}
-SERVER_UPDATE_PATH = {'gitlab':'update2/', 'gitlab':'update2/', 'gitlab':'update2/'}
+SERVER_DOMAINS = {'vline':'http://9thprince.gitlab.io/', 'gitlab':'http://9thprince.gitlab.io/', 'private':'http://9thprince.gitlab.io/'}
+SERVER_UPDATE_PATH = {'vline':'update2/', 'gitlab':'update2/', 'private':'update2/'}
+
 
 
 def GetServerKey(serverNum=None):
@@ -38,11 +39,11 @@ def GetServerKey(serverNum=None):
         serverNum = config.plugins.iptvplayer.preferredupdateserver.value
 
     if serverNum == '3':
-        serverKey = 'gitlab'
+        serverKey = 'private'
     elif serverNum == '2':
         serverKey = 'gitlab'
     else:
-        serverKey = 'gitlab'
+        serverKey = 'vline'
 
     return serverKey
 
