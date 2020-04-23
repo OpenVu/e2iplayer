@@ -1,4 +1,17 @@
 # -*- coding: utf-8 -*-
+
+#
+#
+# @Codermik release, based on @Samsamsam's E2iPlayer public.
+# Released with kind permission of Samsamsam.
+# All code developed by Samsamsam is the property of Samsamsam and the E2iPlayer project,  
+# all other work is © E2iStream Team, aka Codermik.  TSiPlayer is © Rgysoft, his group can be
+# found here:  https://www.facebook.com/E2TSIPlayer/
+#
+# https://www.facebook.com/e2iStream/
+#
+#
+
 #
 #  Update iptv setup main window
 #
@@ -84,14 +97,14 @@ class IPTVSetupMainWidget(Screen):
         self.onShow.remove(self.onStart)
         printDBG("IPTVSetupMainWidget.onStart")
         self["sub_title"].setText(_("Information"))
-        self["info_field"].setText(_("IPTVPlayer need some additional setup.\nSuch as downloading and installation additional binaries.\nPress OK to start."))
+        self["info_field"].setText(_("E2iPlayer needs some additional setup\nsuch as the download and install of additional binaries.\nPress OK to start."))
         if self.autoStart: self.startPressed()
         
     def cancelPressed(self):
         printDBG("IPTVSetupMainWidget.cancelPressed")
         if self.underClosing: return
         self.underCloseMessage = True
-        message = _("Skipping IPTVPlayer setup may cause problems.\nAre you sure to skip IPTVPlayer setup?")
+        message = _("Skipping E2iPlayer setup may cause problems.\nAre you sure to skip E2iPlayer setup?")
         self.session.openWithCallback(self.cancelAnswer, MessageBox, text=message, type=MessageBox.TYPE_YESNO)
 
     def startPressed(self):

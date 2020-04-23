@@ -1,5 +1,18 @@
 # -*- coding: utf-8 -*-
 
+#
+#
+# @Codermik release, based on @Samsamsam's E2iPlayer public.
+# Released with kind permission of Samsamsam.
+# All code developed by Samsamsam is the property of Samsamsam and the E2iPlayer project,  
+# all other work is © E2iStream Team, aka Codermik.  TSiPlayer is © Rgysoft, his group can be
+# found here:  https://www.facebook.com/E2TSIPlayer/
+#
+# https://www.facebook.com/e2iStream/
+#
+#
+
+
 ###################################################
 # LOCAL import
 ###################################################
@@ -286,7 +299,7 @@ class CBinaryStepHelper:
         def _deprecatedHandler(paths, stsTab, dataTab):
             sts, retPath = False, ""
             for idx in range(len(dataTab)):
-                if 'samsamsam@o2.pl' in dataTab[idx]: sts, retPath = True, paths[idx]
+                if 'codermik@tuta.io' in dataTab[idx]: sts, retPath = True, paths[idx]
             return sts, retPath
             
         self.stepHelper = CBinaryStepHelper("wget", self.platform, self.openSSLVersion, config.plugins.iptvplayer.wgetpath)
