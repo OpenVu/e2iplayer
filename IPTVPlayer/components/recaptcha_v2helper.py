@@ -1,17 +1,4 @@
 # -*- coding: utf-8 -*-
-
-#
-#
-# @Codermik release, based on @Samsamsam's E2iPlayer public.
-# Released with kind permission of Samsamsam.
-# All code developed by Samsamsam is the property of Samsamsam and the E2iPlayer project,  
-# all other work is © E2iStream Team, aka Codermik.  TSiPlayer is © Rgysoft, his group can be
-# found here:  https://www.facebook.com/E2TSIPlayer/
-#
-# https://www.facebook.com/e2iStream/
-#
-#
-
 from Plugins.Extensions.IPTVPlayer.components.iptvplayerinit import TranslateTXT as _
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG, printExc, GetDefaultLang
 
@@ -51,6 +38,8 @@ class CaptchaHelper():
         
         if token == '':
             recaptcha = None
+            if config.plugins.iptvplayer.captcha_bypass.value != '' and bypassCaptchaService == None:
+                bypassCaptchaService = config.plugins.iptvplayer.captcha_bypass.value
             if bypassCaptchaService == '9kw.eu':
                 recaptcha = UnCaptchaReCaptcha_9kw()
             elif bypassCaptchaService == '2captcha.com':
@@ -61,7 +50,7 @@ class CaptchaHelper():
             if recaptcha != None:
                 token = recaptcha.processCaptcha(sitekey, refUrl)
             else:
-                errorMsgTab.append(_('Please visit %s to learn how to redirect this task to a external device.') % 'https://www.softrix.co.uk/istream/reCAPTCHA.html')
+                errorMsgTab.append(_('Please visit %s to learn how to redirect this task to the external device.') % 'http://zadmario.gitlab.io/captcha.html')
                 if not beQuaiet:
                     self.sessionEx.waitForFinishOpen(MessageBox, '\n'.join(errorMsgTab), type=MessageBox.TYPE_ERROR, timeout=20)
                 if bypassCaptchaService != None:
