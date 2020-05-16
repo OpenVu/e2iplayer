@@ -19,7 +19,7 @@ except Exception: import simplejson as json
 ###################################################
 
 def gettytul():
-    return 'https://altadefinizione.town/'
+    return 'https://altadefinizione.us/'
 
 class AltadefinizioneCool(CBaseHostClass):
  
@@ -29,9 +29,9 @@ class AltadefinizioneCool(CBaseHostClass):
         self.HEADER = {'User-Agent': self.USER_AGENT, 'DNT':'1', 'Accept': 'text/html'}
         self.AJAX_HEADER = dict(self.HEADER)
         self.AJAX_HEADER.update( {'X-Requested-With': 'XMLHttpRequest'} )
-        self.MAIN_URL = 'https://altadefinizione.town/'
+        self.MAIN_URL = 'https://altadefinizione.us/'
         self.AZ_URL = self.MAIN_URL + 'catalog/%l/page/{0}'
-        self.DEFAULT_ICON_URL = 'https://altadefinizione.town/templates/Dark/img/logo.png'
+        self.DEFAULT_ICON_URL = 'https://altadefinizione.us/templates/Dark/img/logo.png'
         
         self.cacheCategories = []
         
@@ -125,7 +125,7 @@ class AltadefinizioneCool(CBaseHostClass):
             sts, data = self.getPage(cItem['url'])
             if not sts: return
         
-        nextPage = self.cm.ph.getDataBeetwenNodes(data, '<div class="paginationC nomobile">', ('</ul', '>'), False)[1]
+        nextPage = self.cm.ph.getDataBeetwenNodes(data, ('<div','>', 'paginationC'), ('</div', '>'), False)[1]
         nextPage = self.getFullUrl( self.cm.ph.getSearchGroups(nextPage, '''<a[^>]+?href=['"]([^"^']+?)['"][^>]*?>%s<''' % (page + 1))[0] )
         
         data = self.cm.ph.getAllItemsBeetwenMarkers(data, '<div class="box">', '</div>')
