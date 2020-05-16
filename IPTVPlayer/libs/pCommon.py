@@ -970,7 +970,13 @@ class common:
                         if url != '': url = _getFullUrl( url, domain )
                         else: url = data.meta['url']
                         actionType = self.ph.getSearchGroups(tmp, 'method="([^"]+?)"', 1, True)[0].lower()
-                        post_data2 = dict(re.findall(r'<input[^>]*name="([^"]*)"[^>]*value="([^"]*)"[^>]*>', tmp))
+#                        post_data2 = dict(re.findall(r'<input[^>]*name="([^"]*)"[^>]*value="([^"]*)"[^>]*>', tmp))
+                        post_data2 = {}
+                        verData = re.findall(r'(<input[^>]*)>', re.sub("<!--.*?-->", "<!-- -->", verData))
+                        for item in verData:
+                            name = self.ph.getSearchGroups(item, '''\sname=['"]([^'^"]+?)['"]''')[0]
+                            value = self.ph.getSearchGroups(item, '''\svalue=['"]([^'^"]+?)['"]''')[0]
+                            post_data2[name] = value
                         #post_data2['id'] = id
                         if '' != token:
                             post_data2['h-captcha-response'] = token
@@ -1001,18 +1007,17 @@ class common:
                                 break
                         decoded = ''
                         elemsText = {}
-                        tmp = ph.findall(verData, ('<div', '>', 'hidden'), '</div>', flags=ph.START_S)
-                        for idx in range(1, len(tmp), 2):
-                            eId = ph.getattr(tmp[(idx - 1)], 'id', flags=ph.I)
-                            if eId:
-                                elemsText[eId] = tmp[idx]
+                        tmp = re.findall("<div.*?id=\"([^\"]+)\">(.*?)</div>", verData)
+                        for item in tmp:
+                            if item[0] and re.search(r'\w+\d', item[0]):
+                                elemsText[item[0]] = item[1]
 
                         js_params = [{'path':GetJSScriptFile('cf.byte')}]
                         try:
                             dat = dat.replace(dat[dat.index('var isIE'):dat.index('setTimeout')],'')
                         except Exception:
                             printExc()
-                        js_params.append({'code': "var ELEMS_TEXT = %s; var location = {hash:''}; var iptv_domain='%s';\n%s\niptv_fun();" % (json_dumps(elemsText), domain, dat)})
+                        js_params.append({'code': "var navigator={cookieEnabled:1}; var ELEMS_TEXT = %s; var location = {hash:''}; var iptv_domain='%s';\n%s\niptv_fun();" % (json_dumps(elemsText), domain, dat)})
                         ret = js_execute_ext( js_params )
                         decoded = json_loads(ret['data'].strip())
                         
@@ -1022,7 +1027,7 @@ class common:
                         printDBG("<<")
                         verUrl =  _getFullUrl( ph.getattr(verData, 'action'), domain)
                         get_data = {}
-                        verData = re.findall(r'(<input[^>]*)>', verData)
+                        verData = re.findall(r'(<input[^>]*)>', re.sub("<!--.*?-->", "<!-- -->", verData))
                         for item in verData:
                             name = self.ph.getSearchGroups(item, '''\sname=['"]([^'^"]+?)['"]''')[0]
                             value = self.ph.getSearchGroups(item, '''\svalue=['"]([^'^"]+?)['"]''')[0]
