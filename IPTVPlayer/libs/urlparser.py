@@ -578,10 +578,15 @@ class urlparser:
                        'upvideo.cc':           self.pp.parserONLYSTREAMTV   ,
                        'jetload.net':          self.pp.parserJETLOADNET     ,
                        'mixdrop.co':           self.pp.parserMIXDROP        ,
+                       'mixdrop.club':         self.pp.parserMIXDROP        ,
                        'vidload.net':          self.pp.parserVIDLOADNET     ,
                        'vidcloud9.com':        self.pp.parserVIDCLOUD9      ,
                        'abcvideo.cc':          self.pp.parserABCVIDEO       ,
                        'easyload.io':          self.pp.parserEASYLOAD       ,
+                       'mstream.icu':          self.pp.parserMSTREAMICU     ,
+                       '4snip.pw':             self.pp.parser4SNIP          ,
+                       'backin.net':           self.pp.parserBACKIN         ,
+                       'streamtape.com':       self.pp.parserSTREAMTAPE     ,
                     }
         return
     
@@ -12430,25 +12435,22 @@ class pageParser(CaptchaHelper):
         printDBG("parserMIXDROP baseUrl[%s]" % baseUrl)
         # example :https://mixdrop.co/f/1f13jq
         #          https://mixdrop.co/e/1f13jq
-
-        baseUrl = strwithmeta(baseUrl)
-        HTTP_HEADER = self.cm.getDefaultHeader(browser='firefox')
-        referer = baseUrl.meta.get('Referer')
-        if referer:
-            HTTP_HEADER['Referer'] = referer
-        else:
-            HTTP_HEADER['Referer'] = baseUrl
-        urlParams = {'header': HTTP_HEADER}
-
-        if '/f/' in baseUrl:
-            url = baseUrl.replace('/f/','/e/')
+        #          https://mixdrop.club/f/vn7de6q7t0j868/2/La_Missy_sbagliata_HD_2020_WEBDL_1080p.mp4
+        
+        m = re.search("mixdrop\.(co|club)/[ef]/(?P<id>.*?)($|/)", baseUrl)
+        
+        if m:
+            video_id = m.group('id')
+            url = "https://mixdrop.co/e/%s" % video_id
         else:
             url = baseUrl
-
-        sts, data = self.cm.getPage(url, urlParams)
+            
+        sts, data = self.cm.getPage(url)
         if not sts:
             return []
-
+        
+        printDBG(data)
+        
         error = self.cm.ph.getDataBeetwenNodes(data, '<div class="tb error">', '</p>')[1]
 
         if error:
@@ -12456,8 +12458,8 @@ class pageParser(CaptchaHelper):
             SetIPTVPlayerLastHostError(text)
             return []
 
+
         urlsTab=[]
-        sub_tracks = []
         # decrypt packed scripts
         scripts = re.findall(r"(eval\s?\(function\(p,a,c,k,e,d.*?)</script>", data,re.S)
         for script in scripts:
@@ -12470,22 +12472,34 @@ class pageParser(CaptchaHelper):
             # duktape
             ret = js_execute( script )
             decoded = ret['data']
-
-            subData = urllib.unquote(self.cm.ph.getSearchGroups(decoded, '''remotesub=['"](http[^'^"]+?)['"]''')[0])
-            if (subData.startswith('https://') or subData.startswith('http://')) and (subData.endswith('.srt') or subData.endswith('.vtt')):
-                sub_tracks.append({'title':'attached', 'url':subData, 'lang':'unk', 'format':'srt'})
-
-            link = self.cm.ph.getSearchGroups(decoded, '''["']((?:https?:)?//[^'^"]+?\.mp4(?:\?[^"^']+?)?)["']''', ignoreCase=True)[0]
+            printDBG('------------------------------')
+            printDBG(decoded)
+            printDBG('------------------------------')
+            
+            # found a part similar to this one:
+            #MDCore.vsrc="//s-delivery4.mixdrop.co/v/cd5b9db3d4d79b8e27f4b8e9e01b0f89.mp4?s=n4gHzKKmauonkMNudSwDkQ&e=1573868130"
+            link = re.findall("vsrc=\"([^\"]+?)\"", decoded)
+            
+            if not link:
+                link = re.findall(r'MDCore\.\w+\s*=\s*"([^"]+)"', decoded)
+                i=0
+                while i < len(link):
+                    if not ('mp4' in link[i] and '//' in link[i]):
+                        link.pop(i)
+                    else:
+                        i = i + 1
+            
             if link:
-                if link.startswith('//'):
-                    video_url = "https:" + link
+                if link[0].startswith('//'):
+                    video_url = "https:" + link[0]
                 else:
-                    video_url = link
-                video_url = urlparser.decorateUrl(video_url, {'Referer' : baseUrl, 'external_sub_tracks':sub_tracks})
+                    video_url = link[0]
+                video_url = urlparser.decorateUrl(video_url, {'Referer' : url})
+                
                 params = {'name': 'link', 'url': video_url}
                 printDBG(params)
                 urlsTab.append(params)
-
+        
         return urlsTab
 
     def parserJETLOADNET(self, baseUrl):
@@ -12653,6 +12667,7 @@ class pageParser(CaptchaHelper):
             hlsUrl = strwithmeta(hlsUrl, {'Origin':"https://" + urlparser.getDomain(baseUrl), 'Referer':baseUrl})
             urlTab.extend(getDirectM3U8Playlist(hlsUrl, checkExt=False, variantCheck=True, checkContent=True, sortWithMaxBitrate=99999999))
         return urlTab
+    
     def parserEASYLOAD(self, baseUrl):
         printDBG("parserEASYLOAD baseUrl[%s]" % baseUrl)
 
@@ -12685,3 +12700,190 @@ class pageParser(CaptchaHelper):
             else:
                 urlTab.append({'name': type, 'url': url})
         return urlTab
+    
+    def parser4SNIP(self, baseUrl):
+        printDBG("parser4SNIP baseUrl[%s]" % baseUrl)
+        
+        sts, data = self.cm.getPage(baseUrl)
+
+        if sts:
+            printDBG("---------")
+            printDBG(data)
+            printDBG("---------")
+            
+            value = re.findall("/([^/]+)$", baseUrl)
+            if value:
+                url = "https://4snip.pw/outlink/" + value[0]
+                
+                printDBG("new url %s" % url)
+                
+                postData = {'url': value[0]}
+                
+                sts, data = self.cm.getPage(url, {'with_metadata':True}, post_data=postData)
+                
+                red_url = data.meta['url']
+                printDBG("redirect to url %s" % red_url)
+                    
+                if self.cm.isValidUrl(red_url):
+                    return urlparser().getVideoLinkExt(red_url)
+
+        return []
+    
+    def parserMSTREAMICU(self, baseUrl):
+        printDBG("parserMSTREAMICU baseUrl[%s]" % baseUrl)
+        
+        sts, data = self.cm.getPage(baseUrl)
+
+        urlTabs=[]
+        
+        if sts:
+            #printDBG("---------")
+            #printDBG(data)
+            #printDBG("---------")
+
+            decode = re.findall('(\$=~\[\];.*?\(\)\))\(\);', data)
+
+            for d in decode:
+                printDBG("---------")
+                printDBG(d)
+                
+                d = re.sub("\$\.\$\(\$\.\$\(", "print(", d)
+                d = re.sub("\)\(\)\)", ");", d)
+                
+                printDBG(d)
+                
+                ret = js_execute( d )
+                if ret['sts'] and 0 == ret['code']:
+                    decoded = ret['data'].decode('string_escape') 
+                    printDBG("--------- decoded -----------")
+                    printDBG(decoded)
+                    
+                    urls = re.findall("setAttribute\('src', '([^']+)'", decoded)
+                    
+                    for u in urls:
+                        if self.cm.isValidUrl(u):
+                            printDBG("Found link %s" % u)
+                            u = urlparser.decorateUrl(u, {'Referer': baseUrl})
+                            urlTabs.append({'name': 'link' , 'url': u}) 
+                            
+        return urlTabs
+
+    def parserBACKIN(self, baseUrl):
+        printDBG("parserBACKIN baseUrl[%s]" % baseUrl)
+        
+        # examples:
+        # "http://backin.net/nplr7n8c1qla"
+        # "http://backin.net/s/nplr7n8c1qla"
+        # "http://backin.net/s/streams.php?s=nplr7n8c1qla"
+
+        
+        def checkTxt(txt):
+            txt = txt.replace('\n', ' ')
+            if txt.find('file:'):
+                txt = txt.replace('file:', '"file":')
+            if txt.find('label:'):
+                txt = txt.replace('label:', '"label":')
+            if txt.find('kind:'):
+                txt = txt.replace('kind:', '"kind":')
+            if txt.find('res:'):
+                txt = txt.replace('res:', '"res":')
+            if txt.find('src:'):
+                txt = txt.replace('src:', '"src":')
+            if txt.find('type:'):
+                txt = txt.replace('type:', '"type":')
+                return txt
+
+        
+        USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36'
+        COOKIE_FILE = GetCookieDir('backin.cookie')
+        HttpHeader = {
+            'User-Agent': USER_AGENT, 
+            'Accept': 'text/html', 
+            'Accept-Encoding': 'gzip', 
+            'Referer': baseUrl
+        }
+        
+        #AJAX_HEADER = MergeDicts(self.HEADER, {'X-Requested-With':'XMLHttpRequest', 'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'})
+        HttpParams = {'header': HttpHeader , 'use_cookie': True, 'load_cookie': True, 'save_cookie': True, 'cookiefile': COOKIE_FILE}
+        HttpParams['cloudflare_params'] = {'domain':'backin.net', 'cookie_file': COOKIE_FILE, 'User-Agent': USER_AGENT}
+
+        sts, data = self.cm.getPageCFProtection(baseUrl, HttpParams)
+
+        urlTabs=[]
+
+        if sts:
+            printDBG("--------- html page after cloudflare javascript challenge ---------")
+            printDBG(data)
+            printDBG("-------------------------------------------------------------------")
+        
+        m = re.search("backin\.net/(s/streams\.php\?s=|s/|)(?P<id>.*)$", baseUrl)
+        
+        if m:
+            video_id = m.group('id')
+            #http://backin.net/stream-nplr7n8c1qla-500x400.html
+            red_url = "http://backin.net/stream-%s-500x400.html" % video_id 
+            
+            sts, data = self.cm.getPageCFProtection(red_url, HttpParams)
+            
+            if sts:
+                printDBG("--------- ")
+                printDBG(data)
+                printDBG("----------")
+
+                scripts = re.findall(r"(eval\s?\(function\(p,a,c,k,e,d.*?)</script>", data,re.S)
+                printDBG("Packed scripts found :%s" % len(scripts))
+        
+                for script in scripts:
+                    script = script + "\n"
+                    # mods
+                    script = script.replace("eval(function(p,a,c,k,e,d","pippo = function(p,a,c,k,e,d")
+                    script = script.replace("return p}(", "print(p)}\n\npippo(")
+                    script = script.replace("))\n",");\n")
+
+                    # duktape
+                    ret = js_execute( script )
+                    decoded = ret['data']
+                    printDBG('------------------------------')
+                    printDBG(decoded)
+                    printDBG('------------------------------')
+
+                    data = data + '\n' + decoded
+
+                # stream search
+                urls = re.findall(r'file\s*:\s*"([^"]+)"', data, re.S)
+
+                for u in urls:
+                    if self.cm.isValidUrl(u):
+                        printDBG("Found link %s" % u)
+                        u = urlparser.decorateUrl(u, {'Referer': baseUrl})
+                        params = {'name': 'link' , 'url': u}
+                        printDBG(params)
+                        urlTabs.append(params)
+
+        return urlTabs
+
+    def parserSTREAMTAPE(self, baseUrl):
+        printDBG("parserSTREAMTAPE baseUrl[%s]" % baseUrl)
+        
+        sts, data = self.cm.getPage(baseUrl)
+
+        urlTabs=[]
+        
+        if sts:
+            printDBG("---------")
+            printDBG(data)
+            printDBG("---------")
+            
+            #search url in tag like <div id="videolink" style="display:none;">//streamtape.com/get_video?id=27Lbk7KlQBCZg02&expires=1589450415&ip=DxWsE0qnDS9X&token=Og-Vxdpku4x8</div>
+            tmp = self.cm.ph.getAllItemsBeetwenNodes(data, ('<div', '>', 'videolink'), ('</div', '>'), False)
+            for t in tmp:
+                printDBG(t)
+                if t.startswith('//'):
+                    t = "http:" + t
+                    if self.cm.isValidUrl(t):
+                        t = urlparser.decorateUrl(t, {'Referer': baseUrl})
+                        params = {'name': 'link' , 'url': t}
+                        printDBG(params)
+                        urlTabs.append(params)
+                        
+        return urlTabs
