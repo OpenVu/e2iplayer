@@ -43,7 +43,11 @@ class CYTSignAlgoExtractor:
     def _findMainFunctionName(self):
         data = self.playerData
 
-        name = ph.search(data, r'(?P<sig>[a-zA-Z0-9$]+)\s*=\s*function\(\s*a\s*\)\s*{\s*a\s*=\s*a\.split\(\s*""\s*\).*a\.join\(\s*""\s*\)')[0]
+        name = ph.search(data, r'\b(?P<sig>[a-zA-Z0-9$]{2})\s*=\s*function\(\s*a\s*\)\s*{\s*a\s*=\s*a\.split\(\s*""\s*\)')[0]
+        if name and not any((c in name) for c in ''', '"'''):
+            return name.strip()
+
+        name = ph.search(data, r'(?P<sig>[a-zA-Z0-9$]+)\s*=\s*function\(\s*a\s*\)\s*{\s*a\s*=\s*a\.split\(\s*""\s*\)')[0]
         if name and not any((c in name) for c in ''', '"'''):
             return name.strip()
 
