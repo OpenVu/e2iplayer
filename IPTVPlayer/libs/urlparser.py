@@ -37,6 +37,8 @@ from Plugins.Extensions.IPTVPlayer.components.asynccall import iptv_execute, Mai
 from Plugins.Extensions.IPTVPlayer.tools.e2ijs import js_execute, js_execute_ext
 from Plugins.Extensions.IPTVPlayer.libs.e2ijson import loads as json_loads, dumps as json_dumps
 from Plugins.Extensions.IPTVPlayer.libs.aadecode import decode as aadecode 
+from Plugins.Extensions.IPTVPlayer.libs.powvideo import swapUrl as powvideo_swapUrl
+
 
 from Screens.MessageBox import MessageBox
 ###################################################
@@ -315,11 +317,13 @@ class urlparser:
                        'movshare.net':          self.pp.parserWHOLECLOUD     ,
                        'mp4upload.com':         self.pp.parserMP4UPLOAD      ,
                        'mstream.icu':           self.pp.parserMSTREAMICU    ,
+                       'mstream.xyz':           self.pp.parserMSTREAMICU    ,
                        'my.mail.ru':            self.pp.parserVIDEOMAIL     ,
                        'mycloud.to':            self.pp.parserMYCLOUDTO      ,
                        'mystream.la':           self.pp.parserMYSTREAMLA    ,
                        'mystream.to':           self.pp.parserMYSTREAMTO     ,
                        'mystream.premiumserver.club': self.pp.parserMSTREAMICU,
+                       'mystream.streamango.to': self.pp.parserMSTREAMICU   ,
                        'myvi.ru':               self.pp.parserMYVIRU        ,
                        'myvi.tv':               self.pp.parserMYVIRU        ,
                        'myvideo.de':            self.pp.parserMYVIDEODE     ,
@@ -370,6 +374,7 @@ class urlparser:
                        'posiedze.pl':           self.pp.parserPOSIEDZEPL    ,
                        'powvideo.cc':           self.pp.parserPOWVIDEONET    ,
                        'powvideo.net':          self.pp.parserPOWVIDEONET    ,
+                       'powv1deo.cc':           self.pp.parserPOWVIDEONET  ,
                        'primevideos.net':       self.pp.parserPRIMEVIDEOS,  
                        'privatestream.tv':      self.pp.parserPRIVATESTREAM ,
                        'promptfile.com':        self.pp.parserPROMPTFILE    ,
@@ -426,10 +431,11 @@ class urlparser:
                        'streamix.cloud':        self.pp.parserSTREAMIXCLOUD  ,
                        'streamlive.to':         self.pp.parserSTREAMLIVETO   ,
                        'streamo.tv':            self.pp.parserIITV          ,
-                       'streamhoe.online':      self.pp.parserFEMBED     ,
+                       'streamhoe.online':      self.pp.parserFEMBED        ,
+                       'streamp1ay.cc':         self.pp.parserSTREAMPLAYCC  ,
                        'streamplay.cc':         self.pp.parserSTREAMPLAYCC  ,
-                       'streamplay.me':         self.pp.parserSTREAMPLAYTO   ,
-                       'streamplay.to':         self.pp.parserSTREAMPLAYTO   ,
+                       'streamplay.me':         self.pp.parserSTREAMPLAYTO  ,
+                       'streamplay.to':         self.pp.parserSTREAMPLAYTO  ,
                        'streamtape.com':        self.pp.parserSTREAMTAPE    ,
                        'superfilm.pl':          self.pp.parserSUPERFILMPL   ,
                        'supervideo.tv':         self.pp.parserSUPERVIDEO    ,
@@ -471,6 +477,7 @@ class urlparser:
                        'uploadx.org':           self.pp.parserUPLOAD         ,
                        'uploadz.co':            self.pp.parserUPLOAD         ,
                        'uploadz.org':           self.pp.parserUPLOAD         ,
+                       'upmela.com':            self.pp.parserVIUCLIPS       ,
                        'upstream.to':           self.pp.parserONLYSTREAM  ,
                        'uptobox.com':           self.pp.parserUPTOSTREAMCOM  ,
                        'uptostream.com':        self.pp.parserUPTOSTREAMCOM  ,
@@ -506,9 +513,10 @@ class urlparser:
                        'video.tt':              self.pp.parserVIDEOTT       ,
                        'video.yandex.ru':       self.pp.parserYANDEX        ,
                        'videoapi.my.mail.ru':   self.pp.parserVIDEOMAIL     ,
-                       'videohouse.me':         self.pp.parserVIDEOHOUSE     ,
+                       'videobin.co':           self.pp.parserVIDEOBIN      ,
+                       'videohouse.me':         self.pp.parserVIDEOHOUSE    ,
                        'videomega.tv':          self.pp.parserVIDEOMEGA     ,
-                       'videomore.ru':          self.pp.parserVIDEOMORERU    ,
+                       'videomore.ru':          self.pp.parserVIDEOMORERU   ,
                        'videoslasher.com':      self.pp.parserVIDEOSLASHER  ,
                        'videoweed.com':         self.pp.parserVIDEOWEED     ,
                        'videoweed.es':          self.pp.parserVIDEOWEED     ,
@@ -3231,12 +3239,101 @@ class pageParser(CaptchaHelper):
     def parserPOWVIDEONET(self, videoUrl):
         printDBG("parserPOWVIDEONET baseUrl[%r]" % videoUrl)
         HEADER = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36', 'Accept':'*/*', 'Accept-Encoding':'gzip, deflate'}
-        sts, data = self.cm.getPage(videoUrl, {'header': HEADER})
-        if not sts: return False
+        httpParams = {'header': HEADER, 'use_cookie':True, 'load_cookie': True, 'save_cookie':True, 'cookiefile': GetCookieDir('powvideo.cookie')}
+        
+        video_id = videoUrl.split('/')[-1]
+        linksTab = []
+        
+        sts, data = self.cm.getPage(videoUrl, httpParams)
+        if not sts: 
+            return False
         
         baseUrl = urlparser.getDomain(self.cm.meta['url'], False)
+        
+        if 'sitekey' in data:
+            # need to solve a reCaptcha
+            #sitekey: '6LfsXx4TAAAAAG7fRIpL2LpS_NLxj1HBlotEDhT7'
+            key = re.findall("sitekey:\s'([^']+?)'", data)
+            if key:
+                key = key[0]
+                printDBG("sitekey = %s" % key)
+                (token, errorMsgTab) = CaptchaHelper().processCaptcha(key, baseUrl)
+                
+                if token:
+                    printDBG(token)
+                    
+                    #<form method="POST" action='' id="d0Form">
+                    form_html = self.cm.ph.getDataBeetwenMarkers(data, ('<form','>','POST'), '</form>')[1]
+                    inputs = self.cm.ph.getAllItemsBeetwenMarkers(form_html, '<input','>', False, caseSensitive=False)
+                    post_data = {}
+                    
+                    for item in inputs:
+                        name  = self.cm.ph.getSearchGroups(item, '''name=['"]([^'^"]+?)['"]''', ignoreCase=True)[0]
+                        value = self.cm.ph.getSearchGroups(item, '''value=['"]([^'^"]+?)['"]''', ignoreCase=True)[0]
+                        if name:
+                            post_data[name] = value
+                        
+                    post_data['g-recaptcha-response'] = token
+                    post_data['token'] = token
+                    
+                    printDBG(json_dumps(post_data))
+                    
+                    sts, data = self.cm.getPage(videoUrl, httpParams, post_data)
+ 
+                    if not sts:
+                        return[]
+                    
+                    #printDBG("-------------- after recaptcha ---------------")
+                    #printDBG(data)
+                    #printDBG("----------------------------------------------")
+                        
+        
+        scripts = re.findall("<script type=[\"']text/javascript[\"']>(eval.*?)</script>", data, re.S)
+        
+        if scripts:
+            for script in scripts:
+                printDBG("----------- pack -----------------")
+                printDBG(script)
+                
+                script = script + "\n"
+                # mods
+                script = script.replace("eval(function(p,a,c,k,e,d","pippo = function(p,a,c,k,e,d")
+                script = script.replace("return p}(", "print(p)}\n\npippo(")
+                script = script.replace("))\n",");\n")
+
+                # duktape
+                ret = js_execute( script )
+                decoded = ret['data']
+                printDBG('------------------------------')
+                printDBG(decoded)
+                printDBG('------------------------------')
+
+                sources = re.findall("src:\s?[\"']([^\"^']+.m3u8)[\"']", decoded)  
+                sources.extend(re.findall("src:\s?[\"']([^\"^']+.mp4)[\"']", decoded))
+                
+                for link_url in sources:
+                    if  self.cm.isValidUrl(link_url):
+                        if 'pvdcdn' in link_url:
+                            # modify url
+                            link_url = powvideo_swapUrl(data, link_url)
+                            
+                        link_url = urlparser.decorateUrl(link_url, {'Referer': videoUrl})
+                        if 'm3u8' in link_url:
+                            params = getDirectM3U8Playlist(link_url, checkExt=True, variantCheck=True, checkContent=True, sortWithMaxBitrate=99999999)
+                            printDBG(str(params))    
+                            linksTab.extend(params)
+                        else:
+                            params = {'name': 'link' , 'url': link_url}
+                            printDBG(str(params))
+                            linksTab.append(params)
+                
+        if linksTab:
+            return linksTab
+        
         vidId = self.cm.ph.getSearchGroups(videoUrl, '''[^-]*?\-([^-^.]+?)[-.]''')[0]
-        if not vidId: vidId = videoUrl.rsplit('/')[-1].split('.', 1)[0]
+        if not vidId: 
+            vidId = videoUrl.rsplit('/')[-1].split('.', 1)[0]
+        
         printDBG('parserPOWVIDEONET VID ID: %s' % vidId)
         referer = baseUrl + ('preview-%s-1920x882.html' % vidId)
         videoUrl = baseUrl + ('iframe-%s-1920x882.html' % vidId)
@@ -3263,7 +3360,6 @@ class pageParser(CaptchaHelper):
         if not sts: return False
         
         hlsTab = []
-        linksTab = []
         jscode.insert(0, 'location={};jQuery.cookie = function(){};function ga(){};document.getElementsByTagName = function(){return [document]}; document.createElement = function(){return document};document.parentNode = {insertBefore: function(){return document}};')
         jscode.insert(0, data[data.find('var S='):])
         jscode.insert(0, base64.b64decode('''aXB0dl9zb3VyY2VzPVtdO3ZhciBkb2N1bWVudD17fTt3aW5kb3c9dGhpcyx3aW5kb3cuYXRvYj1mdW5jdGlvbih0KXt0Lmxlbmd0aCU0PT09MyYmKHQrPSI9IiksdC5sZW5ndGglND09PTImJih0Kz0iPT0iKSx0PUR1a3RhcGUuZGVjKCJiYXNlNjQiLHQpLGRlY1RleHQ9IiI7Zm9yKHZhciBlPTA7ZTx0LmJ5dGVMZW5ndGg7ZSsrKWRlY1RleHQrPVN0cmluZy5mcm9tQ2hhckNvZGUodFtlXSk7cmV0dXJuIGRlY1RleHR9LGpRdWVyeT17fSxqUXVlcnkubWFwPUFycmF5LnByb3RvdHlwZS5tYXAsalF1ZXJ5Lm1hcD1mdW5jdGlvbigpe3JldHVybiBhcmd1bWVudHNbMF0ubWFwKGFyZ3VtZW50c1sxXSksaXB0dl9zb3VyY2VzLnB1c2goYXJndW1lbnRzWzBdKSxhcmd1bWVudHNbMF19LCQ9alF1ZXJ5LGlwdHZvYmo9e30saXB0dm9iai5zZXR1cD1mdW5jdGlvbigpe3JldHVybiBpcHR2b2JqfSxpcHR2b2JqLm9uPWZ1bmN0aW9uKCl7cmV0dXJuIGlwdHZvYmp9LGp3cGxheWVyPWZ1bmN0aW9uKCl7cmV0dXJuIGlwdHZvYmp9Ow=='''))
@@ -4598,20 +4694,21 @@ class pageParser(CaptchaHelper):
             
         urlTab = []
         
-        baseUrl = strwithmeta(baseUrl)
-        referer = baseUrl.meta.get('Referer', baseUrl)
+
+        USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36'
+        COOKIE_FILE = GetCookieDir('akvideo.stream.cookie')
+        HttpHeader = {
+            'User-Agent': USER_AGENT, 
+            'Accept': 'text/html', 
+            'Accept-Encoding': 'gzip', 
+            'Referer': baseUrl
+        }
         
-        HTTP_HEADER = self.cm.getDefaultHeader(browser='chrome')
-        if referer != '': 
-            HTTP_HEADER['Referer'] = referer
-        paramsUrl = {'header':HTTP_HEADER, 'with_metadata':True}
+        HttpParams = {'header': HttpHeader , 'use_cookie': True, 'load_cookie': True, 'save_cookie': True, 'cookiefile': COOKIE_FILE}
+        HttpParams['cloudflare_params'] = {'domain':'akvideo.stream', 'cookie_file': COOKIE_FILE, 'User-Agent': USER_AGENT}
         
-        COOKIE_FILE = self.COOKIE_PATH + "akvideo.stream.cookie"
-        if GetFileSize(COOKIE_FILE) > 16 * 1024: rm(COOKIE_FILE)
-        paramsUrl.update({'use_cookie': True, 'save_cookie': True, 'load_cookie': True, 'cookiefile': COOKIE_FILE})
-        
-        sts, data = self.getPage(baseUrl, paramsUrl)
-        
+        sts, data = self.cm.getPageCFProtection(baseUrl, HttpParams)
+
         if not sts: 
             return False
         
@@ -7830,20 +7927,119 @@ class pageParser(CaptchaHelper):
             return videoUrl
         return False
         
-    def parserSTREAMPLAYCC(self, baseUrl):
-        printDBG("parserSTREAMPLAYCC baseUrl[%s]" % baseUrl)
-        HTTP_HEADER= { 'User-Agent':"Mozilla/5.0", 'Referer':baseUrl }
+    def parserSTREAMPLAYCC(self, videoUrl):
+        printDBG("parserSTREAMPLAYCC baseUrl[%s]" % videoUrl)
+
+        HEADER = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36', 'Accept':'*/*', 'Accept-Encoding':'gzip, deflate'}
+        httpParams = {'header': HEADER, 'use_cookie':True, 'load_cookie': True, 'save_cookie':True, 'cookiefile': GetCookieDir('streamplay.cookie')}
+        
+        video_id = videoUrl.split('/')[-1]
+        linksTab = []
+        
+        sts, data = self.cm.getPage(videoUrl, httpParams)
+        if not sts: 
+            return False
+        
+        baseUrl = urlparser.getDomain(self.cm.meta['url'], False)
+        
+        if 'sitekey' in data:
+            # need to solve a reCaptcha
+            #sitekey: '6LfsXx4TAAAAAG7fRIpL2LpS_NLxj1HBlotEDhT7'
+            key = re.findall("sitekey:\s'([^']+?)'", data)
+            if key:
+                key = key[0]
+                printDBG("sitekey = %s" % key)
+                (token, errorMsgTab) = CaptchaHelper().processCaptcha(key, baseUrl)
+                
+                if token:
+                    printDBG(token)
+                    
+                    #<form method="POST" action='' id="d0Form">
+                    form_html = self.cm.ph.getDataBeetwenMarkers(data, ('<form','>','POST'), '</form>')[1]
+                    inputs = self.cm.ph.getAllItemsBeetwenMarkers(form_html, '<input','>', False, caseSensitive=False)
+                    post_data = {}
+                    
+                    for item in inputs:
+                        name  = self.cm.ph.getSearchGroups(item, '''name=['"]([^'^"]+?)['"]''', ignoreCase=True)[0]
+                        value = self.cm.ph.getSearchGroups(item, '''value=['"]([^'^"]+?)['"]''', ignoreCase=True)[0]
+                        if name:
+                            post_data[name] = value
+                        
+                    post_data['g-recaptcha-response'] = token
+                    post_data['token'] = token
+                    
+                    printDBG(json_dumps(post_data))
+                    
+                    sts, data = self.cm.getPage(videoUrl, httpParams, post_data)
+ 
+                    if not sts:
+                        return[]
+                    
+                    #printDBG("-------------- after recaptcha ---------------")
+                    #printDBG(data)
+                    #printDBG("----------------------------------------------")
+                        
+        
+        scripts = re.findall("<script type=[\"']text/javascript[\"']>(eval.*?)</script>", data, re.S)
+        
+        if scripts:
+            for script in scripts:
+                printDBG("----------- pack -----------------")
+                printDBG(script)
+                
+                script = script + "\n"
+                # mods
+                script = script.replace("eval(function(p,a,c,k,e,d","pippo = function(p,a,c,k,e,d")
+                script = script.replace("return p}(", "print(p)}\n\npippo(")
+                script = script.replace("))\n",");\n")
+
+                # duktape
+                ret = js_execute( script )
+                decoded = ret['data']
+                printDBG('------------------------------')
+                printDBG(decoded)
+                printDBG('------------------------------')
+
+                sources = re.findall("src:\s?[\"']([^\"^']+.m3u8)[\"']", decoded)  
+                sources.extend(re.findall("file:\s?[\"']([^\"^']+.m3u8)[\"']", decoded))  
+                sources.extend(re.findall("src:\s?[\"']([^\"^']+.mp4)[\"']", decoded))
+                sources.extend(re.findall("file:\s?[\"']([^\"^']+.mp4)[\"']", decoded))
+                
+                for link_url in sources:
+                    if  self.cm.isValidUrl(link_url):
+                        if 'spcdn' in link_url:
+                            # modify url
+                            link_url = powvideo_swapUrl(data, link_url)
+                        
+                        link_url = urlparser.decorateUrl(link_url, {'Referer': videoUrl})
+                        if 'm3u8' in link_url:
+                            params = getDirectM3U8Playlist(link_url, checkExt=True, variantCheck=True, checkContent=True, sortWithMaxBitrate=99999999)
+                            printDBG(str(params))    
+                            linksTab.extend(params)
+                        else:
+                            params = {'name': 'link' , 'url': link_url}
+                            printDBG(str(params))
+                            linksTab.append(params)
+                
+        if linksTab:
+            return linksTab
+
         if '/embed/' not in baseUrl:
-            video_id = self.cm.ph.getSearchGroups(baseUrl+'/', '/([A-Za-z0-9]{16})/')[0]
+            video_id = self.cm.ph.getSearchGroups(videoUrl+'/', '/([A-Za-z0-9]{16})/')[0]
             url = 'http://www.streamplay.cc/embed/{0}'.format(video_id)
         else:
             url = baseUrl
         post_data = None
-        sts, data = self.cm.getPage(url, {'header':HTTP_HEADER}, post_data)
-        if not sts: return False
+
+        sts, data = self.cm.getPage(url, httpParams, post_data)
+        if not sts: 
+            return False
+        
         data = CParsingHelper.getDataBeetwenMarkers(data, 'id="playerStream"', '</a>', False)[1]
         videoUrl = self.cm.ph.getSearchGroups(data, 'href="(http[^"]+?)"')[0]
-        if '' != videoUrl: return videoUrl
+        if '' != videoUrl: 
+            return videoUrl
+        
         return False
         
     def parserYOURVIDEOHOST(self, baseUrl):
@@ -11869,6 +12065,7 @@ class pageParser(CaptchaHelper):
         #         https://hofoot.allvidview.tk/player/PopUpIframe/rU81KreFct?iframe=popup&u=
         #         https://oms.streamatus.tk/player/html/Mi5nzmttSZ?popup=yes&autoplay=1
         #         https://hofoot.vidcrt.net
+        #         http://oms.upmela.com/player/PopUpIframe/xbVz4HBVkMpLr?iframe=popup&u=
         
         baseUrl = baseUrl + "?"
             
@@ -12943,3 +13140,34 @@ class pageParser(CaptchaHelper):
                                     urlTabs.append(params)
                                 
         return urlTabs
+
+    def parserVIDEOBIN(self, baseUrl):
+        printDBG("parserVIDEOBIN baseUrl [%s]" % baseUrl)
+        # example: https://videobin.co/embed-n7uoq6qlj2du.html
+        #          https://videobin.co/n7uoq6qlj2du
+
+        urlTabs = []
+        
+        sts, data = self.cm.getPage(baseUrl)
+        
+        if sts:
+            s = re.findall("sources: ?\[(.*?)\]", data, re.S)
+            if s:
+                for ss in s:
+                    printDBG("Found sources: %s" % ss)
+                    links = re.findall("[\"']([^\"']+?)[\"']",ss)
+                    for link_url in links:
+                        if  self.cm.isValidUrl(link_url):
+                            link_url = urlparser.decorateUrl(link_url, {'Referer': baseUrl})
+                            if 'm3u8' in link_url:
+                                params = getDirectM3U8Playlist(link_url, checkExt=True, variantCheck=True, checkContent=True, sortWithMaxBitrate=99999999)
+                                printDBG(str(params))    
+                                urlTabs.extend(params)
+                            else:
+                                params = {'name': 'link' , 'url': link_url}
+                                printDBG(str(params))
+                                urlTabs.append(params)
+
+                
+        return urlTabs
+
