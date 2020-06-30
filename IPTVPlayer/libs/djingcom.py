@@ -1,18 +1,5 @@
 # -*- coding: utf-8 -*-
 
-#
-#
-# @Codermik release, based on @Samsamsam's E2iPlayer public.
-# Released with kind permission of Samsamsam.
-# All code developed by Samsamsam is the property of Samsamsam and the E2iPlayer project,  
-# all other work is © E2iStream Team, aka Codermik.  TSiPlayer is © Rgysoft, his group can be
-# found here:  https://www.facebook.com/E2TSIPlayer/
-#
-# https://www.facebook.com/e2iStream/
-#
-#
-
-
 ###################################################
 # LOCAL import
 ###################################################
@@ -88,8 +75,15 @@ class DjingComApi(CBaseHostClass):
         printDBG("hlsUrl||||||||||||||||| " + hlsUrl)
         if hlsUrl != '':
             hlsUrl = strwithmeta(hlsUrl, {'User-Agent':self.defaultParams['header']['User-Agent'], 'Referer':cItem['url']})
-            urlsTab = getDirectM3U8Playlist(hlsUrl, checkContent=True)
-            
+            try :            
+                urlsTab = getDirectM3U8Playlist(hlsUrl, checkContent=True)
+            except:
+                printExc()
+                
+            if not urlsTab:
+                hlsUrl = "https://www" + hlsUrl[hlsUrl.find(".djing"):]
+                urlsTab = getDirectM3U8Playlist(hlsUrl, checkContent=True)
+                
         def __getLinkQuality( itemLink ):
             try: return int(itemLink['bitrate'])
             except Exception: return 0
