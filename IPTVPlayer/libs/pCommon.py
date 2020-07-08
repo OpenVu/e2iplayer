@@ -5,7 +5,7 @@
 ###################################################
 from Plugins.Extensions.IPTVPlayer.components.iptvplayerinit import TranslateTXT as _, GetIPTVNotify, GetIPTVSleep
 from Plugins.Extensions.IPTVPlayer.tools.iptvtypes import strwithmeta
-from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG, printExc, IsHttpsCertValidationEnabled, byteify, GetDefaultLang, rm, UsePyCurl, GetJSScriptFile
+from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG, printExc, IsHttpsCertValidationEnabled, byteify, GetDefaultLang, rm, UsePyCurl, GetJSScriptFile, IsExecutable, iptv_system
 from Plugins.Extensions.IPTVPlayer.components.asynccall import IsMainThread, IsThreadTerminated, SetThreadKillable
 from Plugins.Extensions.IPTVPlayer.tools.e2ijs import js_execute_ext
 from Plugins.Extensions.IPTVPlayer.libs import ph
@@ -31,6 +31,7 @@ try:
 except Exception: pass
 from urlparse import urljoin, urlparse, urlunparse
 from binascii import hexlify
+import os
 ###################################################
 
 def DecodeGzipped(data):
@@ -771,7 +772,15 @@ class common:
                             break
                 else:
                     sts = True
-
+                    if metadata['content-type'] == 'image/webp':
+                        new_name = params['save_to_file'].replace(".jpg",".webp")
+                        printDBG("Change extension of webp image: %s" % new_name)
+                        try:
+                            os.rename(params['save_to_file'], new_name)
+                            self.convertWebp(new_name)
+                        except:
+                            pass
+                            
             if fileHandler:
                 fileHandler.close()
         except pycurl.error as e:
@@ -785,7 +794,7 @@ class common:
         printDBG('pCommon - getPageWithPyCurl() return -> \nsts: %s\nmetadata: %s\n' % (sts, metadata))
         if params.get('with_metadata', False):
             out_data = strwithmeta(out_data, metadata)
-            
+        
         return sts, out_data
     
     def getPageWithPyCurl(self, url, params = {}, post_data = None):
@@ -1073,18 +1082,78 @@ class common:
                         printDBG("*************** CloudFlare: Searching javascript code *************")
 
                         dat = ""
+                        challengeType = 0
+                        
                         datas = ph.findall(verData, ('<script', '>'), '</script>', flags=0)
                         for item in datas:
                             if 'setTimeout' in item and 'submit()' in item:
                                 dat = item
+                                challengeType = 1
                                 break
+                            elif 'window._cf_chl_opt' in item:
+                                dat = item 
+                                challengeType = 2
 
-                        if not dat:
+                        if challengeType == 0:
                             GetIPTVNotify().push(_("New javascript not yet supported!"), 'info', 5)
                              
                             sts, data = self.getPage(url, params, post_data)
                             
+                        elif challengeType == 2:
+                            #new javascript challenge
+                            GetIPTVNotify().push(_("New javascript not yet supported!"), 'info', 5)
+                            
+                            # read data in input
+                            '''
+                                window._cf_chl_opt={
+                                  cvId: "1",
+                                  cType: "non-interactive",
+                                  cNounce: "26660",
+                                  cRay: "5ac74ed95fb0f933",
+                                  cHash: "eb58dc0fc80046a",
+                                  cRq: {
+                                    d: "2wOPpt6Rz0hp98w7LWqi2DCq40ly1Caj7tlM3OzjWh+x3STQIs92O5s1emIiqTUBgRI9LGqSs3KEjhhHtABOz48TWHrhvrSRErjPosaSt1fp4a3hVF06KFnNNyGYX00wdybYjMm7GTis3AlAT6kEWXKZ3m22o0IEPgbsDjV5HSlnjiV28fhf3OSadQlKe69HC5ntRLiXHDMwhMayLLbYqQIc/kbWej6PPjuDWCZqTNYGHNkBnQnRVVPN+JT5iMMvDCKxod5+6XzN2OBgwLES7++REiANKzjPcbNV0NviqU+rSVzoKwTIWL3iRWYTX+xrxXxPWEgrzyaj+GvHTUmvpfS865ulGhqMHOJYojIlIl7UFAXeXgUs4BqvHcCjLu+o",
+                                    t: "MTU5MzY4MTgwNi4zMDYwMDA=",
+                                    m: "YsUG/qEAi/HzONdr+WCreA0qbRGWCidXJeJdAfTrYQo=",
+                                    i1: "dXmQj8RI29F/GXqoNbw7Dg==",
+                                    i2: "FqoqVwUBuH8bcn9eSrnu3w==",
+                                  }
+                                }
+                                window._cf_chl_enter = function(){window._cf_chl_opt.p=1};
+                            '''
+                            
+                            data_input = re.findall("(window._cf_chl_opt=\{.*?\};)", data, re.S)
+                            if data_input:
+                                data_input = data_input[0]
+                                printDBG("-------------- data_input---------------")
+                                printDBG(data_input)
+                                
+                                jsch_url = re.findall("cpo.src\s?=\s?\"([^\"]+?)\"", data, re.S)
+                                if jsch_url:
+                                    jsch_url = urljoin(domain, jsch_url[0])
+                                    printDBG(jsch_url)
+                                    
+                                    sts, jschCode = self.getPage(jsch_url, params)
+
+                                    
+                                    printDBG("-----------  jschCode  -----------")
+                                    printDBG("----------------------------------")
+                                    printDBG(jschCode)
+                                    printDBG("----------------------------------")
+
+                                    js_params = [{'path' : GetJSScriptFile('cf_max.byte')}]
+                                    code = "var window = {}; \n\n" + data_input + "\n\n" + jschCode
+                                    js_params.append({'code': code})
+                                    ret = js_execute_ext( js_params )
+                                    printDBG(ret)
+
+                                    
                         else:
+                            
+                            # old javascript challenge
+                            
+                            # uncomment to solve 
+                            #break
                             
                             decoded = ''
                             
@@ -1098,8 +1167,8 @@ class common:
                             numChildren = 5
                             #<div style="display:none;visibility:hidden;">
                             
-                            tmp = divs = re.findall("<div.*?id=\"([^\"]+)\">(.*?)</div>", data)
-                            for t in tmp:
+                            divs = re.findall("<div.*?id=\"([^\"]+)\">(.*?)</div>", data)
+                            for t in divs:
                                 name_id = t[0]
                                 if len(name_id)>=8 and len(name_id)<=12:
                                     numChildren = numChildren + 1
@@ -1117,7 +1186,10 @@ class common:
                             pattern = re.compile("\(function\(\)\{.*?b\(function\(\)", re.S)
                             dat = re.sub(pattern, "function pippo()", dat)
                             
-                            dat = dat.replace('f.submit()','print(a.value);')
+                            if 'return  f.submit();' in dat:
+                                dat = dat.replace('return  f.submit();','print(a.value); return (a.value);')
+                            else:
+                                dat = dat.replace('f.submit()','print(a.value);')
                             dat = dat.replace('setTimeout(function(){','')
                             
                             #var cookiesEnabled=(navigator.cookieEnabled)? true : false;
@@ -1135,7 +1207,10 @@ class common:
                             #t = t.firstChild.href;r = (setInterval(function(){}, 100),t.match(/https?:\/\//)[0]);
                             dat = dat.replace("r = (setInterval(function(){}, 100),t.match(/https?:\/\//)[0]);","r = t.match(/https?:\/\//)[0];")
                             #old version
-                            dat = dat.replace("t = document.createElement('div');\n        t.innerHTML=\"<a href='/'>x</a>\";\n        t = t.firstChild.href;",'t="%domain%";').replace('%domain%',domain)
+                            if 'cpo' in dat:
+                                dat = dat.replace("t = document.createElement('div');\n        cpo = {};\n        t.innerHTML=\"<a href='/'>x</a>\";\n        cpo.src = \"/cdn-cgi/challenge-platform/orchestrate/jsch/v1\";\n        t = t.firstChild.href;",'t="%domain%";').replace('%domain%',domain)
+                            else:
+                                dat = dat.replace("t = document.createElement('div');\n        t.innerHTML=\"<a href='/'>x</a>\";\n        t = t.firstChild.href;",'t="%domain%";').replace('%domain%',domain)
                             
                             
                             
@@ -1226,7 +1301,21 @@ class common:
             else:
                 break
         return sts, data
-    
+
+    def convertWebp(self,file_path, png = False):
+        printDBG("PCommon.convertWebp %s" % file_path)
+        
+        output_path = file_path.replace('.webp','.jpg')
+        png_path = file_path.replace('.webp','.png')
+        if IsExecutable('ffmpeg'):
+            if png:
+                command = "ffmpeg -i %s %s && test -e %s && rm %s && mv %s %s" % (file_path, png_path, png_path, file_path, png_path , output_path) 
+            else:
+                command = "ffmpeg -i %s %s && test -e %s && rm %s " % (file_path, output_path, output_path, file_path) 
+            
+            printDBG("Send command %s" % command)
+            self.cmd = iptv_system(command)
+            
     def saveWebFileWithPyCurl(self, file_path, url, add_params = {}, post_data = None):
         bRet = False
         downDataSize = 0
@@ -1244,7 +1333,7 @@ class common:
         else:
             rm(file_path)
         return {'sts': sts, 'fsize': downDataSize}
-    
+            
     def saveWebFile(self, file_path, url, addParams = {}, post_data = None):
         addParams = dict(addParams)
         
@@ -1273,6 +1362,7 @@ class common:
                 contentLength = None
             
             checkFromFirstBytes = addParams.get('check_first_bytes', [])
+            
             OK = True
             if 'maintype' in addParams and addParams['maintype'] != downHandler.headers.maintype:
                 printDBG("common.getFile wrong maintype! requested[%r], retrieved[%r]" % (addParams['maintype'], downHandler.headers.maintype))
@@ -1297,6 +1387,19 @@ class common:
                         OK = False
                         for item in checkFromFirstBytes:
                             if buffer.startswith(item):
+
+                                # change extension of file
+                                if item in ['\xFF\xD8','\xFF\xD9']: 
+                                    printDBG("SaveWebFile. It's a jpeg")
+                                elif item == '\x89\x50\x4E\x47': 
+                                    printDBG("SaveWebFile. It's a png")
+                                    #file_path = file_path.replace('.jpg','.png')
+                                elif item in ['GIF87a','GIF89a']: 
+                                    printDBG("SaveWebFile. It's a gif")
+                                    #file_path = file_path.replace('.jpg','.gif')
+                                elif item == 'RI':
+                                    printDBG("SaveWebFile. It's a webp")
+                                    file_path = file_path.replace('.jpg','.webp')
                                 OK = True
                                 break
                         if not OK:
@@ -1319,6 +1422,14 @@ class common:
                         bRet = True
                 elif downDataSize > 0:
                     bRet = True
+                
+                # decode webp to jpeg
+                if file_path.endswith(".webp"):
+                    if addParams.get('webp_convert_to_png', False):
+                        self.convertWebp(file_path, png = True)
+                    else:
+                        self.convertWebp(file_path)
+                         
         except Exception:
             printExc("common.getFile download file exception")
         dictRet.update( {'sts': bRet, 'fsize': downDataSize} )
