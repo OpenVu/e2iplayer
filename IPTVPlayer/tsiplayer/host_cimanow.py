@@ -59,6 +59,7 @@ class TSIPHost(TSCBaseHostClass):
 			self.addDir({'import':cItem['import'],'category' : 'host2','title':'الاكثر اعجابا' ,'url':'likes','icon':cItem['icon'],'mode':'20','sub_mode':0})
 			
 	def showitms(self,cItem):
+		printDBG('citem='+str(cItem))
 		ind=cItem.get('sub_mode',-1)
 		page=cItem.get('page',1)
 		pat = 'class="block".*?href="(.*?)"(.*?)image:url\((.*?)\).*?class="title.*?>(.*?)<.*?class="content.*?>(.*?)<.*?detail(.*?)</a>'
@@ -95,6 +96,7 @@ class TSIPHost(TSCBaseHostClass):
 					elif 'fa-film'     in elm: desc = desc+tscolor('\c00????00')+'Cat: ' +tscolor('\c00??????') + self.cleanHtmlStr(elm)+' | '
 					elif 'fa-eye'      in elm: desc = desc+tscolor('\c00????00')+'View: ' +tscolor('\c00??????') + self.cleanHtmlStr(elm)+' | '	
 				desc = desc+tscolor('\c00????00')+'\nDesc: '+tscolor('\c00??????') + self.cleanHtmlStr(inf2) +'\n'
+				image=self.std_url(image)
 				self.addDir({'import':cItem['import'],'category' : 'host2','title':self.cleanHtmlStr(titre),'url':url ,'desc':desc,'icon':image,'mode':'20','good_for_fav':True,'EPG':True,'hst':'tshost'})
 				i=i+1
 			if (i>13) and (ind<0): self.addDir({'import':cItem['import'],'category' : 'host2','title':'Page Suivante','url':cItem['url'],'page':page+1,'mode':'20'})
@@ -124,6 +126,7 @@ class TSIPHost(TSCBaseHostClass):
 					elif 'fa-film'     in elm: desc = desc+tscolor('\c00????00')+'Cat: ' +tscolor('\c00??????') + self.cleanHtmlStr(elm)+' | '
 					elif 'fa-eye'      in elm: desc = desc+tscolor('\c00????00')+'View: ' +tscolor('\c00??????') + self.cleanHtmlStr(elm)+' | '	
 				desc = desc+tscolor('\c00????00')+'\nDesc: '+tscolor('\c00??????') + self.cleanHtmlStr(inf2) +'\n'
+				image=self.std_url(image)
 				self.addDir({'import':extra,'category' : 'host2','title':self.cleanHtmlStr(titre),'url':url ,'desc':desc,'icon':image,'mode':'20','good_for_fav':True,'EPG':True,'hst':'tshost'})
 
 
@@ -236,13 +239,14 @@ class TSIPHost(TSCBaseHostClass):
 						host = URL.split('.net/',1)[0]+'.net'
 						printDBG('host='+host)
 						sts, data = self.getPage(URL,self.defaultParams)
-						printDBG('data='+data)
-						Liste_els = re.findall('source.*?src="(.*?)".*?size="(.*?)"', data, re.S|re.IGNORECASE)
-						for elm in Liste_els:
-							url_ = elm[0]
-							if not(url_.startswith('http')): url_ = host + urllib.quote(url_)
-							URL_= strwithmeta(elm[1]+'|'+url_, {'Referer':host})
-							urlTab.append((URL_,'4'))
+						if sts:
+							printDBG('data='+data)
+							Liste_els = re.findall('source.*?src="(.*?)".*?size="(.*?)"', data, re.S|re.IGNORECASE)
+							for elm in Liste_els:
+								url_ = elm[0]
+								if not(url_.startswith('http')): url_ = host + urllib.quote(url_)
+								URL_= strwithmeta(elm[1]+'|'+url_, {'Referer':host})
+								urlTab.append((URL_,'4'))
 					else:
 						urlTab.append((URL,'1'))
 		return urlTab			

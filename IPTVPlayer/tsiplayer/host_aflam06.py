@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from Plugins.Extensions.IPTVPlayer.tools.iptvtools import printDBG
 from Plugins.Extensions.IPTVPlayer.libs import ph
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,tscolor
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,tscolor,tshost
 from Components.config import config
 
 
@@ -10,8 +10,12 @@ import re
 
 def getinfo():
 	info_={}
-	info_['name']='Aflam06'
-	info_['version']='1.2 20/02/2020'
+	name = 'Aflam06'
+	hst = tshost(name)	
+	if hst=='': hst = 'https://aflam06.net'
+	info_['host']= hst
+	info_['name']=name	
+	info_['version']='1.0.01 05/07/2020'
 	info_['dev']='OPESBOY'
 	info_['cat_id']='201'
 	info_['desc']='أفلام, مسلسلات و انمي عربية و اجنبية'
@@ -25,13 +29,14 @@ class TSIPHost(TSCBaseHostClass):
 	def __init__(self):
 		TSCBaseHostClass.__init__(self,{'cookie':'aflam06.cookie'})
 		self.USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0'
-		self.MAIN_URL = 'https://aflam06.net'
+		self.MAIN_URL = getinfo()['host']
 		self.HTTP_HEADER = {'User-Agent': self.USER_AGENT, 'DNT':'1', 'Accept': 'text/html', 'Accept-Encoding':'gzip, deflate', 'Referer':self.getMainUrl(), 'Origin':self.getMainUrl()}
 		self.AJAX_HEADER = dict(self.HTTP_HEADER)
 		self.AJAX_HEADER.update( {'X-Requested-With': 'XMLHttpRequest', 'Accept-Encoding':'gzip, deflate', 'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8', 'Accept':'application/json, text/javascript, */*; q=0.01'} )
 		self.defaultParams = {'header':self.HTTP_HEADER, 'with_metadata':True, 'use_cookie': True, 'load_cookie': True, 'save_cookie': True, 'cookiefile': self.COOKIE_FILE}
 
 	def getPage(self, baseUrl, addParams = {}, post_data = None):
+		baseUrl=self.std_url(baseUrl)
 		if addParams == {}: addParams = dict(self.defaultParams)
 		addParams['cloudflare_params'] = {'cookie_file':self.COOKIE_FILE, 'User-Agent':self.USER_AGENT}
 		return self.cm.getPageCFProtection(baseUrl, addParams, post_data)
@@ -118,6 +123,7 @@ class TSIPHost(TSCBaseHostClass):
 		if sts:		
 			lst_data=re.findall('class="block">.*?href="(.*?)".*?src="(.*?)".*?<p>(.*?)<.*?class="title">(.*?)<', data, re.S)
 			for (url1,image,desc,titre) in lst_data:
+				image=self.std_url(image)
 				desc0,titre = self.uniform_titre(titre)
 				
 				self.addVideo({'import':cItem['import'],'good_for_fav':True,'category':'host2', 'url':url1, 'desc':desc0,'title':titre, 'icon':image, 'mode':'31','EPG':True,'hst':'tshost'} )							
@@ -130,6 +136,7 @@ class TSIPHost(TSCBaseHostClass):
 		if sts:
 			cat_data=re.findall('class="block">.*?href="(.*?)".*?src="(.*?)".*?<p>(.*?)<.*?class="title">(.*?)<', data, re.S)
 			for (url1,image,desc,name_eng) in cat_data:
+				image=self.std_url(image)
 				desc=ph.clean_html(desc)
 				desc0,name_eng = self.uniform_titre(name_eng)
 				if desc.strip()!='':

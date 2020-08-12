@@ -27,6 +27,10 @@ tunisia_gouv = [("", "None"),("Tunis","Tunis"),("Ariana","Ariana"),("Béja","Bé
                 ("Sousse","Sousse"),("Tataouine","Tataouine"),("Tozeur","Tozeur"),("Zaghouane","Zaghouane")]
 
 
+def printD(x1,x2=''):
+	printDBG(x1)
+	return ''
+
 def cryptoJS_AES_decrypt(encrypted, password, salt):
 	def derive_key_and_iv(password, salt, key_length, iv_length):
 		d = d_i = ''
@@ -53,6 +57,8 @@ def tscolor(color):
 				else: return color
 		else: return color	
 
+def tshost(hst):
+	return ''
 	
 def gethostname(url):
 	url=url.replace('http://','').replace('https://','').replace('www.','')
@@ -213,10 +219,24 @@ class TSCBaseHostClass:
                 				
         return name_ 
 		
-
+    def std_url(self,url):
+		url1=url
+		printDBG('url0='+url1)
+		url1=url1.replace('://','rgy11soft')
+		url1=url1.replace('?','rgy22soft')        
+		url1=url1.replace('&','rgy33soft') 
+		url1=url1.replace('=','rgy44soft') 
+		url1=urllib.unquote(url1)
+		url1=urllib.quote(url1)
+		url1=url1.replace('rgy11soft','://')
+		url1=url1.replace('rgy22soft','?')        
+		url1=url1.replace('rgy33soft','&') 	
+		url1=url1.replace('rgy44soft','=') 		
+		printDBG('url1='+url1)
+		return url1
     def uniform_titre(self,titre,year_op=0):
 		titre=titre.replace('مشاهدة وتحميل مباشر','').replace('مشاهدة','').replace('اون لاين','')
-		tag_type   = ['مدبلج للعربية', 'مدبلجة', 'مترجمة' , 'مترجم' , 'مدبلج', 'مسلسل', 'عرض', 'انمي', 'فيلم']
+		tag_type   = ['مدبلج للعربية','مترجمة للعربية','مترجم للعربية', 'مدبلجة', 'مترجمة' , 'مترجم' , 'مدبلج', 'مسلسل', 'عرض', 'انمي', 'فيلم']
 		tag_qual   = ['1080p','720p','WEB-DL','BluRay','DVDRip','HDCAM','HDTC','HDRip', 'HD', '1080P','720P','DVBRip','TVRip','DVD','SD']
 		tag_saison = [('الموسم الثاني','02'),('الموسم الاول','01'),('الموسم الثالث','03'),('الموسم الرابع','04'),('الموسم الخامس','05'),('الموسم السادس','06'),('الموسم السابع','07'),('الموسم الثامن','08'),('الموسم التاسع','09'),('الموسم العاشر','10')]
 		type_ = tscolor('\c00????00')+ 'Type: '+tscolor('\c00??????')

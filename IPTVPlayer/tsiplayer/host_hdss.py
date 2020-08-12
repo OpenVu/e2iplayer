@@ -64,17 +64,25 @@ class TSIPHost(TSCBaseHostClass):
 		img_=cItem['icon']	
 		gnr=cItem['sub_mode']
 		if gnr==0:						
+			sts, data = self.getPage(self.MAIN_URL)
+			if sts:
+				data_list = re.findall('class="sub-menu">(.*?)</ul', data, re.S)
+				if data_list:
+					data_list2 = re.findall('<li.*?href="(.*?)">(.*?)<', data_list[0], re.S)
+					for (url,titre) in data_list2:
+						self.addDir({'import':cItem['import'],'category' : hst,'url': url,'title':titre,'desc':'','icon':cItem['icon'],'mode':'30'})					
 			Cat_TAB = [
-						{'category':hst,'title': 'Tous',                'mode':'30','url':'https://hdss.to/films-z/'},
-						{'category':hst,'title': 'Les Plus Populaires', 'mode':'30','url':'https://hdss.to/populaires/'},
-						{'category':hst,'title': 'Les Mieux Notés',     'mode':'30','url':'https://hdss.to/mieux-notes/'},
 						{'category':hst,'title': 'Par Genre',           'mode':'20','sub_mode':3},
 						]
 			self.listsTab(Cat_TAB, {'import':cItem['import'],'icon':img_})
 			
 		elif gnr==1:
+			sts, data = self.getPage(self.MAIN_URL)
+			if sts:
+				data_list = re.findall('class="fa-television.*?href="(.*?)"', data, re.S)
+				if data_list:
+					self.addDir({'import':cItem['import'],'category' : hst,'url': data_list[0],'title':'Tous','desc':'','icon':cItem['icon'],'mode':'30'})								
 			Cat_TAB = [
-						{'category':hst,'title': 'Tous',                'mode':'30','url':'https://hdss.to/tv-series-a/'},
 						{'category':hst,'title': 'Par Genre',           'mode':'20','sub_mode':4},
 						]			
 			self.listsTab(Cat_TAB, {'import':cItem['import'],'icon':img_})
@@ -101,13 +109,19 @@ class TSIPHost(TSCBaseHostClass):
 	def showitms(self,cItem):
 		url1=cItem['url']
 		page=cItem.get('page',1)
-		if '?' in url1:
-			x1,x2=url1.split('?',1)
-			url1=x1+'page/'+str(page)+'/?'+x2
-		else:
-			url1=url1+'page/'+str(page)+'/'
+		if page>1:
+			if '?' in url1:
+				x1,x2=url1.split('?',1)
+				url1=x1+'page/'+str(page)+'/?'+x2
+			else:
+				url1=url1+'page/'+str(page)+'/'
 		sts, data = self.getPage(url1)
 		if sts:
+			if page==1:
+				printDBG('dataMeta='+str(data.meta))
+				url_out = data.meta.get('url',url1)
+			else:
+				url_out = cItem['url']
 			if not '/letters/' in url1:
 				data_list = re.findall('class="TPost C">(.*?)</li>', data, re.S)
 				i=0
@@ -136,7 +150,7 @@ class TSIPHost(TSCBaseHostClass):
 						
 						self.addDir({'import':cItem['import'],'category' : 'host2','url': url,'title':self.cleanHtmlStr(titre),'desc':desc,'icon':image,'mode':'31'})	
 				if i>19:
-					self.addDir({'import':cItem['import'],'title':tscolor('\c0000????')+'Page Suivante','page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
+					self.addDir({'import':cItem['import'],'title':tscolor('\c0000????')+'Page Suivante','page':page+1,'category' : 'host2','url':url_out,'icon':cItem['icon'],'mode':'30'} )									
 			else:
 				data_list = re.findall('class="Num">.*?href="(.*?)".*?src="(.*?)"(.*?)<strong>(.*?)<.*?class="Info">(.*?)</tr>', data, re.S)
 				i=0
@@ -153,7 +167,7 @@ class TSIPHost(TSCBaseHostClass):
 						desc=desc+tscolor('\c00??????')+'Durée: '+tscolor('\c00????00')+ph.clean_html(data_listi[0])+' '+tscolor('\c00??????')+'| Genre: '+tscolor('\c00????00')+ph.clean_html(data_listi[1])
 					self.addDir({'import':cItem['import'],'category' : 'host2','url': url,'title':self.cleanHtmlStr(titre)+type_,'desc':desc,'icon':image,'mode':'31'})	
 				if i>19:
-					self.addDir({'import':cItem['import'],'title':tscolor('\c0000????')+'Page Suivante','page':page+1,'category' : 'host2','url':cItem['url'],'icon':cItem['icon'],'mode':'30'} )									
+					self.addDir({'import':cItem['import'],'title':tscolor('\c0000????')+'Page Suivante','page':page+1,'category' : 'host2','url':url_out,'icon':cItem['icon'],'mode':'30'} )									
 
 	def showelms(self,cItem):
 		urlo=cItem['url']
@@ -232,32 +246,33 @@ class TSIPHost(TSCBaseHostClass):
 							paramsUrl = dict(self.defaultParams)
 							paramsUrl['header']['Referer'] = url
 							sts, data3 = self.getPage(url1,paramsUrl)
-							Url=data3.meta['url']
-							printDBG('etap 5='+Url)
-							if ('public/dist' in Url) and ('id=' in Url):
-								URL = 'https://' + Url.split('/')[2] + '/hls/'+Url.split('id=')[1]+'/'+Url.split('id=')[1]+'.playlist.m3u8'
-								printDBG('etap 6='+URL)
-								URL = strwithmeta(URL, {'Referer':Url})	
-								urlTab.extend(getDirectM3U8Playlist(URL, checkExt=True, checkContent=True, sortWithMaxBitrate=999999999))
-							if '/public/dist/index.html?id=' in Url:
-								URL = Url.replace('/public/dist/index.html?id=','/getLinkStreamMd5/')
-								printDBG('etap 7='+URL)						
-								sts, data4 = self.getPage(URL,paramsUrl)
-								if sts:
-									data_lst = re.findall('file":"(.*?)".*?label":"(.*?)"', data4, re.S)
-									if data_lst: 
-										label = data_lst[0][1]
-										if 'googlevideo' in data_lst[0][0]: label = '|'+label + '| Google'
-										urlTab.append({'name':label, 'url':data_lst[0][0], 'need_resolve':0})
-							elif '/embedplay/' in Url:
-								sts, data4 = self.getPage(Url,self.defaultParams)
-								if sts:
-									data_list4 = re.findall('<iframe.*?src=["\'](.*?)["\']', data4, re.S)
-									if data_list4:
-										Url = data_list4[0]
-										urlTab.append({'name':gethostname(Url), 'url':Url, 'need_resolve':1})
-							else:
-								urlTab.append({'name':gethostname(Url), 'url':Url, 'need_resolve':1})
+							if sts:
+								Url=data3.meta['url']
+								printDBG('etap 5='+Url)
+								if ('public/dist' in Url) and ('id=' in Url):
+									URL = 'https://' + Url.split('/')[2] + '/hls/'+Url.split('id=')[1]+'/'+Url.split('id=')[1]+'.playlist.m3u8'
+									printDBG('etap 6='+URL)
+									URL = strwithmeta(URL, {'Referer':Url})	
+									urlTab.extend(getDirectM3U8Playlist(URL, checkExt=True, checkContent=True, sortWithMaxBitrate=999999999))
+								if '/public/dist/index.html?id=' in Url:
+									URL = Url.replace('/public/dist/index.html?id=','/getLinkStreamMd5/')
+									printDBG('etap 7='+URL)						
+									sts, data4 = self.getPage(URL,paramsUrl)
+									if sts:
+										data_lst = re.findall('file":"(.*?)".*?label":"(.*?)"', data4, re.S)
+										if data_lst: 
+											label = data_lst[0][1]
+											if 'googlevideo' in data_lst[0][0]: label = '|'+label + '| Google'
+											urlTab.append({'name':label, 'url':data_lst[0][0], 'need_resolve':0})
+								elif '/embedplay/' in Url:
+									sts, data4 = self.getPage(Url,self.defaultParams)
+									if sts:
+										data_list4 = re.findall('<iframe.*?src=["\'](.*?)["\']', data4, re.S)
+										if data_list4:
+											Url = data_list4[0]
+											urlTab.append({'name':gethostname(Url), 'url':Url, 'need_resolve':1})
+								else:
+									urlTab.append({'name':gethostname(Url), 'url':Url, 'need_resolve':1})
 				self.cacheLinks[str(cItem['url'])] = urlTab	
 		return urlTab	
 

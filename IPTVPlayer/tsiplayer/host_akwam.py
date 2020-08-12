@@ -4,7 +4,7 @@ from Plugins.Extensions.IPTVPlayer.libs import ph
 from Plugins.Extensions.IPTVPlayer.components.iptvplayerinit import GetIPTVSleep
 from Plugins.Extensions.IPTVPlayer.tools.iptvtypes import strwithmeta
 from Plugins.Extensions.IPTVPlayer.libs.e2ijson import loads as json_loads
-from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname,tscolor
+from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.tstools import TSCBaseHostClass,gethostname,tscolor,tshost
 from Plugins.Extensions.IPTVPlayer.tsiplayer.libs.urlparser    import urlparser as ts_urlparser
 
 try:
@@ -24,8 +24,12 @@ import time
 ###################################################	
 def getinfo():
 	info_={}
-	info_['name']='Akoam (New Site)'
-	info_['version']='1.0 07/03/2020'
+	name = 'Akoam (New Site)'
+	hst = tshost(name)	
+	if hst=='': hst = 'https://akwam.net'
+	info_['host']= hst
+	info_['name']=name
+	info_['version']='1.1.01 05/07/2020'
 	info_['dev']='RGYSoft'
 	info_['cat_id']='201'
 	info_['desc']='أفلام, مسلسلات و انمي عربية و اجنبية'
@@ -39,12 +43,31 @@ class TSIPHost(TSCBaseHostClass):
 	def __init__(self):
 		TSCBaseHostClass.__init__(self,{'cookie':'akwam.cookie'})
 		self.USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0'
-		self.MAIN_URL = 'https://akwam.net'
+		self.MAIN_URL = getinfo()['host']
 		self.HEADER = {'User-Agent': self.USER_AGENT, 'DNT':'1', 'Accept': 'text/html', 'Accept-Encoding':'gzip, deflate','Referer':self.getMainUrl(), 'Origin':self.getMainUrl()}
 		self.AJAX_HEADER = MergeDicts(self.HEADER, {'X-Requested-With': 'XMLHttpRequest', 'Accept-Encoding':'gzip, deflate', 'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8', 'Accept':'application/json, text/javascript, */*; q=0.01'})
 		self.defaultParams = {'header':self.HEADER,'with_metadata':True, 'use_cookie': True, 'load_cookie': True, 'save_cookie': True, 'cookiefile': self.COOKIE_FILE}
 		self.cacheLinks = {}
-		self.getPage = self.cm.getPage
+		#self.getPage = self.cm.getPage
+
+
+	def getPage(self,baseUrl, addParams = {}, post_data = None):
+		baseUrl = self.std_url(baseUrl)
+		i=0
+		while True:
+			printDBG('count='+str(i))
+			if addParams == {}: addParams = dict(self.defaultParams)
+			#origBaseUrl = baseUrl
+			#baseUrl = self.cm.iriToUri(baseUrl)
+			addParams['cloudflare_params'] = {'cookie_file':self.COOKIE_FILE, 'User-Agent':self.USER_AGENT}
+			sts, data = self.cm.getPageCFProtection(baseUrl, addParams, post_data)
+			if sts:
+				break
+			else:
+				i=i+1
+				if i>2: break
+		return sts, data
+
 
 	def showmenu0(self,cItem):
 		self.addDir({'import':cItem['import'],'category' :'host2','title':'أفلام'   ,'icon':cItem['icon'],'mode':'20','sub_mode':0})
@@ -116,12 +139,13 @@ class TSIPHost(TSCBaseHostClass):
 					self.addDir({'import':cItem['import'],'category' : 'host2','title':titre,'url':url,'desc':'','icon':cItem['icon'],'mode':'30'})
 
 	def showitms(self,cItem):
+		#printDBG('citem='+str(cItem))
 		page = cItem.get('page', 1)
 		if page==1: Url = cItem['url']
 		else: Url = cItem['url']+'&page='+str(page)
 		sts, data = self.getPage(Url)
 		if sts:
-			lst_data=re.findall('class="entry-box.*?>(.*?)src="(.*?)".*?href="(.*?)".*?<h3.*?>(.*?)</h3>', data, re.S)
+			lst_data=re.findall('class="entry-box.*?>(.*?)-src="(.*?)".*?href="(.*?)".*?<h3.*?>(.*?)</h3>', data, re.S)
 			count=0			
 			for (desc,image,url,titre) in lst_data:
 				rating = ''
